@@ -1,0 +1,17 @@
+*.debug.html
+*.release.html
+*.canvas.js
+*.tzjs
+*.pyc
+.lock-wscript
+_build
+mapping_table.json
+jslib
+staticmax
+models
+shaders
+textures
+materials
+shaders
+sounds
+capture
