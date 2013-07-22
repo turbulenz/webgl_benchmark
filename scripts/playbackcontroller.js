@@ -36,6 +36,8 @@ PlaybackController.prototype =
             if (xhr0.readyState === 4)
             {
                 group.resources = JSON.parse(xhr0.responseText);
+                that.numCaptureDataLoaded += 1;
+
                 if (group.resources && group.data && group.frames)
                 {
                     group.ready = true;
@@ -60,6 +62,8 @@ PlaybackController.prototype =
             if (xhr1.readyState === 4)
             {
                 group.data = xhr1.response;
+                that.numCaptureDataLoaded += 1;
+
                 if (group.resources && group.data && group.frames)
                 {
                     group.ready = true;
@@ -84,6 +88,8 @@ PlaybackController.prototype =
             if (xhr2.readyState === 4)
             {
                 group.frames = JSON.parse(xhr2.responseText);
+                that.numCaptureDataLoaded += 1;
+
                 if (group.resources && group.data && group.frames)
                 {
                     group.ready = true;
@@ -118,6 +124,8 @@ PlaybackController.prototype =
         xhr2.open('GET', this.prefixCaptureURL + 'frames' + rangeString + '.json', true);
         xhr2.onreadystatechange = framesLoaded;
         xhr2.send();
+
+        this.numCaptureData += 3;
     },
 
     loadAssets : function playbackcontrollerLoadAssetsFn()
@@ -130,6 +138,14 @@ PlaybackController.prototype =
         {
             this._requestData(g);
         }
+    },
+
+    getLoadingProgress : function playbackcontrollerGetLoadingProgressFn()
+    {
+        var playbackGraphicsDevice = this.playbackGraphicsDevice;
+        //var numResourcesAdded = 92; //playbackGraphicsDevice.numResourcesAdded;
+        //var numLoadedResources = playbackGraphicsDevice.numResourcesAdded - playbackGraphicsDevice.numPendingResources;
+        return (this.numCaptureDataLoaded) / (this.numCaptureData);
     },
 
     update : function playbackcontrollerUpdateFn()
@@ -257,6 +273,9 @@ PlaybackController.create = function playbackControllerCreateFn(graphicsDevice)
     playbackController.addingResources = true;
     playbackController.loadingResources = false;
     playbackController.emptyData = [-1, -1, -1, -1];
+
+    playbackController.numCaptureData = 0;
+    playbackController.numCaptureDataLoaded = 0;
 
     playbackController.frameTimeElement = document.getElementById("frameTime");
     playbackController.frameNumberElement = document.getElementById("frameNumber");

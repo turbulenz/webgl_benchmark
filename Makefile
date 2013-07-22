@@ -1,6 +1,6 @@
 
 # Location of the Turbulenz checkout root
-TZROOT := ../turbulenz_engine
+TZROOT := ../turbulenz/engine
 
 # Location of templates.  Each .js file in the templates dir
 # represents an application to be built

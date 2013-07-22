@@ -3,6 +3,7 @@
 //
 
 /*global TurbulenzEngine: false*/
+/*global LoadingScreen: false*/
 /*global PlaybackController: false*/
 
 function BenchmarkApp() {}
@@ -63,7 +64,31 @@ BenchmarkApp.prototype =
             that.playbackController.update();
         }
 
-        this.intervalID = TurbulenzEngine.setInterval(update, 1000 / 60);
+        function loadingUpdate()
+        {
+            var graphicsDevice = that.graphicsDevice;
+            var playbackController = that.playbackController;
+
+            if (playbackController.addingResources || playbackController.loadingResources)
+            {
+                playbackController.update();
+                var progress = playbackController.getLoadingProgress();
+                that.loadingScreen.setProgress(progress);
+            }
+            else
+            {
+                TurbulenzEngine.clearInterval(that.intervalID);
+                that.intervalID = TurbulenzEngine.setInterval(update, 1000 / 60);
+            }
+
+            if (graphicsDevice.beginFrame())
+            {
+                graphicsDevice.clear(this.loadingColor);
+                that.loadingScreen.render(1, 1);
+            }
+        }
+
+        this.intervalID = TurbulenzEngine.setInterval(loadingUpdate, 1000 / 60);
     },
 
     shutdown : function benchmarkappShutdownFn()
@@ -86,7 +111,10 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
     var benchmarkApp = new BenchmarkApp();
 
     var graphicsDevice = benchmarkApp.graphicsDevice = TurbulenzEngine.createGraphicsDevice({});
+    var mathDevice = benchmarkApp.mathDevice = TurbulenzEngine.createMathDevice({});
     benchmarkApp.playbackController = PlaybackController.create(graphicsDevice);
+
+    benchmarkApp.loadingScreen = LoadingScreen.create(graphicsDevice, mathDevice, {progress: 0});
 
     benchmarkApp.intervalID = null;
 

@@ -1,6 +1,7 @@
 /*{# Copyright (c) 2013 Turbulenz Limited #}*/
 
 /*{{ javascript("scripts/benchmarkapp.js") }}*/
+/*{{ javascript("scripts/loadingscreen.js") }}*/
 /*{{ javascript("scripts/playbackcontroller.js") }}*/
 
 // jslib files
