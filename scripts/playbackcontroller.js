@@ -191,22 +191,32 @@ PlaybackController.prototype =
                     this.frameTimeElement.textContent = frameTime.toFixed(1) + ' ms';
                 }
 
-                graphicsDevice.finish();
+                this.msPerFrame[this.msPerFrame.length] = frameTime;
 
                 playbackGraphicsDevice.play(this.relativeFrameIndex);
-                frameTime = (TurbulenzEngine.getTime() - frameTime);
 
-                if (this.frameTimeElement)
+                var metrics = graphicsDevice.metrics;
+                if (metrics)
                 {
-                    this.frameTimeElement.textContent = frameTime.toFixed(1) + ' ms';
+                    var metricsCopy = this.metricsPerFrame[this.metricsPerFrame.length] = {};
+                    var p;
+                    for (p in this.metricsFields)
+                    {
+                        if (this.metricsFields.hasOwnProperty(p))
+                        {
+                            metricsCopy[p] = metrics[p];
+                        }
+                    }
                 }
+
+                //graphicsDevice.finish();
 
                 if (!this.paused || this.step)
                 {
                     this.step = false;
 
                     var frameIndexDelta;
-                    if (this.step || this.fixedFrameRate || graphicsDevice.fps <= 0)
+                    if (this.fixedFrameRate || graphicsDevice.fps <= 0)
                     {
                         frameIndexDelta = 1;
                     }
@@ -231,6 +241,11 @@ PlaybackController.prototype =
                         else
                         {
                             this.relativeFrameIndex -= frameIndexDelta;
+                            if (!this.sentData)
+                            {
+                                this.outputData();
+                                this.sentData = true;
+                            }
                         }
                     }
 
@@ -248,6 +263,75 @@ PlaybackController.prototype =
 
             graphicsDevice.endFrame();
         }
+    },
+
+    outputData : function playbackcontrollerOutputDataFn()
+    {
+        var browserTest = window.prompt('Save recording data as:', '');
+        var filename = browserTest + '-' + (new Date()).toISOString();
+        var msPerFrame = this.msPerFrame;
+        var msPerFrameLength = msPerFrame.length;
+        var i;
+        for (i = 0; i < msPerFrameLength; i += 1)
+        {
+            msPerFrame[i] = 1000 / msPerFrame[i]; // convert to FPS
+        }
+        this.postData('/local/v1/save/webgl-benchmark/data/' + filename + '.csv',
+            this.msPerFrame.join('\n'));
+
+        var metricsPerFrame = this.metricsPerFrame;
+        if (metricsPerFrame.length > 0)
+        {
+            var metricsFields = this.metricsFields;
+            var metricsData = '';
+            var p;
+            for (p in metricsFields)
+            {
+                if (metricsFields.hasOwnProperty(p))
+                {
+                    metricsData += p + ',';
+                }
+            }
+            metricsData += '\n';
+            var metricsPerFrameLength = metricsPerFrame.length;
+            for (i = 0; i < metricsPerFrameLength; i += 1)
+            {
+                var frameMetrics = metricsPerFrame[i];
+                for (p in metricsFields)
+                {
+                    if (metricsFields.hasOwnProperty(p))
+                    {
+                        metricsData += frameMetrics[p] + ',';
+                    }
+                }
+                metricsData += '\n';
+            }
+            this.postData('/local/v1/save/webgl-benchmark/data/' + filename + '-metrics.csv', metricsData);
+        }
+    },
+
+    postData : function playbackRecorderPostData(url, dataString)
+    {
+        var that = this;
+        var xhr;
+        if (this.xhrPool.length === 0)
+        {
+            xhr = (window.XMLHttpRequest ? new window.XMLHttpRequest() : new window.ActiveXObject("Microsoft.XMLHTTP"));
+        }
+        else
+        {
+            xhr = this.xhrPool.pop();
+        }
+        xhr.open('POST', url, true);
+        xhr.onreadystatechange = function ()
+        {
+            if (xhr.readyState === 4)
+            {
+                xhr.onreadystatechange = null;
+                that.xhrPool.push(xhr);
+            }
+        };
+        xhr.send(dataString);
     },
 
     destroy : function playbackcontrollerDestroyFn()
@@ -289,6 +373,22 @@ PlaybackController.create = function playbackControllerCreateFn(graphicsDevice)
     playbackController.paused = false;
     playbackController.step = false;
     playbackController.fixedFrameRate = true;
+
+    playbackController.xhrPool = [];
+    playbackController.msPerFrame = [];
+    playbackController.metricsPerFrame = [];
+    playbackController.sentData = false;
+
+    playbackController.metricsFields = {
+        'renderTargetChanges': 1,
+        'textureChanges': 1,
+        'renderStateChanges': 1,
+        'vertexBufferChanges': 1,
+        'indexBufferChanges': 1,
+        'techniqueChanges': 1,
+        'drawCalls': 1,
+        'primitives': 1
+    };
 
     return playbackController;
 };
