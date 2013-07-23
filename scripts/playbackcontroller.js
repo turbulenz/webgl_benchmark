@@ -182,12 +182,18 @@ PlaybackController.prototype =
         {
             if (framesReady)
             {
-                var frameTime = TurbulenzEngine.getTime();
+                var timeNow = TurbulenzEngine.getTime();
+                var frameTime = (timeNow - this.previousFrameTime);
+                this.previousFrameTime = timeNow;
 
-                playbackGraphicsDevice.play(this.relativeFrameIndex);
+                if (this.frameTimeElement)
+                {
+                    this.frameTimeElement.textContent = frameTime.toFixed(1) + ' ms';
+                }
 
                 graphicsDevice.finish();
 
+                playbackGraphicsDevice.play(this.relativeFrameIndex);
                 frameTime = (TurbulenzEngine.getTime() - frameTime);
 
                 if (this.frameTimeElement)
@@ -277,6 +283,7 @@ PlaybackController.create = function playbackControllerCreateFn(graphicsDevice)
     playbackController.numCaptureData = 0;
     playbackController.numCaptureDataLoaded = 0;
 
+    playbackController.previousFrameTime = 0;
     playbackController.frameTimeElement = document.getElementById("frameTime");
     playbackController.frameNumberElement = document.getElementById("frameNumber");
     playbackController.paused = false;

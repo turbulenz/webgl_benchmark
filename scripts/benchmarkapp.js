@@ -78,7 +78,7 @@ BenchmarkApp.prototype =
             else
             {
                 TurbulenzEngine.clearInterval(that.intervalID);
-                that.intervalID = TurbulenzEngine.setInterval(update, 1000 / 60);
+                that.intervalID = TurbulenzEngine.setInterval(update, 0);
             }
 
             if (graphicsDevice.beginFrame())
