@@ -182,34 +182,49 @@ PlaybackController.prototype =
         {
             if (framesReady)
             {
-                var timeNow = TurbulenzEngine.getTime();
-                var frameTime = (timeNow - this.previousFrameTime);
-                this.previousFrameTime = timeNow;
+                var frameStart = TurbulenzEngine.getTime();
+                playbackGraphicsDevice.play(this.relativeFrameIndex);
+                var dispachTime = TurbulenzEngine.getTime() - frameStart;
+
+                var frameTime;
+                if (this.config.blockForRendering)
+                {
+                    // block by reading from the backbuffer
+                    this.graphicsDevice.getScreenshot(false, 0, 0, 1, 1);
+                    frameTime = TurbulenzEngine.getTime() - frameStart;
+                }
+                else
+                {
+                    var timeNow = TurbulenzEngine.getTime();
+                    frameTime = (timeNow - this.previousFrameTime);
+                    this.previousFrameTime = timeNow;
+                }
 
                 if (this.frameTimeElement)
                 {
                     this.frameTimeElement.textContent = frameTime.toFixed(1) + ' ms';
                 }
 
-                this.msPerFrame[this.msPerFrame.length] = frameTime;
-
-                playbackGraphicsDevice.play(this.relativeFrameIndex);
-
-                var metrics = graphicsDevice.metrics;
-                if (metrics)
+                // stop recording metrics at the end of the replay (to avoid running out of memory)
+                if (!this.atEnd)
                 {
-                    var metricsCopy = this.metricsPerFrame[this.metricsPerFrame.length] = {};
-                    var p;
-                    for (p in this.metricsFields)
+                    this.msPerFrame[this.msPerFrame.length] = frameTime;
+                    this.msDispachPerFrame[this.msDispachPerFrame.length] = dispachTime;
+
+                    var graphicsDeviceMetrics = graphicsDevice.metrics;
+                    if (graphicsDeviceMetrics)
                     {
-                        if (this.metricsFields.hasOwnProperty(p))
+                        var metrics = this.metricsPerFrame[this.metricsPerFrame.length] = {};
+                        var p;
+                        for (p in this.metricsFields)
                         {
-                            metricsCopy[p] = metrics[p];
+                            if (this.metricsFields.hasOwnProperty(p))
+                            {
+                                metrics[p] = graphicsDeviceMetrics[p];
+                            }
                         }
                     }
                 }
-
-                //graphicsDevice.finish();
 
                 if (!this.paused || this.step)
                 {
@@ -245,6 +260,7 @@ PlaybackController.prototype =
                             {
                                 this.outputData();
                                 this.sentData = true;
+                                this.atEnd = true;
                             }
                         }
                     }
@@ -267,23 +283,30 @@ PlaybackController.prototype =
 
     outputData : function playbackcontrollerOutputDataFn()
     {
-        var browserTest = window.prompt('Save recording data as:', '');
-        var filename = browserTest + '-' + (new Date()).toISOString();
+        var browserTestPath = window.prompt('Save recording data as:', '');
+        if (!browserTestPath)
+        {
+            return;
+        }
+
+        var filename = browserTestPath + '-' + (new Date()).toISOString();
+
+        var metricsData = 'msPerFrame,msDispachPerFrame\n';
         var msPerFrame = this.msPerFrame;
+        var msDispachPerFrame = this.msDispachPerFrame;
         var msPerFrameLength = msPerFrame.length;
         var i;
         for (i = 0; i < msPerFrameLength; i += 1)
         {
-            msPerFrame[i] = 1000 / msPerFrame[i]; // convert to FPS
+            metricsData += msPerFrame[i] + ',' + msDispachPerFrame[i] + '\n';
         }
-        this.postData('/local/v1/save/webgl-benchmark/data/' + filename + '.csv',
-            this.msPerFrame.join('\n'));
+        this.postData('/local/v1/save/webgl-benchmark/data/' + filename + '.csv', metricsData);
 
         var metricsPerFrame = this.metricsPerFrame;
         if (metricsPerFrame.length > 0)
         {
             var metricsFields = this.metricsFields;
-            var metricsData = '';
+            metricsData = '';
             var p;
             for (p in metricsFields)
             {
@@ -340,10 +363,12 @@ PlaybackController.prototype =
     }
 };
 
-PlaybackController.create = function playbackControllerCreateFn(graphicsDevice)
+PlaybackController.create = function playbackControllerCreateFn(config, graphicsDevice)
 {
     var playbackController = new PlaybackController();
     playbackController.graphicsDevice = graphicsDevice;
+    playbackController.config = config;
+
     playbackController.playbackGraphicsDevice = PlaybackGraphicsDevice.create(graphicsDevice);
 
     playbackController.playbackGraphicsDevice.onerror = function (msg)
@@ -351,11 +376,11 @@ PlaybackController.create = function playbackControllerCreateFn(graphicsDevice)
         window.alert(msg);
     };
 
-    playbackController.prefixAssetURL = 'capture/';
-    playbackController.prefixCaptureURL = 'capture/';
+    playbackController.prefixAssetURL = config.capturePath;
+    playbackController.prefixCaptureURL = config.capturePath;
 
-    var numTotalFrames = playbackController.numTotalFrames = 3600;
-    var numFramesPerGroup = playbackController.numFramesPerGroup = 60;
+    var numTotalFrames = playbackController.numTotalFrames = config.numTotalFrames;
+    var numFramesPerGroup = playbackController.numFramesPerGroup = config.numFramesPerGroup;
     playbackController.numGroups = Math.floor(numTotalFrames / numFramesPerGroup);
     playbackController.groups = [];
     playbackController.currentGroupIndex = 0;
@@ -368,6 +393,7 @@ PlaybackController.create = function playbackControllerCreateFn(graphicsDevice)
     playbackController.numCaptureDataLoaded = 0;
 
     playbackController.previousFrameTime = 0;
+    playbackController.atEnd = false;
     playbackController.frameTimeElement = document.getElementById("frameTime");
     playbackController.frameNumberElement = document.getElementById("frameNumber");
     playbackController.paused = false;
@@ -376,6 +402,7 @@ PlaybackController.create = function playbackControllerCreateFn(graphicsDevice)
 
     playbackController.xhrPool = [];
     playbackController.msPerFrame = [];
+    playbackController.msDispachPerFrame = [];
     playbackController.metricsPerFrame = [];
     playbackController.sentData = false;
 

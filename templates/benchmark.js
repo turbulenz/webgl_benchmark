@@ -3,6 +3,7 @@
 /*{{ javascript("scripts/benchmarkapp.js") }}*/
 /*{{ javascript("scripts/loadingscreen.js") }}*/
 /*{{ javascript("scripts/playbackcontroller.js") }}*/
+/*{{ javascript("scripts/config.js") }}*/
 
 // jslib files
 /*{{ javascript("jslib/capturegraphicsdevice.js") }}*/

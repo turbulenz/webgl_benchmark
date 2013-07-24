@@ -5,6 +5,7 @@
 /*global TurbulenzEngine: false*/
 /*global LoadingScreen: false*/
 /*global PlaybackController: false*/
+/*global Config: false*/
 
 function BenchmarkApp() {}
 
@@ -78,7 +79,7 @@ BenchmarkApp.prototype =
             else
             {
                 TurbulenzEngine.clearInterval(that.intervalID);
-                that.intervalID = TurbulenzEngine.setInterval(update, 0);
+                that.intervalID = TurbulenzEngine.setInterval(update, that.config.renderInterval);
             }
 
             if (graphicsDevice.beginFrame())
@@ -112,7 +113,10 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
 
     var graphicsDevice = benchmarkApp.graphicsDevice = TurbulenzEngine.createGraphicsDevice({});
     var mathDevice = benchmarkApp.mathDevice = TurbulenzEngine.createMathDevice({});
-    benchmarkApp.playbackController = PlaybackController.create(graphicsDevice);
+
+    var config = benchmarkApp.config = Config.create();
+
+    benchmarkApp.playbackController = PlaybackController.create(config, graphicsDevice);
 
     benchmarkApp.loadingScreen = LoadingScreen.create(graphicsDevice, mathDevice, {progress: 0});
 
