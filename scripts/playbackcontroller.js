@@ -211,16 +211,19 @@ PlaybackController.prototype =
                     this.msPerFrame[this.msPerFrame.length] = frameTime;
                     this.msDispachPerFrame[this.msDispachPerFrame.length] = dispachTime;
 
-                    var graphicsDeviceMetrics = graphicsDevice.metrics;
-                    if (graphicsDeviceMetrics)
+                    if (this.metricsPerFrame)
                     {
-                        var metrics = this.metricsPerFrame[this.metricsPerFrame.length] = {};
-                        var p;
-                        for (p in this.metricsFields)
+                        var graphicsDeviceMetrics = graphicsDevice.metrics;
+                        if (graphicsDeviceMetrics)
                         {
-                            if (this.metricsFields.hasOwnProperty(p))
+                            var metrics = this.metricsPerFrame[this.metricsPerFrame.length] = {};
+                            var p;
+                            for (p in this.metricsFields)
                             {
-                                metrics[p] = graphicsDeviceMetrics[p];
+                                if (this.metricsFields.hasOwnProperty(p))
+                                {
+                                    metrics[p] = graphicsDeviceMetrics[p];
+                                }
                             }
                         }
                     }
@@ -310,7 +313,7 @@ PlaybackController.prototype =
         this.postData('/local/v1/save/webgl-benchmark/data/' + filename + '.csv', metricsData);
 
         var metricsPerFrame = this.metricsPerFrame;
-        if (metricsPerFrame.length > 0)
+        if (metricsPerFrame)
         {
             var metricsFields = this.metricsFields;
             metricsData = '';
@@ -411,7 +414,14 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.xhrPool = [];
     playbackController.msPerFrame = [];
     playbackController.msDispachPerFrame = [];
-    playbackController.metricsPerFrame = [];
+    if (config.outputMetrics)
+    {
+        playbackController.metricsPerFrame = [];
+    }
+    else
+    {
+        playbackController.metricsPerFrame = null;
+    }
     playbackController.sentData = false;
 
     playbackController.metricsFields = {

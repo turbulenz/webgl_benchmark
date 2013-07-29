@@ -15,8 +15,10 @@ Config.prototype =
     // render at recorded speed
     //renderInterval: 1000 / 60,
 
-    // use getScreenShot to force the rendering to complete
-    blockForRendering: false
+    // use getScreenshot to force the rendering to complete
+    blockForRendering: false,
+
+    outputMetrics: false
 };
 
 Config.create = function configCreateFn()
