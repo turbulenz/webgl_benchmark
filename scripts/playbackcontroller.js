@@ -270,6 +270,13 @@ PlaybackController.prototype =
                         this.frameNumberElement.textContent =
                             ((this.currentGroupIndex * this.numFramesPerGroup) + this.relativeFrameIndex).toString();
                     }
+
+                    if (this.resolutionElement)
+                    {
+                        this.resolutionElement.textContent = this.graphicsDevice.width.toString() + 'x' +
+                            this.graphicsDevice.height.toString();
+                    }
+
                 }
             }
             else
@@ -396,6 +403,7 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.atEnd = false;
     playbackController.frameTimeElement = document.getElementById("frameTime");
     playbackController.frameNumberElement = document.getElementById("frameNumber");
+    playbackController.resolutionElement = document.getElementById("resolution");
     playbackController.paused = false;
     playbackController.step = false;
     playbackController.fixedFrameRate = true;
