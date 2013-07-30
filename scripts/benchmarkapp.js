@@ -16,11 +16,26 @@ BenchmarkApp.prototype =
         this.playbackController.init();
 
         // Controls
+        var saveElement = document.getElementById("buttonSave");
         var pauseElement = document.getElementById("buttonPause");
         var stepElement = document.getElementById("buttonStep");
         var fixedElement = document.getElementById("checkboxFixed");
+        var multisamplingElement = document.getElementById("multisampling");
+
+        if (multisamplingElement)
+        {
+            multisamplingElement.textContent = this.config.multisample;
+        }
 
         var playbackController = this.playbackController;
+
+        if (saveElement)
+        {
+            saveElement.onclick = function ()
+            {
+                playbackController.outputData();
+            }
+        }
 
         if (pauseElement)
         {
@@ -53,6 +68,7 @@ BenchmarkApp.prototype =
 
         if (fixedElement)
         {
+            fixedElement.checked = playbackController.fixedFrameRate;
             fixedElement.onclick = function ()
             {
                 playbackController.fixedFrameRate = fixedElement.checked;

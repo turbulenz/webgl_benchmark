@@ -14,6 +14,10 @@
 
     <div id="sidebar">
         <div class="html-control control-output-pair">
+            <span>Test</span>
+            <span id="capturePath" class="html-control control-output"></span>
+        </div>
+        <div class="html-control control-output-pair">
             <span>Time</span>
             <span id="time" class="html-control control-output"></span>
         </div>
@@ -37,10 +41,18 @@
             <span>Average FPS</span>
             <span id="averageFps" class="html-control control-output"></span>
         </div>
+        <div class="html-control control-output-pair">
+            <span>Multisampling</span>
+            <span id="multisampling" class="html-control control-output"></span>
+        </div>
         <div class="html-control control-button-pair">
             <span class="control-title">Control</span>
             <input type="button" id="buttonStep" value="Step">
             <input type="button" id="buttonPause" value="Pause">
+        </div>
+        <div class="html-control control-button-pair">
+            <span class="control-title">Save</span>
+            <input type="button" id="buttonSave" value="Save">
         </div>
         <div class="html-control control-button-pair">
             <span class="control-title">Fixed frame rate</span>

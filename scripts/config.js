@@ -6,14 +6,13 @@ function Config() {}
 
 Config.prototype =
 {
-    capturePath: 'capture/',
+    capturePath: 'capture/noshadows_norendertarget/',
     numTotalFrames: 3600,
     numFramesPerGroup: 60,
     // only works for 'norendertarget' captures
-    multisample: 4,
+    multisample: 1,
 
-    fixedFrameRate: false,
-
+    fixedFrameRate: true,
     // use getScreenshot to force the rendering to complete
     blockForRendering: false,
 

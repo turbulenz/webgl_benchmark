@@ -300,12 +300,7 @@ PlaybackController.prototype =
                         else
                         {
                             this.relativeFrameIndex -= frameIndexDelta;
-                            if (!this.sentData)
-                            {
-                                this.outputData();
-                                this.sentData = true;
-                                this.atEnd = true;
-                            }
+                            this.atEnd = true;
                         }
                     }
                 }
@@ -340,6 +335,9 @@ PlaybackController.prototype =
         }
         this.postData('/local/v1/save/webgl-benchmark/data/' + filename + '.csv', metricsData);
 
+        this.msPerFrame = [];
+        this.msDispachPerFrame = [];
+
         var metricsPerFrame = this.metricsPerFrame;
         if (metricsPerFrame)
         {
@@ -368,6 +366,8 @@ PlaybackController.prototype =
                 metricsData += '\n';
             }
             this.postData('/local/v1/save/webgl-benchmark/data/' + filename + '-metrics.csv', metricsData);
+
+            this.metricsPerFrame = [];
         }
     },
 
@@ -416,6 +416,12 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
 
     playbackController.prefixAssetURL = config.capturePath;
     playbackController.prefixCaptureURL = config.capturePath;
+
+    playbackController.capturePathElement = document.getElementById("capturePath");
+    if (playbackController.capturePathElement)
+    {
+        playbackController.capturePathElement.textContent = config.capturePath;
+    }
 
     var numTotalFrames = playbackController.numTotalFrames = config.numTotalFrames;
     var numFramesPerGroup = playbackController.numFramesPerGroup = config.numFramesPerGroup;
