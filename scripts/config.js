@@ -14,6 +14,7 @@ Config.prototype =
     renderInterval: 0,
     // render at recorded speed
     //renderInterval: 1000 / 60,
+    fixedFrameRate: false,
 
     // use getScreenshot to force the rendering to complete
     blockForRendering: false,

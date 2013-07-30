@@ -409,7 +409,7 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.resolutionElement = document.getElementById("resolution");
     playbackController.paused = false;
     playbackController.step = false;
-    playbackController.fixedFrameRate = true;
+    playbackController.fixedFrameRate = config.fixedFrameRate;
 
     playbackController.xhrPool = [];
     playbackController.msPerFrame = [];
