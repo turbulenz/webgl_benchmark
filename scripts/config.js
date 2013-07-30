@@ -9,6 +9,8 @@ Config.prototype =
     capturePath: 'capture/',
     numTotalFrames: 3600,
     numFramesPerGroup: 60,
+    // only works for 'norendertarget' captures
+    multisample: 4,
 
     fixedFrameRate: false,
 

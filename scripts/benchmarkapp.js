@@ -119,10 +119,14 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
 {
     var benchmarkApp = new BenchmarkApp();
 
-    var graphicsDevice = benchmarkApp.graphicsDevice = TurbulenzEngine.createGraphicsDevice({});
-    var mathDevice = benchmarkApp.mathDevice = TurbulenzEngine.createMathDevice({});
-
     var config = benchmarkApp.config = Config.create();
+
+    var graphicsDeviceOptions = {
+        multisample: config.multisample
+    };
+
+    var graphicsDevice = benchmarkApp.graphicsDevice = TurbulenzEngine.createGraphicsDevice(graphicsDeviceOptions);
+    var mathDevice = benchmarkApp.mathDevice = TurbulenzEngine.createMathDevice({});
 
     benchmarkApp.playbackController = PlaybackController.create(config, graphicsDevice);
 
