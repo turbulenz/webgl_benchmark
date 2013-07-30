@@ -182,6 +182,14 @@ PlaybackController.prototype =
         {
             if (framesReady)
             {
+                if (!this.playbackStart)
+                {
+                    playbackGraphicsDevice.play(0);
+                    this.relativeFrameIndex = 1;
+                    this.playbackStart = TurbulenzEngine.getTime();
+                    return;
+                }
+
                 var frameStart = TurbulenzEngine.getTime();
                 playbackGraphicsDevice.play(this.relativeFrameIndex);
                 var dispachTime = TurbulenzEngine.getTime() - frameStart;
@@ -238,20 +246,28 @@ PlaybackController.prototype =
                     }
                     else
                     {
-                        frameIndexDelta = Math.max(1.0, Math.floor(0.5 + (60 / graphicsDevice.fps)));
+                        var expectedFrame = (TurbulenzEngine.getTime() - this.playbackStart) * (60 / 1000);
+                        var currentGroupFrame = this.currentGroupIndex * this.numFramesPerGroup;
+                        frameIndexDelta = Math.max(1.0, Math.floor(expectedFrame - (currentGroupFrame + this.relativeFrameIndex)));
                     }
 
                     this.relativeFrameIndex += frameIndexDelta;
 
                     if (this.relativeFrameIndex >= this.numFramesPerGroup)
                     {
+                        if (frameIndexDelta > 0)
+                        {
+                            // skip the remaining playback in this group
+                            playbackGraphicsDevice.skip(this.numFramesPerGroup);
+                        }
+
                         if ((this.currentGroupIndex + 1) < this.numGroups)
                         {
                             // Flag last group data for release
                             group.data = this.emptyData;
 
                             this.currentGroupIndex += 1;
-                            this.relativeFrameIndex = 0;
+                            this.relativeFrameIndex -= this.numFramesPerGroup;
                             this.addingResources = true;
                         }
                         else
