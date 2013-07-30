@@ -229,10 +229,8 @@ PlaybackController.prototype =
                     }
                 }
 
-                if (!this.paused || this.step)
+                if (!this.paused)
                 {
-                    this.step = false;
-
                     var frameIndexDelta;
                     if (this.fixedFrameRate || graphicsDevice.fps <= 0)
                     {
@@ -408,7 +406,6 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.frameNumberElement = document.getElementById("frameNumber");
     playbackController.resolutionElement = document.getElementById("resolution");
     playbackController.paused = false;
-    playbackController.step = false;
     playbackController.fixedFrameRate = config.fixedFrameRate;
 
     playbackController.xhrPool = [];
