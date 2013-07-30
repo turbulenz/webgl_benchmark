@@ -60,9 +60,17 @@ BenchmarkApp.prototype =
         }
 
         var that = this;
+        var requestAnimationFrame = (window.requestAnimationFrame ||
+                                     window.webkitRequestAnimationFrame ||
+                                     window.oRequestAnimationFrame ||
+                                     window.msRequestAnimationFrame ||
+                                     window.mozRequestAnimationFrame);
         function update()
         {
-            that.playbackController.update();
+            if(!TurbulenzEngine.isUnloading()) {
+                that.playbackController.update();
+                requestAnimationFrame(update);
+            }
         }
 
         function loadingUpdate()
@@ -79,7 +87,7 @@ BenchmarkApp.prototype =
             else
             {
                 TurbulenzEngine.clearInterval(that.intervalID);
-                that.intervalID = TurbulenzEngine.setInterval(update, that.config.renderInterval);
+                requestAnimationFrame(update);
             }
 
             if (graphicsDevice.beginFrame())

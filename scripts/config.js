@@ -10,10 +10,6 @@ Config.prototype =
     numTotalFrames: 3600,
     numFramesPerGroup: 60,
 
-    // render as fast as possible
-    renderInterval: 0,
-    // render at recorded speed
-    //renderInterval: 1000 / 60,
     fixedFrameRate: false,
 
     // use getScreenshot to force the rendering to complete
