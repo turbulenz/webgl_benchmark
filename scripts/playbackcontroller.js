@@ -185,6 +185,7 @@ PlaybackController.prototype =
                 if (!this.playbackStart)
                 {
                     playbackGraphicsDevice.play(0);
+                    this.framesRendered = 1;
                     this.relativeFrameIndex = 1;
                     this.playbackStart = TurbulenzEngine.getTime();
                     return;
@@ -213,9 +214,38 @@ PlaybackController.prototype =
                     this.frameTimeElement.textContent = frameTime.toFixed(1) + ' ms';
                 }
 
-                // stop recording metrics at the end of the replay (to avoid running out of memory)
-                if (!this.atEnd)
+                if (!this.paused && !this.atEnd)
                 {
+                    this.framesRendered += 1;
+
+                    var recordingTime = (TurbulenzEngine.getTime() - this.playbackStart) / 1000;
+                    if (this.timeElement)
+                    {
+                        this.timeElement.textContent = recordingTime.toFixed(2) + ' s';
+                    }
+
+                    if (this.framesRenderedElement)
+                    {
+                        this.framesRenderedElement.textContent = this.framesRendered.toString();
+                    }
+
+                    if (this.averageFpsElement)
+                    {
+                        this.averageFpsElement.textContent = (this.framesRendered / recordingTime).toFixed(2);
+                    }
+
+                    if (this.frameNumberElement)
+                    {
+                        this.frameNumberElement.textContent =
+                            ((this.currentGroupIndex * this.numFramesPerGroup) + this.relativeFrameIndex).toString();
+                    }
+
+                    if (this.resolutionElement)
+                    {
+                        this.resolutionElement.textContent = this.graphicsDevice.width.toString() + 'x' +
+                            this.graphicsDevice.height.toString();
+                    }
+
                     this.msPerFrame[this.msPerFrame.length] = frameTime;
                     this.msDispachPerFrame[this.msDispachPerFrame.length] = dispachTime;
 
@@ -235,10 +265,7 @@ PlaybackController.prototype =
                             }
                         }
                     }
-                }
 
-                if (!this.paused)
-                {
                     var frameIndexDelta;
                     if (this.fixedFrameRate || graphicsDevice.fps <= 0)
                     {
@@ -247,8 +274,8 @@ PlaybackController.prototype =
                     else
                     {
                         var expectedFrame = (TurbulenzEngine.getTime() - this.playbackStart) * (60 / 1000);
-                        var currentGroupFrame = this.currentGroupIndex * this.numFramesPerGroup;
-                        frameIndexDelta = Math.max(1.0, Math.floor(expectedFrame - (currentGroupFrame + this.relativeFrameIndex)));
+                        var currentFrame = (this.currentGroupIndex * this.numFramesPerGroup) + this.relativeFrameIndex;
+                        frameIndexDelta = Math.floor(expectedFrame - currentFrame);
                     }
 
                     this.relativeFrameIndex += frameIndexDelta;
@@ -281,19 +308,6 @@ PlaybackController.prototype =
                             }
                         }
                     }
-
-                    if (this.frameNumberElement)
-                    {
-                        this.frameNumberElement.textContent =
-                            ((this.currentGroupIndex * this.numFramesPerGroup) + this.relativeFrameIndex).toString();
-                    }
-
-                    if (this.resolutionElement)
-                    {
-                        this.resolutionElement.textContent = this.graphicsDevice.width.toString() + 'x' +
-                            this.graphicsDevice.height.toString();
-                    }
-
                 }
             }
             else
@@ -409,18 +423,26 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.groups = [];
     playbackController.currentGroupIndex = 0;
     playbackController.relativeFrameIndex = 0;
+    playbackController.framesRendered = 0;
     playbackController.addingResources = true;
     playbackController.loadingResources = false;
     playbackController.emptyData = [-1, -1, -1, -1];
+
+    playbackController.test = true;
 
     playbackController.numCaptureData = 0;
     playbackController.numCaptureDataLoaded = 0;
 
     playbackController.previousFrameTime = 0;
     playbackController.atEnd = false;
+
+    playbackController.framesRenderedElement = document.getElementById("framesRendered");
+    playbackController.timeElement = document.getElementById("time");
     playbackController.frameTimeElement = document.getElementById("frameTime");
     playbackController.frameNumberElement = document.getElementById("frameNumber");
     playbackController.resolutionElement = document.getElementById("resolution");
+    playbackController.averageFpsElement = document.getElementById("averageFps");
+
     playbackController.paused = false;
     playbackController.fixedFrameRate = config.fixedFrameRate;
 
