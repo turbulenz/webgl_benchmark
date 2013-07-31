@@ -214,8 +214,9 @@ PlaybackController.prototype =
                     this.frameTimeElement.textContent = frameTime.toFixed(1) + ' ms';
                 }
 
-                if (!this.paused && !this.atEnd)
+                if ((!this.paused || this.step) && !this.atEnd)
                 {
+                    this.step = false;
                     this.framesRendered += 1;
 
                     var recordingTime = (TurbulenzEngine.getTime() - this.playbackStart) / 1000;
@@ -434,7 +435,7 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.loadingResources = false;
     playbackController.emptyData = [-1, -1, -1, -1];
 
-    playbackController.test = true;
+    playbackController.step = false;
 
     playbackController.numCaptureData = 0;
     playbackController.numCaptureDataLoaded = 0;
