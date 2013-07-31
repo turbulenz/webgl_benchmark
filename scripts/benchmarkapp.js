@@ -31,6 +31,7 @@ BenchmarkApp.prototype =
 
         if (saveElement)
         {
+            saveElement.disabled = !playbackController.fixedFrameRate;
             saveElement.onclick = function ()
             {
                 playbackController.outputData();
@@ -72,6 +73,7 @@ BenchmarkApp.prototype =
             fixedElement.onclick = function ()
             {
                 playbackController.fixedFrameRate = fixedElement.checked;
+                saveElement.disabled = !fixedElement.checked;
             };
         }
 
