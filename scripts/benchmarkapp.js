@@ -13,7 +13,8 @@ BenchmarkApp.prototype =
 {
     init : function benchmarkappInitFn()
     {
-        this.playbackController.init();
+        var config = this.config;
+        this.playbackController.init(config.prefixAssetURL, config.captureLookUp[config.defaultCapture]);
 
         // Controls
         var saveElement = document.getElementById("buttonSave");
@@ -21,6 +22,12 @@ BenchmarkApp.prototype =
         var stepElement = document.getElementById("buttonStep");
         var fixedElement = document.getElementById("checkboxFixed");
         var multisamplingElement = document.getElementById("multisampling");
+
+        var captureNameElement = document.getElementById("captureName");
+        if (captureNameElement)
+        {
+            captureNameElement.textContent = config.defaultCapture;
+        }
 
         if (multisamplingElement)
         {

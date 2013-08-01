@@ -10,8 +10,10 @@ function PlaybackController() {}
 PlaybackController.prototype =
 {
 
-    init : function playbackcontrollerInitFn()
+    init : function playbackcontrollerInitFn(prefixAssetURL, prefixCaptureURL)
     {
+        this.prefixAssetURL = prefixAssetURL;
+        this.prefixCaptureURL = prefixCaptureURL;
         this.loadAssets();
     },
 
@@ -415,14 +417,8 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
         window.alert(msg);
     };
 
-    playbackController.prefixAssetURL = config.capturePath;
-    playbackController.prefixCaptureURL = config.capturePath;
-
-    playbackController.capturePathElement = document.getElementById("capturePath");
-    if (playbackController.capturePathElement)
-    {
-        playbackController.capturePathElement.textContent = config.capturePath;
-    }
+    playbackController.prefixAssetURL = null;
+    playbackController.prefixCaptureURL = null;
 
     var numTotalFrames = playbackController.numTotalFrames = config.numTotalFrames;
     var numFramesPerGroup = playbackController.numFramesPerGroup = config.numFramesPerGroup;
