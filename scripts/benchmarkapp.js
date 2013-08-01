@@ -48,14 +48,15 @@ BenchmarkApp.prototype =
         {
             pauseElement.onclick = function ()
             {
-                playbackController.paused = !playbackController.paused;
                 if (playbackController.paused)
                 {
                     pauseElement.value = "Play";
+                    playbackController.play();
                 }
                 else
                 {
                     pauseElement.value = "Pause";
+                    playbackController.pause();
                 }
                 if (stepElement)
                 {

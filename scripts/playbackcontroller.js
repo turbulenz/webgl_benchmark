@@ -150,6 +150,21 @@ PlaybackController.prototype =
         return (this.numCaptureDataLoaded) / (this.numCaptureData);
     },
 
+    pause : function playbackcontrollerPauseFn()
+    {
+        this.pauseStart = TurbulenzEngine.getTime();
+        this.paused = true;
+    },
+
+    play : function playbackcontrollerPlayFn()
+    {
+        if (this.pauseStart)
+        {
+            this.playbackStart += TurbulenzEngine.getTime() - this.pauseStart;
+        }
+        this.paused = false;
+    },
+
     update : function playbackcontrollerUpdateFn()
     {
         var framesReady = false;
@@ -461,6 +476,7 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.averageFpsElement = document.getElementById("averageFps");
 
     playbackController.paused = false;
+    playbackController.pauseStart = null;
     playbackController.fixedFrameRate = config.fixedFrameRate;
 
     playbackController.xhrPool = [];
