@@ -245,8 +245,8 @@ PlaybackController.prototype =
 
                     if (this.resolutionElement)
                     {
-                        this.resolutionElement.textContent = this.graphicsDevice.width.toString() + 'x' +
-                            this.graphicsDevice.height.toString();
+                        this.resolutionElement.textContent = this.playbackGraphicsDevice.playWidth.toString() + ' x ' +
+                            this.playbackGraphicsDevice.playHeight.toString();
                     }
 
                     this.msPerFrame[this.msPerFrame.length] = frameTime;
