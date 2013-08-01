@@ -249,30 +249,31 @@ PlaybackController.prototype =
                             this.playbackGraphicsDevice.playHeight.toString();
                     }
 
-                    this.msPerFrame[this.msPerFrame.length] = frameTime;
-                    this.msDispachPerFrame[this.msDispachPerFrame.length] = dispachTime;
-
-                    if (this.metricsPerFrame)
-                    {
-                        var graphicsDeviceMetrics = graphicsDevice.metrics;
-                        if (graphicsDeviceMetrics)
-                        {
-                            var metrics = this.metricsPerFrame[this.metricsPerFrame.length] = {};
-                            var p;
-                            for (p in this.metricsFields)
-                            {
-                                if (this.metricsFields.hasOwnProperty(p))
-                                {
-                                    metrics[p] = graphicsDeviceMetrics[p];
-                                }
-                            }
-                        }
-                    }
-
                     var frameIndexDelta;
                     if (this.fixedFrameRate || graphicsDevice.fps <= 0)
                     {
                         frameIndexDelta = 1;
+
+                        this.msPerFrame[this.msPerFrame.length] = frameTime;
+                        this.msDispachPerFrame[this.msDispachPerFrame.length] = dispachTime;
+
+                        if (this.metricsPerFrame)
+                        {
+                            var graphicsDeviceMetrics = graphicsDevice.metrics;
+                            if (graphicsDeviceMetrics)
+                            {
+                                var metrics = this.metricsPerFrame[this.metricsPerFrame.length] = {};
+                                var p;
+                                for (p in this.metricsFields)
+                                {
+                                    if (this.metricsFields.hasOwnProperty(p))
+                                    {
+                                        metrics[p] = graphicsDeviceMetrics[p];
+                                    }
+                                }
+                            }
+                        }
+
                     }
                     else
                     {
@@ -303,6 +304,15 @@ PlaybackController.prototype =
                         else
                         {
                             this.relativeFrameIndex -= frameIndexDelta;
+                            this.testDetails = {
+                                recordingTime: recordingTime,
+                                framesRendered: this.framesRendered,
+                                averageFps: this.framesRendered / recordingTime,
+                                playWidth: this.playbackGraphicsDevice.playWidth,
+                                playHeight: this.playbackGraphicsDevice.playHeight,
+                                multisample: this.config.multisample,
+                                fixedFrameRate: this.fixedFrameRate
+                            };
                             this.atEnd = true;
                         }
                     }
@@ -317,60 +327,64 @@ PlaybackController.prototype =
         }
     },
 
-    outputData : function playbackcontrollerOutputDataFn()
+    outputData : function playbackcontrollerOutputDataFn(testName)
     {
-        var browserTestPath = window.prompt('Save recording data as:', '');
+        var browserTestPath = window.prompt('Save recording data in:', '');
         if (!browserTestPath)
         {
             return;
         }
 
-        var filename = browserTestPath + '-' + (new Date()).toISOString();
+        var filename = browserTestPath + '/' + testName + '-' + (new Date()).toISOString();
+        this.postData('/local/v1/save/webgl-benchmark/data/' + filename + '-details.json', JSON.stringify(this.testDetails));
 
         var metricsData = 'msPerFrame,msDispachPerFrame\n';
         var msPerFrame = this.msPerFrame;
-        var msDispachPerFrame = this.msDispachPerFrame;
-        var msPerFrameLength = msPerFrame.length;
-        var i;
-        for (i = 0; i < msPerFrameLength; i += 1)
+        if (msPerFrame.length > 0)
         {
-            metricsData += msPerFrame[i] + ',' + msDispachPerFrame[i] + '\n';
-        }
-        this.postData('/local/v1/save/webgl-benchmark/data/' + filename + '.csv', metricsData);
-
-        this.msPerFrame = [];
-        this.msDispachPerFrame = [];
-
-        var metricsPerFrame = this.metricsPerFrame;
-        if (metricsPerFrame)
-        {
-            var metricsFields = this.metricsFields;
-            metricsData = '';
-            var p;
-            for (p in metricsFields)
+            var msDispachPerFrame = this.msDispachPerFrame;
+            var msPerFrameLength = msPerFrame.length;
+            var i;
+            for (i = 0; i < msPerFrameLength; i += 1)
             {
-                if (metricsFields.hasOwnProperty(p))
-                {
-                    metricsData += p + ',';
-                }
+                metricsData += msPerFrame[i] + ',' + msDispachPerFrame[i] + '\n';
             }
-            metricsData += '\n';
-            var metricsPerFrameLength = metricsPerFrame.length;
-            for (i = 0; i < metricsPerFrameLength; i += 1)
+            this.postData('/local/v1/save/webgl-benchmark/data/' + filename + '.csv', metricsData);
+
+            this.msPerFrame = [];
+            this.msDispachPerFrame = [];
+
+            var metricsPerFrame = this.metricsPerFrame;
+            if (metricsPerFrame)
             {
-                var frameMetrics = metricsPerFrame[i];
+                var metricsFields = this.metricsFields;
+                metricsData = '';
+                var p;
                 for (p in metricsFields)
                 {
                     if (metricsFields.hasOwnProperty(p))
                     {
-                        metricsData += frameMetrics[p] + ',';
+                        metricsData += p + ',';
                     }
                 }
                 metricsData += '\n';
-            }
-            this.postData('/local/v1/save/webgl-benchmark/data/' + filename + '-metrics.csv', metricsData);
+                var metricsPerFrameLength = metricsPerFrame.length;
+                for (i = 0; i < metricsPerFrameLength; i += 1)
+                {
+                    var frameMetrics = metricsPerFrame[i];
+                    for (p in metricsFields)
+                    {
+                        if (metricsFields.hasOwnProperty(p))
+                        {
+                            metricsData += frameMetrics[p] + ',';
+                        }
+                    }
+                    metricsData += '\n';
+                }
+                this.postData('/local/v1/save/webgl-benchmark/data/' + filename + '-metrics.csv', metricsData);
 
-            this.metricsPerFrame = [];
+                this.metricsPerFrame = [];
+            }
         }
     },
 
@@ -452,6 +466,8 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.xhrPool = [];
     playbackController.msPerFrame = [];
     playbackController.msDispachPerFrame = [];
+    playbackController.testDetails = null;
+
     if (config.outputMetrics)
     {
         playbackController.metricsPerFrame = [];
