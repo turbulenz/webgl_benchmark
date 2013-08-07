@@ -16,3 +16,23 @@ Once you have the engine set up:
   ::
 
         $ python manage.py apps PATH_TO_WEBGL_BENCHMARK
+
+
+Changing benchmark config
+-------------------------
+
+To change the benchmark config see the "scripts/config.js" file.
+
+Saving benchmark results
+------------------------
+
+Benchmark results will be saved under "data/" with under the folder name you specify when you click Save.
+
+Creating graphs
+---------------
+
+You can create graphs by installing `gnuplot <http://www.gnuplot.info/>_`. To create a frame rate graph run::
+
+    $> python plotgraph.py -t plot-frametimes.gnuplot -i data/mydatafolder/mydatafile.csv -o output.png --var y_axis_max=120
+
+You might want to change "y_axis_max" depending on your results.
