@@ -31,7 +31,7 @@ Benchmark results will be saved under "data/" with under the folder name you spe
 Creating graphs
 ---------------
 
-You can create graphs by installing `gnuplot <http://www.gnuplot.info/>_`. To create a frame rate graph run::
+You can create graphs by installing `gnuplot <http://www.gnuplot.info/>`_. To create a frame rate graph run::
 
     $> python plotgraph.py -t plot-frametimes.gnuplot -i data/mydatafolder/mydatafile.csv -o output.png --var y_axis_max=120
 
