@@ -50,12 +50,12 @@ BenchmarkApp.prototype =
             {
                 if (playbackController.paused)
                 {
-                    pauseElement.value = "Play";
+                    pauseElement.value = "Pause";
                     playbackController.play();
                 }
                 else
                 {
-                    pauseElement.value = "Pause";
+                    pauseElement.value = "Play";
                     playbackController.pause();
                 }
                 if (stepElement)
