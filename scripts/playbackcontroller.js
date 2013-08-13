@@ -4,6 +4,7 @@
 
 /*global TurbulenzEngine: false*/
 /*global PlaybackGraphicsDevice: false*/
+/*global PostFx: false*/
 
 function PlaybackController() {}
 
@@ -169,6 +170,7 @@ PlaybackController.prototype =
     {
         var framesReady = false;
         var graphicsDevice = this.graphicsDevice;
+        var postFx = this.postFx;
         var playbackGraphicsDevice = this.playbackGraphicsDevice;
 
         var group = this.groups[this.currentGroupIndex];
@@ -201,7 +203,8 @@ PlaybackController.prototype =
             {
                 if (!this.playbackStart)
                 {
-                    playbackGraphicsDevice.play(0);
+                    playbackGraphicsDevice.play(0, postFx.renderTarget);
+                    postFx.renderBloomEffect(postFx.renderTexture);
                     this.framesRendered = 1;
                     this.relativeFrameIndex = 1;
                     this.playbackStart = TurbulenzEngine.getTime();
@@ -209,7 +212,8 @@ PlaybackController.prototype =
                 }
 
                 var frameStart = TurbulenzEngine.getTime();
-                playbackGraphicsDevice.play(this.relativeFrameIndex);
+                playbackGraphicsDevice.play(this.relativeFrameIndex, postFx.renderTarget);
+                postFx.renderBloomEffect(postFx.renderTexture);
                 var dispachTime = TurbulenzEngine.getTime() - frameStart;
 
                 var frameTime;
@@ -437,11 +441,12 @@ PlaybackController.prototype =
 
     destroy : function playbackcontrollerDestroyFn()
     {
+        this.postFx.destroyBuffers();
         this.playbackGraphicsDevice.destroy();
     }
 };
 
-PlaybackController.create = function playbackControllerCreateFn(config, graphicsDevice)
+PlaybackController.create = function playbackControllerCreateFn(config, graphicsDevice, mathDevice)
 {
     var playbackController = new PlaybackController();
     playbackController.graphicsDevice = graphicsDevice;
@@ -449,10 +454,16 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
 
     playbackController.playbackGraphicsDevice = PlaybackGraphicsDevice.create(graphicsDevice);
 
-    playbackController.playbackGraphicsDevice.onerror = function (msg)
+    var postFx = playbackController.postFx = PostFx.create(graphicsDevice, mathDevice);
+    postFx.createBuffers();
+
+    var onerror = function onerrorFn(msg)
     {
         window.alert(msg);
     };
+
+    playbackController.postFx.onerror = onerror;
+    playbackController.playbackGraphicsDevice.onerror = onerror;
 
     playbackController.prefixAssetURL = null;
     playbackController.prefixCaptureURL = null;

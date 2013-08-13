@@ -4,6 +4,7 @@
 /*{{ javascript("scripts/loadingscreen.js") }}*/
 /*{{ javascript("scripts/playbackcontroller.js") }}*/
 /*{{ javascript("scripts/config.js") }}*/
+/*{{ javascript("scripts/postfx.js") }}*/
 
 // jslib files
 /*{{ javascript("jslib/capturegraphicsdevice.js") }}*/

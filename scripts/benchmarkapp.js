@@ -152,7 +152,7 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
     var graphicsDevice = benchmarkApp.graphicsDevice = TurbulenzEngine.createGraphicsDevice(graphicsDeviceOptions);
     var mathDevice = benchmarkApp.mathDevice = TurbulenzEngine.createMathDevice({});
 
-    benchmarkApp.playbackController = PlaybackController.create(config, graphicsDevice);
+    benchmarkApp.playbackController = PlaybackController.create(config, graphicsDevice, mathDevice);
 
     benchmarkApp.loadingScreen = LoadingScreen.create(graphicsDevice, mathDevice, {progress: 0});
 
