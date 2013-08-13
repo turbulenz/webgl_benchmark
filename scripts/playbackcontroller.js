@@ -145,8 +145,6 @@ PlaybackController.prototype =
     getLoadingProgress : function playbackcontrollerGetLoadingProgressFn()
     {
         var playbackGraphicsDevice = this.playbackGraphicsDevice;
-        //var numResourcesAdded = 92; //playbackGraphicsDevice.numResourcesAdded;
-        //var numLoadedResources = playbackGraphicsDevice.numResourcesAdded - playbackGraphicsDevice.numPendingResources;
         return (this.numCaptureDataLoaded) / (this.numCaptureData);
     },
 
