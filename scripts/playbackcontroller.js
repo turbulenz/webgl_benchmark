@@ -197,6 +197,15 @@ PlaybackController.prototype =
 
         if (graphicsDevice.beginFrame())
         {
+            if (this.width !== graphicsDevice.width ||
+                this.height !== graphicsDevice.height)
+            {
+                this.width = graphicsDevice.width;
+                this.height = graphicsDevice.height;
+                postFx.destroyBuffers();
+                postFx.createBuffers();
+            }
+
             if (framesReady)
             {
                 if (!this.playbackStart)
@@ -241,6 +250,7 @@ PlaybackController.prototype =
                     var recordingTime = (TurbulenzEngine.getTime() - this.playbackStart) / 1000;
                     var score = this.playbackGraphicsDevice.playWidth *
                             this.playbackGraphicsDevice.playHeight * (this.framesRendered / recordingTime) * 0.0001;
+
                     if (this.timeElement)
                     {
                         this.timeElement.textContent = recordingTime.toFixed(2) + ' s';
@@ -462,6 +472,9 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
 
     playbackController.postFx.onerror = onerror;
     playbackController.playbackGraphicsDevice.onerror = onerror;
+
+    playbackController.height = graphicsDevice.height;
+    playbackController.width = graphicsDevice.width;
 
     playbackController.prefixAssetURL = null;
     playbackController.prefixCaptureURL = null;

@@ -55,8 +55,8 @@ PostFx.prototype =
     {
         var graphicsDevice = this.graphicsDevice;
 
-        var defaultHeight = 1024;
-        var defaultWidth = 1024;
+        var defaultHeight = graphicsDevice.height;
+        var defaultWidth = graphicsDevice.width;
 
         var renderTextureParameters =
         {
@@ -216,7 +216,6 @@ PostFx.prototype =
         graphicsDevice.draw(this.quadPrimitive, 4);
     },
 
-
     renderInvertEffect: function renderInvertEffectFn(inputTexture)
     {
         var graphicsDevice = this.graphicsDevice;
@@ -281,7 +280,6 @@ PostFx.prototype =
         graphicsDevice.setStream(this.quadVertexBuffer, this.quadSemantics);
         graphicsDevice.draw(this.quadPrimitive, 4);
     }
-
 };
 
 PostFx.create = function postFxCreateFn(graphicsDevice, mathDevice)
