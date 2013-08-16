@@ -235,8 +235,6 @@ PlaybackController.prototype =
                     this.framesRendered += 1;
 
                     var recordingTime = (TurbulenzEngine.getTime() - this.playbackStart) / 1000;
-                    var score = this.playbackGraphicsDevice.playWidth *
-                            this.playbackGraphicsDevice.playHeight * (this.framesRendered / recordingTime) * 0.0001;
                     if (this.timeElement)
                     {
                         this.timeElement.textContent = recordingTime.toFixed(2) + ' s';
@@ -262,11 +260,6 @@ PlaybackController.prototype =
                     {
                         this.resolutionElement.textContent = this.playbackGraphicsDevice.playWidth.toString() + ' x ' +
                             this.playbackGraphicsDevice.playHeight.toString();
-                    }
-
-                    if (this.scoreElement)
-                    {
-                        this.scoreElement.textContent = score.toFixed(0);
                     }
 
                     var frameIndexDelta;
@@ -331,8 +324,7 @@ PlaybackController.prototype =
                                 playWidth: this.playbackGraphicsDevice.playWidth,
                                 playHeight: this.playbackGraphicsDevice.playHeight,
                                 multisample: this.config.multisample,
-                                fixedFrameRate: this.fixedFrameRate,
-                                score: score
+                                fixedFrameRate: this.fixedFrameRate
                             };
                             this.atEnd = true;
                         }
@@ -480,7 +472,6 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.frameNumberElement = document.getElementById("frameNumber");
     playbackController.resolutionElement = document.getElementById("resolution");
     playbackController.averageFpsElement = document.getElementById("averageFps");
-    playbackController.scoreElement = document.getElementById("score");
 
     playbackController.paused = false;
     playbackController.pauseStart = null;
