@@ -363,16 +363,30 @@ PlaybackController.prototype =
         var filename = browserTestPath + '/' + testName + '-' + (new Date()).toISOString();
         this.postData('/local/v1/save/webgl-benchmark/data/' + filename + '-details.json', JSON.stringify(this.testDetails));
 
-        var metricsData = 'msPerFrame,msDispachPerFrame\n';
+        var metricsData = 'msPerFrame,msDispachPerFrame,averageMsPerFrame,averageMsPerDispach\n';
         var msPerFrame = this.msPerFrame;
         if (msPerFrame.length > 0)
         {
             var msDispachPerFrame = this.msDispachPerFrame;
             var msPerFrameLength = msPerFrame.length;
+            var averageFrameMs = 0;
+            var newAverageFrameMs = 0;
+            var averageDispachMs = 0;
+            var newAverageDispachMs = 0;
             var i;
             for (i = 0; i < msPerFrameLength; i += 1)
             {
-                metricsData += msPerFrame[i] + ',' + msDispachPerFrame[i] + '\n';
+                if (i % 60 === 0)
+                {
+                    averageFrameMs = newAverageFrameMs;
+                    averageDispachMs = newAverageDispachMs;
+                    newAverageFrameMs = 0;
+                    newAverageDispachMs = 0;
+                }
+                newAverageFrameMs += msPerFrame[i] / 60.0;
+                newAverageDispachMs += msDispachPerFrame[i] / 60.0;
+
+                metricsData += msPerFrame[i] + ',' + msDispachPerFrame[i] + ',' + averageFrameMs + ',' + averageDispachMs + '\n';
             }
             this.postData('/local/v1/save/webgl-benchmark/data/' + filename + '.csv', metricsData);
 
