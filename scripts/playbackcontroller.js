@@ -234,7 +234,19 @@ PlaybackController.prototype =
                     this.step = false;
                     this.framesRendered += 1;
 
+                    if (this.framesRendered % 60 === 0)
+                    {
+                        this.averageFrameTime = this.newAverageFrameTime;
+                        this.newAverageFrameTime = 0;
+                    }
+                    this.newAverageFrameTime += frameTime / 60.0;
+
                     var recordingTime = (TurbulenzEngine.getTime() - this.playbackStart) / 1000;
+                    if (this.averageFrameTimeElement)
+                    {
+                        this.averageFrameTimeElement.textContent = this.averageFrameTime.toFixed(1) + ' ms';
+                    }
+
                     if (this.timeElement)
                     {
                         this.timeElement.textContent = recordingTime.toFixed(2) + ' s';
@@ -394,7 +406,7 @@ PlaybackController.prototype =
                     }
                     metricsData += '\n';
                 }
-                this.postData('/local/v1/save/webgl-benchmark/data/' + filename + '-metrics.csv', metricsData);
+                this.postData('/local/v1/save/webgl-benchmark/data/' + testName + '-metrics.csv', metricsData);
 
                 this.metricsPerFrame = [];
             }
@@ -454,6 +466,8 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.currentGroupIndex = 0;
     playbackController.relativeFrameIndex = 0;
     playbackController.framesRendered = 0;
+    playbackController.averageFrameTime = 0;
+    playbackController.newAverageFrameTime = 0;
     playbackController.addingResources = true;
     playbackController.loadingResources = false;
     playbackController.emptyData = [-1, -1, -1, -1];
@@ -469,6 +483,7 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.framesRenderedElement = document.getElementById("framesRendered");
     playbackController.timeElement = document.getElementById("time");
     playbackController.frameTimeElement = document.getElementById("frameTime");
+    playbackController.averageFrameTimeElement = document.getElementById("averageFrameTime");
     playbackController.frameNumberElement = document.getElementById("frameNumber");
     playbackController.resolutionElement = document.getElementById("resolution");
     playbackController.averageFpsElement = document.getElementById("averageFps");
