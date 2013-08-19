@@ -1,0 +1,5 @@
+Author: Anders Kjersem
+Version: 1.1 
+License: Freeware
+Platforms: Windows 95/NT4/98/ME/2000/XP/2003/Vista/2008/7
+URL: http://www.home.no/aksoftware/
