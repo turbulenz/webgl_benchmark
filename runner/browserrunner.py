@@ -31,7 +31,7 @@ class BrowserRunner():
         self.verbose("BrowserRunner( %s )" % (browser_name))
 
     def verbose(self, msg):
-        print "[enginetest] %s" % msg
+        print "[benchmark] %s" % msg
 
     def shutdown(self):
         if self.browsercontrol:
@@ -39,12 +39,18 @@ class BrowserRunner():
 
     def run(self, url, timeout=60):
 
+        if self.browser_name == 'chrome':
+            self.command_line_args = " --disable-web-security"
+        else:
+            self.command_line_args = None
+
         def launch():
             self.verbose("Launching browsercontrol at url: %s" % url)
             self.browsercontrol = browsercontrol.get_control(self.browser_name,
                                                              url,
                                                              self.browser_bin,
-                                                             profile=self.profile)
+                                                             profile=self.profile,
+                                                             command_line_args=self.command_line_args)
 
         # Start the browser if it hasn't been started.
 
@@ -94,23 +100,23 @@ class BrowserRunner():
                 if appExit is not None:
                     exec_tries = exec_tries - 1
 
-                    self.verbose("(browser) App terminated.  Must have " \
-                                     "crashed.  %d tries left" % exec_tries)
+                    # self.verbose("(browser) App terminated.  Must have " \
+                    #                  "crashed.  %d tries left" % exec_tries)
 
-                    if exec_tries > 0:
-                        self.browsercontrol.close()
-                        self.browsercontrol.shutdown()
-                        self.browsercontrol = None
+                    # if exec_tries > 0:
+                    #     self.browsercontrol.close()
+                    #     self.browsercontrol.shutdown()
+                    #     self.browsercontrol = None
 
-                        self.verbose("(browser) retry url: %s" % self.html_file_url)
-                        launch()
-                        deadline = startTime + timeout
-                        continue
+                    #     self.verbose("(browser) retry url: %s" % self.html_file_url)
+                    #     launch()
+                    #     deadline = startTime + timeout
+                    #     continue
 
-                    result = 'crash'
+                    # result = 'crash'
 
-                    self.browsercontrol.close()
-                    self.browsercontrol = None
+                    # self.browsercontrol.close()
+                    # self.browsercontrol = None
 
                     break
 

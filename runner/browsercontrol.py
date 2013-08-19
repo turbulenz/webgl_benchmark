@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2011 Turbulenz Limited
+# Copyright (c) 2010-2013 Turbulenz Limited
 
 # pylint:disable=W0703
 
@@ -605,7 +605,7 @@ class FirefoxWindowsBrowserControl(WindowsBrowserControl):
 
 class ChromeWindowsBrowserControl(WindowsBrowserControl):
 
-    def __init__(self, url, browser_bin, profile):
+    def __init__(self, url, browser_bin, profile, command_line_args):
 
         if 'LOCALAPPDATA' in os.environ:
             localDataPath = os.environ['LOCALAPPDATA']
@@ -626,7 +626,10 @@ class ChromeWindowsBrowserControl(WindowsBrowserControl):
 
         self.shutdown()
 
-        cmdline = '"%s" --start-maximized %s' % (exe, url)
+        if command_line_args is None:
+            cmdline = '"%s" --start-maximized %s' % (exe, url)
+        else:
+            cmdline = '"%s" --start-maximized %s %s' % (exe, command_line_args, url)
         verbose("Browser CMDLINE: %s" % cmdline)
         proc = _popen(cmdline, shell=True)
         time.sleep(2)
@@ -992,9 +995,9 @@ def list_controls():
     ks = controls.keys()
     return [c for c in ks if controls[c].isvalid()]
 
-def get_control(name, url, browser_bin = None, profile = None):
+def get_control(name, url, browser_bin = None, profile = None, command_line_args = None):
     control_type = CONTROLS[TURBULENZOS][name]
-    return control_type(url, browser_bin, profile)
+    return control_type(url, browser_bin, profile, command_line_args)
 
 ############################################################
 
