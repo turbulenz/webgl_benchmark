@@ -10,7 +10,7 @@ LocalConfig.prototype = {};
 
 LocalConfig.create = function localCreateFn()
 {
-    var config = new BaseConfig();
+    var config = BaseConfig.create();
     config.prefixAssetURL = '';
 
     var captureLookUp = config.captureLookUp;

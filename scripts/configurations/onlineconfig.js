@@ -10,18 +10,18 @@ OnlineConfig.prototype = {};
 
 OnlineConfig.create = function onlineCreateFn()
 {
-    var config = new BaseConfig();
-    config.prefixAssetURL = '';
+    var config = BaseConfig();
+    config.prefixAssetURL = '//tzawsuser-benchmark.s3.amazonaws.com/';
 
     var captureLookUp = config.captureLookUp;
-    captureLookUp['noshadows_norendertarget']          = 'capture/noshadows_norendertarget/';
-    captureLookUp['noshadows_rendertarget']            = 'capture/noshadows_rendertarget/';
-    captureLookUp['shadows_norendertarget']            = 'capture/shadows_norendertarget/';
-    captureLookUp['shadows_rendertarget']              = 'capture/shadows_rendertarget/';
-    captureLookUp['waves3_noshadows_norendertarget']   = 'capture/waves3_noshadows_norendertarget/';
-    captureLookUp['waves3_shadows_norendertarget']     = 'capture/waves3_shadows_norendertarget/';
-    captureLookUp['zoom_shadows_norendertarget']       = 'capture/zoom_shadows_norendertarget/';
-    captureLookUp['zoom_noshadows_norendertarget']     = 'capture/zoom_noshadows_norendertarget/';
+    captureLookUp['noshadows_norendertarget']          = '//tzawsuser-benchmark.s3.amazonaws.com/51f94db3/';
+    captureLookUp['noshadows_rendertarget']            = '//tzawsuser-benchmark.s3.amazonaws.com/51f94bd6/';
+    captureLookUp['shadows_norendertarget']            = '//tzawsuser-benchmark.s3.amazonaws.com/51f94867/';
+    captureLookUp['shadows_rendertarget']              = '//tzawsuser-benchmark.s3.amazonaws.com/51f92bf7/';
+    captureLookUp['waves3_noshadows_norendertarget']   = '//tzawsuser-benchmark.s3.amazonaws.com/520106fe/';
+    captureLookUp['waves3_shadows_norendertarget']     = '//tzawsuser-benchmark.s3.amazonaws.com/520109eb/';
+    captureLookUp['zoom_shadows_norendertarget']       = '//tzawsuser-benchmark.s3.amazonaws.com/5200c983/';
+    captureLookUp['zoom_noshadows_norendertarget']     = '//tzawsuser-benchmark.s3.amazonaws.com/5200c983/';
 
     return config;
 };
