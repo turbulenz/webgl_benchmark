@@ -3,7 +3,7 @@
 	"config": {
 		"benchmark": {
 			"name": "webgl_benchmark",
-			"version": "0.0.1.0",
+			"version": "0.0.7",
 			"type": "offline"
 		},
 		"hardware": {},
@@ -11,5 +11,7 @@
 		"playback": {},
 		"sequences": []
 	},
-	"data": {}
+	"data": {
+		"sequences": []
+	}
 }
