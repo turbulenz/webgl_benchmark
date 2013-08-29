@@ -22,6 +22,12 @@ OnlineConfig.create = function onlineCreateFn()
     captureLookUp['waves3_shadows_norendertarget']     = '//tzawsuser-benchmark.s3.amazonaws.com/520109eb/';
     captureLookUp['zoom_shadows_norendertarget']       = '//tzawsuser-benchmark.s3.amazonaws.com/5200c983/';
     captureLookUp['zoom2_shadows_tiltshift']           = '//tzawsuser-benchmark.s3.amazonaws.com/5214d902/';
+    captureLookUp['shadows_norendertarget2']           = '//tzawsuser-benchmark.s3.amazonaws.com/51f94867/';
+    captureLookUp['shadows_rendertarget2']             = '//tzawsuser-benchmark.s3.amazonaws.com/520e3eb2/';
+    captureLookUp['noshadows_rendertarget2']           = '//tzawsuser-benchmark.s3.amazonaws.com/520e3eb2/';
+    captureLookUp['noshadows_norendertarget2']         = '//tzawsuser-benchmark.s3.amazonaws.com/520e4fae/';
+    captureLookUp['zoom2_shadows_norendertarget']      = '//tzawsuser-benchmark.s3.amazonaws.com/520e3905/';
+    captureLookUp['seige_shadows_norendertarget']      = '//tzawsuser-benchmark.s3.amazonaws.com/520e27e0/';
 
     config.prefixTemplatesURL = "config/templates/online/";
 

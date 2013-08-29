@@ -25,7 +25,9 @@ BaseConfig.prototype =
         'waves3_noshadows_norendertarget': 'capture/waves3_noshadows_norendertarget/',
         'waves3_shadows_norendertarget': 'capture/waves3_shadows_norendertarget/',
         'zoom_shadows_norendertarget': 'capture/zoom_shadows_norendertarget/',
-        'zoom2_shadows_tiltshift': 'capture/zoom2_shadows_tiltshift/'
+        'zoom2_shadows_tiltshift': 'capture/zoom2_shadows_tiltshift/',
+        'zoom_noshadows_norendertarget': 'capture/zoom_noshadows_norendertarget/',
+        'story_shadows_rendertarget': 'capture/story_shadows_rendertarget/'
     },
 
     // The total number of frames to playback
