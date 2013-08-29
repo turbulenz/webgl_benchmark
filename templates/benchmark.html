@@ -5,6 +5,36 @@
     <link rel="stylesheet" type="text/css" href="css/base_template.css">
     <link rel="shortcut icon" href="img/favicon.ico">
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+    <script type="text/javascript" src="js/d3.v3/d3.v3.js"></script>
+    <style>
+        #engine {
+            background: #fff;
+            text-shadow: none;
+        }
+
+        svg {
+            font: 10px sans-serif;
+        }
+
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+        }
+
+        .line {
+            fill: none;
+            stroke-width: 1.5px;
+        }
+
+        .brush .extent {
+            stroke: #fff;
+            fill-opacity: .125;
+            shape-rendering: crispEdges;
+        }
+
+    </style>
 </head>
 <body>
     <div id="titlebar" class="ui-layout-north">
@@ -55,6 +85,10 @@
             <input type="button" id="buttonPause" value="Pause">
         </div>
         <div class="html-control control-button-pair">
+            <span class="control-title">Abort</span>
+            <input type="button" id="buttonAbort" value="Abort">
+        </div>
+        <div class="html-control control-button-pair">
             <span class="control-title">Save</span>
             <input type="button" id="buttonSave" value="Save">
         </div>
@@ -65,6 +99,7 @@
     </div>
 
     <div id="engine">
+        <div id="results"></div>
         /*{{ tz_engine_div }}*/
     </div>
 
