@@ -5,7 +5,6 @@
 *.pyc
 .lock-wscript
 _build
-mapping_table.json
 jslib
 staticmax
 models
