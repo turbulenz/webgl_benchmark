@@ -256,7 +256,7 @@ def main():
 
     try:
         generate_config(config_name=args.config, config_target=args.target, allow_querystring=True)
-        if args.target == 'local':
+        if args.target == 'offline':
             download_assets(config_name=args.config)
     except Exception as ex:
         error(str(ex))
