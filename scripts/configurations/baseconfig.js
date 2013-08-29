@@ -34,7 +34,10 @@ BaseConfig.prototype =
     // The block grouping of frames to render
     numFramesPerGroup: 60,
 
-    // Enable multi-sampling (where available). Note: only works for 'norendertarget' captures
+    // Enable anti-aliasing (where available). Note: The benchmark will warn if this is not possible.
+    antialias: true,
+
+    // Multi-sampling amount (where configurable). Note: This will be specified, but may not be set. The actual samples used will be recorded.
     multisample: 4,
 
     // Ensure that all frames are played of the recording
