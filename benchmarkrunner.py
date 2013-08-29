@@ -31,8 +31,8 @@ CONFIG_PATH = "scripts/config.js"
 CONFIGS_DIR_PATH = "scripts/configurations/"
 
 STREAM_MAPPING_PATH = "config/stream_mapping.json"
-CAPTURES_PATH = "test-captures/"
-ASSETS_PATH = "test-captures/"
+CAPTURES_PATH = "captures/"
+ASSETS_PATH = "captures/"
 
 NUM_FRAMES = 3600
 NUM_FRAMES_BLOCK = 60
