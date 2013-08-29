@@ -19,7 +19,6 @@ PlaybackController.prototype =
         this.prefixCaptureURL = prefixCaptureURL;
         this.prefixTemplatesURL = prefixTemplatesURL;
         this.loadAssets();
-        this._requestResultsTemplate(this.config.resultsTemplate);
     },
 
     _requestData : function playbackcontroller_requestDataFn(groupIndex)
@@ -133,63 +132,6 @@ PlaybackController.prototype =
         xhr2.send();
 
         this.numCaptureData += 3;
-    },
-
-    _requestResultsTemplate : function _requestResultsTemplateFn(resultsTemplateName)
-    {
-        var that = this;
-        var xhr0 = (window.XMLHttpRequest ? new window.XMLHttpRequest() : new window.ActiveXObject("Microsoft.XMLHTTP"));
-        var templateRequest = this.prefixTemplatesURL + resultsTemplateName + '.json';
-
-        that.resultsTemplateJSON = null;
-        var templateProcess = function templateProcessFn()
-        {
-            var resultsTemplateJSON = that.resultsTemplateJSON;
-            if (!resultsTemplateJSON)
-            {
-                window.alert("Results template is missing: " + templateRequest + ". Cannot save data.");
-                that.resultsTemplateData = null;
-                that.loadingTemplates = false;
-                return;
-            }
-
-            try {
-                that.resultsTemplateData = JSON.parse(resultsTemplateJSON);
-                if (!that.resultsTemplateData)
-                {
-                    window.alert("Results template is empty. Cannot save data.");
-                    that.resultsTemplateData = null;
-                }
-                else if (!that._isSupportedTemplate(that.resultsTemplateData))
-                {
-                    window.alert("Results template is incompatible. Cannot save data.");
-                    that.resultsTemplateData = null;
-                }
-                that.loadingTemplates = false;
-            }
-            catch (e)
-            {
-                window.alert("Failed to parse results template: " + templateRequest + " with message: " + e);
-            }
-        };
-
-        var templateLoaded = function templateLoadedFn()
-        {
-            if (xhr0.readyState === 4)
-            {
-                that.resultsTemplateJSON = xhr0.responseText;
-                xhr0.onreadystatechange = null;
-                xhr0.responseText = null;
-                xhr0 = null;
-                TurbulenzEngine.setTimeout(templateProcess, 0);
-            }
-        };
-
-        xhr0.open('GET', templateRequest, true);
-        xhr0.onreadystatechange = templateLoaded;
-        xhr0.send();
-
-        this.loadingTemplates = true;
     },
 
     _isSupportedTemplate : function _isSupportedTemplateFn(template)
@@ -913,7 +855,7 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.newAverageFrameTime = 0;
     playbackController.addingResources = true;
     playbackController.loadingResources = false;
-    playbackController.loadingTemplates = false;
+    playbackController.loadingTemplates = true;
     playbackController.loadingResults = false;
     playbackController.emptyData = [-1, -1, -1, -1];
 
@@ -978,12 +920,57 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.gameSession = null;
     playbackController.userDataManager = null;
 
+    playbackController.mappingTable = null;
+
+    var mappingTableErrorFn = function mappingTableErrorFn()
+    {
+        window.alert("Mapping table is missing. Cannot save data.");
+        playbackController.resultsTemplateData = null;
+        playbackController.loadingTemplates = false;
+    };
+
+    var mappingTableReceived = function mappingTableReceivedFn(mappingTable) {
+
+        function templateLoaded(responseText, status)
+        {
+            if (responseText && status === 200)
+            {
+                try {
+                    playbackController.resultsTemplateData = JSON.parse(responseText);
+                    if (!playbackController.resultsTemplateData)
+                    {
+                        window.alert("Results template is empty. Cannot save data.");
+                        playbackController.resultsTemplateData = null;
+                    }
+                    else if (!playbackController._isSupportedTemplate(playbackController.resultsTemplateData))
+                    {
+                        window.alert("Results template is incompatible. Cannot save data.");
+                        playbackController.resultsTemplateData = null;
+                    }
+                    playbackController.loadingTemplates = false;
+                }
+                catch (e)
+                {
+                    window.alert("Failed to parse results template: " + templateRequest + " with message: " + e);
+                }
+            }
+            else
+            {
+                window.alert("Results template is missing: " + templateRequest + ". Cannot save data.");
+                playbackController.resultsTemplateData = null;
+                playbackController.loadingTemplates = false;
+                return;
+            }
+        }
+
+        var templateRequest = playbackController.prefixTemplatesURL + playbackController.config.resultsTemplate + '.json';
+        TurbulenzEngine.request(mappingTable.getURL(templateRequest), templateLoaded);
+    };
+
     var gameSessionCreated = function gameSessionCreatedFn(gameSession)
     {
-        if (TurbulenzServices.available())
-        {
-            playbackController.userDataManager = UserDataManager.create(requestHandler, gameSession);
-        }
+        playbackController.mappingTable = TurbulenzServices.createMappingTable(requestHandler, gameSession, mappingTableReceived, null, mappingTableErrorFn);
+        playbackController.userDataManager = UserDataManager.create(requestHandler, gameSession);
     };
 
     var gameSessionError = function gameSessionErrorFn()
@@ -997,10 +984,7 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
         playbackController.userDataManager = null;
     };
 
-    if (TurbulenzServices.available())
-    {
-        playbackController.gameSession = TurbulenzServices.createGameSession(requestHandler, gameSessionCreated, gameSessionError);
-    }
+    playbackController.gameSession = TurbulenzServices.createGameSession(requestHandler, gameSessionCreated, gameSessionError);
 
     return playbackController;
 };

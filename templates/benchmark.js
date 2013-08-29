@@ -15,6 +15,7 @@
 
 /*{# jslib files #}*/
 /*{{ javascript("jslib/services/turbulenzservices.js") }}*/
+/*{{ javascript("jslib/services/mappingtable.js") }}*/
 /*{{ javascript("jslib/services/turbulenzbridge.js") }}*/
 /*{{ javascript("jslib/services/userdatamanager.js") }}*/
 /*{{ javascript("jslib/services/gamesession.js") }}*/
