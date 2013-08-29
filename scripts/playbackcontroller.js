@@ -709,16 +709,19 @@ PlaybackController.prototype =
 
     outputData : function playbackcontrollerOutputDataFn(testName)
     {
-        var browserTestPath = window.prompt('Save recording data in:', '');
-        if (!browserTestPath)
+        var resultsData = this.processData();
+        if (!resultsData.userData)
         {
+            window.alert("No results to save");
             return;
         }
 
-        var timestamp = (new Date()).getTime();
-        var filename = browserTestPath + '/' + timestamp;
+        var hardwareName = resultsData.userData.config.hardware.name;
+        var filePath = hardwareName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
 
-        var resultsData = this.processData();
+        var timestamp = (new Date()).getTime();
+        var filename = filePath + '/' + timestamp;
+
         if (resultsData.timing && resultsData.timing.csv)
         {
             this.postData('/local/v1/save/webgl-benchmark/data/' + filename + '-timing.csv', resultsData.timing.csv);
@@ -747,7 +750,7 @@ PlaybackController.prototype =
 
         function setResultsCallbackFn(/*key*/)
         {
-            //TODO: Confirm save for user
+            window.alert('Saved results');
         }
 
         function generateGetKeysCallbackFn(timestamp, resultsData)

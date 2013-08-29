@@ -40,6 +40,7 @@ BenchmarkApp.prototype =
 
         if (saveElement)
         {
+            saveElement.disabled = true;
             saveElement.onclick = function ()
             {
                 playbackController.outputData(config.defaultCapture);
@@ -111,6 +112,10 @@ BenchmarkApp.prototype =
                 if (that.playbackController.atEnd)
                 {
                     that.displayResults();
+                    if (saveElement && saveElement.disabled)
+                    {
+                        saveElement.disabled = false;
+                    }
                     return;
                 }
                 requestAnimationFrame(update);
