@@ -11,7 +11,6 @@ OnlineConfig.prototype = {};
 OnlineConfig.create = function onlineCreateFn()
 {
     var config = BaseConfig.create();
-    config.prefixAssetURL = '//tzawsuser-benchmark.s3.amazonaws.com/';
 
     var captureLookUp = config.captureLookUp;
     captureLookUp['noshadows_norendertarget']          = '//tzawsuser-benchmark.s3.amazonaws.com/51f94db3/';
@@ -28,7 +27,9 @@ OnlineConfig.create = function onlineCreateFn()
     captureLookUp['noshadows_norendertarget2']         = '//tzawsuser-benchmark.s3.amazonaws.com/520e4fae/';
     captureLookUp['zoom2_shadows_norendertarget']      = '//tzawsuser-benchmark.s3.amazonaws.com/520e3905/';
     captureLookUp['seige_shadows_norendertarget']      = '//tzawsuser-benchmark.s3.amazonaws.com/520e27e0/';
+    captureLookUp['story_shadows_rendertarget']        = '//tzawsuser-benchmark.s3.amazonaws.com/521f13a3/';
 
+    config.prefixAssetURL = '//tzawsuser-benchmark.s3.amazonaws.com/';
     config.prefixTemplatesURL = "config/templates/online/";
 
     return config;

@@ -21,6 +21,13 @@ OfflineConfig.create = function offlineCreateFn()
     captureLookUp['waves3_shadows_norendertarget']     = 'capture/waves3_shadows_norendertarget/';
     captureLookUp['zoom_shadows_norendertarget']       = 'capture/zoom_shadows_norendertarget/';
     captureLookUp['zoom2_shadows_tiltshift']           = 'capture/zoom2_shadows_tiltshift/';
+    captureLookUp['shadows_norendertarget2']           = 'capture/shadows_norendertarget2/';
+    captureLookUp['shadows_rendertarget2']             = 'capture/shadows_rendertarget2/';
+    captureLookUp['noshadows_rendertarget2']           = 'capture/noshadows_rendertarget2/';
+    captureLookUp['noshadows_norendertarget2']         = 'capture/noshadows_norendertarget2/';
+    captureLookUp['zoom2_shadows_norendertarget']      = 'capture/zoom2_shadows_norendertarget/';
+    captureLookUp['seige_shadows_norendertarget']      = 'capture/seige_shadows_norendertarget/';
+    captureLookUp['story_shadows_rendertarget']        = 'capture/story_shadows_rendertarget/';
 
     config.prefixAssetURL = "capture/";
     config.prefixTemplatesURL = "config/templates/offline/";
