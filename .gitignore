@@ -1,17 +1,6 @@
-*.debug.html
-*.release.html
-*.canvas.js
 *.tzjs
 *.pyc
 .lock-wscript
 _build
-jslib
-staticmax
-models
-shaders
-textures
-materials
-shaders
-sounds
 capture
 data

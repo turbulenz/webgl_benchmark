@@ -1,0 +1,21 @@
+{
+    "prefixAssetURL": "tzawsuser-benchmark.s3.amazonaws.com/",
+    "prefixCaptureURL": "tzawsuser-benchmark.s3.amazonaws.com/",
+    "captureLookUp":
+    {
+        "noshadows_norendertarget" : "51f94db3",
+        "noshadows_rendertarget" : "51f94bd6",
+        "shadows_norendertarget" : "51f94867",
+        "shadows_rendertarget" : "51f92bf7",
+        "waves3_noshadows_norendertarget" : "520106fe",
+        "waves3_shadows_norendertarget" : "520109eb",
+        "zoom_shadows_norendertarget" : "5200c983",
+        "zoom2_shadows_tiltshift" : "5214d902",
+        "shadows_norendertarget2" : "51f94867",
+        "shadows_rendertarget2" : "520e3eb2",
+        "noshadows_rendertarget2" : "520e3eb2",
+        "noshadows_norendertarget2" : "520e4fae",
+        "zoom2_shadows_norendertarget" : "520e3905",
+        "story_shadows_rendertarget" : "521f13a3"
+    }
+}
