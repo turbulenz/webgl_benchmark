@@ -1,0 +1,3 @@
+- config/templates/online/results_template.json
+- config/templates/offline/results_template.json
+- config/stream_mapping.json
