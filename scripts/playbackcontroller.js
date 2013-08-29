@@ -140,40 +140,47 @@ PlaybackController.prototype =
         var that = this;
         var xhr0 = (window.XMLHttpRequest ? new window.XMLHttpRequest() : new window.ActiveXObject("Microsoft.XMLHTTP"));
         var templateRequest = this.prefixTemplatesURL + resultsTemplateName + '.json';
+
+        that.resultsTemplateJSON = null;
+        var templateProcess = function templateProcessFn()
+        {
+            var resultsTemplateJSON = that.resultsTemplateJSON;
+            if (!resultsTemplateJSON)
+            {
+                window.alert("Results template is missing: " + templateRequest + ". Cannot save data.");
+                that.resultsTemplateData = null;
+                return;
+            }
+
+            try {
+                that.resultsTemplateData = JSON.parse(resultsTemplateJSON);
+                if (!that.resultsTemplateData)
+                {
+                    window.alert("Results template is empty. Cannot save data.");
+                    that.resultsTemplateData = null;
+                }
+                else if (!that._isSupportedTemplate(that.resultsTemplateData))
+                {
+                    window.alert("Results template is incompatible. Cannot save data.");
+                    that.resultsTemplateData = null;
+                }
+                that.loadingTemplates = false;
+            }
+            catch (e)
+            {
+                window.alert("Failed to parse results template: " + templateRequest + " with message: " + e);
+            }
+        };
+
         var templateLoaded = function templateLoadedFn()
         {
             if (xhr0.readyState === 4)
             {
-                var resultsTemplateJSON = xhr0.responseText;
+                that.resultsTemplateJSON = xhr0.responseText;
                 xhr0.onreadystatechange = null;
                 xhr0.responseText = null;
                 xhr0 = null;
-
-                if (!resultsTemplateJSON)
-                {
-                    window.alert("Results template is missing: " + templateRequest);
-                }
-                else
-                {
-                    try {
-                        that.resultsTemplateData = JSON.parse(resultsTemplateJSON);
-                        if (!that.resultsTemplateData)
-                        {
-                            window.alert("Results template is empty. Cannot save data.");
-                            that.resultsTemplateData = null;
-                        }
-                        else if (!that._isSupportedTemplate(that.resultsTemplateData))
-                        {
-                            window.alert("Results template is incompatible. Cannot save data.");
-                            that.resultsTemplateData = null;
-                        }
-                        that.loadingTemplates = false;
-                    }
-                    catch (e)
-                    {
-                        window.alert("Failed to parse results template: " + templateRequest + " with message: " + e);
-                    }
-                }
+                TurbulenzEngine.setTimeout(templateProcess, 0);
             }
         };
 
