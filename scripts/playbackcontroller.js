@@ -149,6 +149,7 @@ PlaybackController.prototype =
             {
                 window.alert("Results template is missing: " + templateRequest + ". Cannot save data.");
                 that.resultsTemplateData = null;
+                that.loadingTemplates = false;
                 return;
             }
 
