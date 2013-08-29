@@ -27,7 +27,6 @@ OnlineConfig.create = function onlineCreateFn()
     captureLookUp['noshadows_rendertarget2']           = '//tzawsuser-benchmark.s3.amazonaws.com/520e3eb2/';
     captureLookUp['noshadows_norendertarget2']         = '//tzawsuser-benchmark.s3.amazonaws.com/520e4fae/';
     captureLookUp['zoom2_shadows_norendertarget']      = '//tzawsuser-benchmark.s3.amazonaws.com/520e3905/';
-    captureLookUp['seige_shadows_norendertarget']      = '//tzawsuser-benchmark.s3.amazonaws.com/520e27e0/';
 
     config.prefixTemplatesURL = "config/templates/online/";
 
