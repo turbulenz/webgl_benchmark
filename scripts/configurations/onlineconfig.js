@@ -23,7 +23,7 @@ OnlineConfig.create = function onlineCreateFn()
     captureLookUp['zoom_shadows_norendertarget']       = '//tzawsuser-benchmark.s3.amazonaws.com/5200c983/';
     captureLookUp['zoom2_shadows_tiltshift']           = '//tzawsuser-benchmark.s3.amazonaws.com/5214d902/';
 
-    config.prefixTemplatesURL = "data/templates/online/";
+    config.prefixTemplatesURL = "config/templates/online/";
 
     return config;
 };

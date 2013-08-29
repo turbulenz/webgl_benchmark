@@ -23,7 +23,7 @@ OfflineConfig.create = function offlineCreateFn()
     captureLookUp['zoom2_shadows_tiltshift']           = 'capture/zoom2_shadows_tiltshift/';
 
     config.prefixAssetURL = "capture/";
-    config.prefixTemplatesURL = "data/templates/offline/";
+    config.prefixTemplatesURL = "config/templates/offline/";
 
     return config;
 };
