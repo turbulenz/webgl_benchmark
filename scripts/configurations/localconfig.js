@@ -21,7 +21,7 @@ LocalConfig.create = function localCreateFn()
     captureLookUp['waves3_noshadows_norendertarget']   = 'capture/waves3_noshadows_norendertarget/';
     captureLookUp['waves3_shadows_norendertarget']     = 'capture/waves3_shadows_norendertarget/';
     captureLookUp['zoom_shadows_norendertarget']       = 'capture/zoom_shadows_norendertarget/';
-    captureLookUp['zoom_noshadows_norendertarget']     = 'capture/zoom_noshadows_norendertarget/';
+    captureLookUp['zoom2_shadows_tiltshift']           = 'capture/zoom2_shadows_tiltshift/';
 
     return config;
 };

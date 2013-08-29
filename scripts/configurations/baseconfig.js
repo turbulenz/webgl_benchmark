@@ -13,6 +13,9 @@ BaseConfig.prototype =
     // The prefix URL to be added to any requests for capture data files
     prefixAssetURL: '',
 
+    // The prefix URL to be added to any requests for template data files
+    prefixTemplatesURL: '',
+
     // The location of capture streams by path
     captureLookUp: {
         'noshadows_norendertarget': 'capture/noshadows_norendertarget/',
@@ -22,7 +25,7 @@ BaseConfig.prototype =
         'waves3_noshadows_norendertarget': 'capture/waves3_noshadows_norendertarget/',
         'waves3_shadows_norendertarget': 'capture/waves3_shadows_norendertarget/',
         'zoom_shadows_norendertarget': 'capture/zoom_shadows_norendertarget/',
-        'zoom_noshadows_norendertarget': 'capture/zoom_noshadows_norendertarget/'
+        'zoom2_shadows_tiltshift': 'capture/zoom2_shadows_tiltshift/'
     },
 
     // The total number of frames to playback
@@ -41,7 +44,10 @@ BaseConfig.prototype =
     blockForRendering: false,
 
     // Record metrics per frame to process later
-    outputMetrics: false
+    outputMetrics: false,
+
+    // The JSON template to use to save results
+    resultsTemplate: "results_template"
 };
 
 BaseConfig.create = function baseConfigCreateFn()

@@ -10,7 +10,7 @@ OnlineConfig.prototype = {};
 
 OnlineConfig.create = function onlineCreateFn()
 {
-    var config = BaseConfig();
+    var config = BaseConfig.create();
     config.prefixAssetURL = '//tzawsuser-benchmark.s3.amazonaws.com/';
 
     var captureLookUp = config.captureLookUp;
@@ -21,7 +21,9 @@ OnlineConfig.create = function onlineCreateFn()
     captureLookUp['waves3_noshadows_norendertarget']   = '//tzawsuser-benchmark.s3.amazonaws.com/520106fe/';
     captureLookUp['waves3_shadows_norendertarget']     = '//tzawsuser-benchmark.s3.amazonaws.com/520109eb/';
     captureLookUp['zoom_shadows_norendertarget']       = '//tzawsuser-benchmark.s3.amazonaws.com/5200c983/';
-    captureLookUp['zoom_noshadows_norendertarget']     = '//tzawsuser-benchmark.s3.amazonaws.com/5200c983/';
+    captureLookUp['zoom2_shadows_tiltshift']           = '//tzawsuser-benchmark.s3.amazonaws.com/5214d902/';
+
+    config.prefixTemplatesURL = "data/templates/online/";
 
     return config;
 };
