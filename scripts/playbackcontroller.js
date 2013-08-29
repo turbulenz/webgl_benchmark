@@ -4,17 +4,22 @@
 
 /*global TurbulenzEngine: false*/
 /*global PlaybackGraphicsDevice: false*/
+/*global RequestHandler: false*/
+/*global UserDataManager: false*/
+/*global TurbulenzServices: false*/
 
 function PlaybackController() {}
 
 PlaybackController.prototype =
 {
 
-    init : function playbackcontrollerInitFn(prefixAssetURL, prefixCaptureURL)
+    init : function playbackcontrollerInitFn(prefixAssetURL, prefixCaptureURL, prefixTemplatesURL)
     {
         this.prefixAssetURL = prefixAssetURL;
         this.prefixCaptureURL = prefixCaptureURL;
+        this.prefixTemplatesURL = prefixTemplatesURL;
         this.loadAssets();
+        this._requestResultsTemplate(this.config.resultsTemplate);
     },
 
     _requestData : function playbackcontroller_requestDataFn(groupIndex)
@@ -130,11 +135,63 @@ PlaybackController.prototype =
         this.numCaptureData += 3;
     },
 
-    loadAssets : function playbackcontrollerLoadAssetsFn()
+    _requestResultsTemplate : function _requestResultsTemplateFn(resultsTemplateName)
     {
         var that = this;
-        var playbackGraphicsDevice = this.playbackGraphicsDevice;
+        var xhr0 = (window.XMLHttpRequest ? new window.XMLHttpRequest() : new window.ActiveXObject("Microsoft.XMLHTTP"));
+        var templateRequest = this.prefixTemplatesURL + resultsTemplateName + '.json';
+        var templateLoaded = function templateLoadedFn()
+        {
+            if (xhr0.readyState === 4)
+            {
+                var resultsTemplateJSON = xhr0.responseText;
+                xhr0.onreadystatechange = null;
+                xhr0.responseText = null;
+                xhr0 = null;
 
+                if (!resultsTemplateJSON)
+                {
+                    window.alert("Results template is missing: " + templateRequest);
+                }
+                else
+                {
+                    try {
+                        that.resultsTemplateData = JSON.parse(resultsTemplateJSON);
+                        if (!that.resultsTemplateData)
+                        {
+                            window.alert("Results template is empty. Cannot save data.");
+                            that.resultsTemplateData = null;
+                        }
+                        else if (!that._isSupportedTemplate(that.resultsTemplateData))
+                        {
+                            window.alert("Results template is incompatible. Cannot save data.");
+                            that.resultsTemplateData = null;
+                        }
+                        that.loadingTemplates = false;
+                    }
+                    catch (e)
+                    {
+                        window.alert("Failed to parse results template: " + templateRequest + " with message: " + e);
+                    }
+                }
+            }
+        };
+
+        xhr0.open('GET', templateRequest, true);
+        xhr0.onreadystatechange = templateLoaded;
+        xhr0.send();
+
+        this.loadingTemplates = true;
+    },
+
+    _isSupportedTemplate : function _isSupportedTemplateFn(template)
+    {
+        // Only support version 0
+        return (template.version === 0);
+    },
+
+    loadAssets : function playbackcontrollerLoadAssetsFn()
+    {
         var g;
         for (g = 0; g < this.numGroups; g += 1)
         {
@@ -144,7 +201,6 @@ PlaybackController.prototype =
 
     getLoadingProgress : function playbackcontrollerGetLoadingProgressFn()
     {
-        var playbackGraphicsDevice = this.playbackGraphicsDevice;
         return (this.numCaptureDataLoaded) / (this.numCaptureData);
     },
 
@@ -161,6 +217,11 @@ PlaybackController.prototype =
             this.playbackStart += TurbulenzEngine.getTime() - this.pauseStart;
         }
         this.paused = false;
+    },
+
+    abort : function playbackControllerAbortFn()
+    {
+        this.aborted = true;
     },
 
     update : function playbackcontrollerUpdateFn()
@@ -187,7 +248,7 @@ PlaybackController.prototype =
                 this.loadingResources = false;
             }
 
-            if (!this.addingResources && !this.loadingResources)
+            if (!this.addingResources && !this.loadingResources && !this.loadingTemplates)
             {
                 framesReady = true;
             }
@@ -202,13 +263,18 @@ PlaybackController.prototype =
                     playbackGraphicsDevice.play(0);
                     this.framesRendered = 1;
                     this.relativeFrameIndex = 1;
+                    this.previousFrameTime = TurbulenzEngine.getTime();
                     this.playbackStart = TurbulenzEngine.getTime();
+                    this.streamStats = {};
+                    this.resultsData = {};
+                    this.playbackConfig = {};
+                    this.streamStats.startTime = (new Date().getTime());
                     return;
                 }
 
                 var frameStart = TurbulenzEngine.getTime();
                 playbackGraphicsDevice.play(this.relativeFrameIndex);
-                var dispachTime = TurbulenzEngine.getTime() - frameStart;
+                var dispatchTime = TurbulenzEngine.getTime() - frameStart;
 
                 var frameTime;
                 if (this.config.blockForRendering)
@@ -280,7 +346,7 @@ PlaybackController.prototype =
                         frameIndexDelta = 1;
 
                         this.msPerFrame[this.msPerFrame.length] = frameTime;
-                        this.msDispachPerFrame[this.msDispachPerFrame.length] = dispachTime;
+                        this.msDispatchPerFrame[this.msDispatchPerFrame.length] = dispatchTime;
 
                         if (this.metricsPerFrame)
                         {
@@ -317,7 +383,7 @@ PlaybackController.prototype =
                             playbackGraphicsDevice.skip(this.numFramesPerGroup);
                         }
 
-                        if ((this.currentGroupIndex + 1) < this.numGroups)
+                        if ((this.currentGroupIndex + 1) < this.numGroups && !this.aborted)
                         {
                             // Flag last group data for release
                             group.data = this.emptyData;
@@ -329,15 +395,22 @@ PlaybackController.prototype =
                         else
                         {
                             this.relativeFrameIndex -= frameIndexDelta;
-                            this.testDetails = {
-                                recordingTime: recordingTime,
-                                framesRendered: this.framesRendered,
-                                averageFps: this.framesRendered / recordingTime,
-                                playWidth: this.playbackGraphicsDevice.playWidth,
-                                playHeight: this.playbackGraphicsDevice.playHeight,
-                                multisample: this.config.multisample,
-                                fixedFrameRate: this.fixedFrameRate
-                            };
+
+                            var streamStats = this.streamStats;
+                            streamStats.playDuration = recordingTime;
+                            streamStats.frameCount = this.framesRendered;
+                            streamStats.averageFps = this.framesRendered / recordingTime;
+                            streamStats.endTime = (new Date().getTime());
+
+                            var playbackConfig = this.playbackConfig;
+                            playbackConfig.canvasWidth = graphicsDevice.width;
+                            playbackConfig.canvasHeight = graphicsDevice.height;
+                            playbackConfig.playWidth = this.playbackGraphicsDevice.playWidth;
+                            playbackConfig.playHeight = this.playbackGraphicsDevice.playHeight;
+                            playbackConfig.multisample = this.multisample;
+                            playbackConfig.antialias = this.antialias;
+                            playbackConfig.fixedFrameRate = this.fixedFrameRate;
+
                             this.atEnd = true;
                         }
                     }
@@ -352,61 +425,211 @@ PlaybackController.prototype =
         }
     },
 
-    outputData : function playbackcontrollerOutputDataFn(testName)
+    generateUserData : function generateUserDataFn(resultsData)
     {
-        var browserTestPath = window.prompt('Save recording data in:', '');
-        if (!browserTestPath)
+        // Parse when new template is required
+        var userDataResult = this.resultsTemplateData;
+        if (!userDataResult)
         {
-            return;
+            return null;
         }
 
-        var filename = browserTestPath + '/' + testName + '-' + (new Date()).toISOString();
-        this.postData('/local/v1/save/webgl-benchmark/data/' + filename + '-details.json', JSON.stringify(this.testDetails));
+        if (!userDataResult.config.hardware.name)
+        {
+            var hardwareName = "";
+            while (!hardwareName)
+            {
+                hardwareName = window.prompt("Please specify a name for this hardware (e.g. Frank's Laptop, Quad-core Desktop)");
+            }
+            userDataResult.config.hardware.name = hardwareName;
+        }
 
-        var metricsData = 'msPerFrame,msDispachPerFrame,averageMsPerFrame,averageMsPerDispach\n';
+        // Add config
+        userDataResult.config.playback = this.playbackConfig;
+        this.playbackConfig = {};
+
+        //TODO: Add browser config
+
+        //TODO: Add online hardware config
+
+        // Add data
+        var framesData = {};
+
+        var timingData = resultsData.timing.obj;
+        var metricsData = null;
+        if (resultsData.metrics && resultsData.metrics.obj)
+        {
+            metricsData = resultsData.metrics.obj;
+        }
+
+        for (var t in timingData)
+        {
+            if (timingData.hasOwnProperty(t))
+            {
+                framesData[t] = timingData[t];
+            }
+        }
+        if (metricsData)
+        {
+            for (var m in metricsData)
+            {
+                if (timingData.hasOwnProperty(m))
+                {
+                    framesData[t] = timingData[m];
+                }
+            }
+        }
+
+        framesData.indices = resultsData.frameIndices;
+
+        var testsData = [];
+        var testStats = resultsData.testStats;
+        var testStatCount = testStats.length;
+        for (var i = 0; i < testStatCount; i += 1)
+        {
+            testsData.push({
+                stats: testStats[i]
+            });
+        }
+
+        //TODO: Multiple streams and tests
+        userDataResult.data.sequences = [{
+            streams: [{
+                frames: framesData,
+                stats: resultsData.streamStats,
+                tests: testsData
+            }]
+        }];
+
+        return userDataResult;
+    },
+
+    processData : function playbackControllerProcessDataFn()
+    {
+        if (this.dataProcessed)
+        {
+            return this.resultsData;
+        }
+
+        var resultsData = this.resultsData;
+
+        var frameCount = 0;
+        var frameIndices = [];
+        var timingData = {
+            msPerFrame: [],
+            msDispatchPerFrame: [],
+            averageMsPerFrame: [],
+            averageMsPerDispatch: []
+        };
+        var timingDataCSV = 'msPerFrame,msDispatchPerFrame,averageMsPerFrame,averageMsPerDispatch\n';
         var msPerFrame = this.msPerFrame;
         if (msPerFrame.length > 0)
         {
-            var msDispachPerFrame = this.msDispachPerFrame;
+            var msDispatchPerFrame = this.msDispatchPerFrame;
             var msPerFrameLength = msPerFrame.length;
             var averageFrameMs = 0;
             var newAverageFrameMs = 0;
-            var averageDispachMs = 0;
-            var newAverageDispachMs = 0;
+            var averageDispatchMs = 0;
+            var newAverageDispatchMs = 0;
+            var maxFrameMs = -1;
+            var minFrameMs = -1;
+            var maxDispatchMs = -1;
+            var minDispatchMs = -1;
             var i;
             for (i = 0; i < msPerFrameLength; i += 1)
             {
                 if (i % 60 === 0)
                 {
                     averageFrameMs = newAverageFrameMs;
-                    averageDispachMs = newAverageDispachMs;
+                    averageDispatchMs = newAverageDispatchMs;
                     newAverageFrameMs = 0;
-                    newAverageDispachMs = 0;
+                    newAverageDispatchMs = 0;
                 }
                 newAverageFrameMs += msPerFrame[i] / 60.0;
-                newAverageDispachMs += msDispachPerFrame[i] / 60.0;
+                newAverageDispatchMs += msDispatchPerFrame[i] / 60.0;
 
-                metricsData += msPerFrame[i] + ',' + msDispachPerFrame[i] + ',' + averageFrameMs + ',' + averageDispachMs + '\n';
+                if (maxFrameMs === -1)
+                {
+                    maxFrameMs = msPerFrame[i];
+                }
+                else if (msPerFrame[i] > maxFrameMs)
+                {
+                    maxFrameMs = msPerFrame[i];
+                }
+
+                if (minFrameMs === -1)
+                {
+                    minFrameMs = msPerFrame[i];
+                }
+                else if (msPerFrame[i] < minFrameMs)
+                {
+                    minFrameMs = msPerFrame[i];
+                }
+
+                if (maxDispatchMs === -1)
+                {
+                    maxDispatchMs = msDispatchPerFrame[i];
+                }
+                else if (msDispatchPerFrame[i] > maxDispatchMs)
+                {
+                    maxDispatchMs = msDispatchPerFrame[i];
+                }
+
+                if (minDispatchMs === -1)
+                {
+                    minDispatchMs = msDispatchPerFrame[i];
+                }
+                else if (msDispatchPerFrame[i] < minDispatchMs)
+                {
+                    minDispatchMs = msDispatchPerFrame[i];
+                }
+
+                timingDataCSV +=    msPerFrame[i] + ',' +
+                                    msDispatchPerFrame[i] + ',' +
+                                    averageFrameMs + ',' +
+                                    averageDispatchMs +
+                                    '\n';
+                timingData.averageMsPerFrame.push(averageFrameMs);
+                timingData.averageMsPerDispatch.push(averageDispatchMs);
+
+                //TODO: Calculate frameIndices for skipped/repeated frames
+                frameIndices.push(frameCount);
+                frameCount += 1;
             }
-            this.postData('/local/v1/save/webgl-benchmark/data/' + filename + '.csv', metricsData);
+
+            var streamStats = this.streamStats;
+            streamStats.maxFrameMs = maxFrameMs;
+            streamStats.minFrameMs = minFrameMs;
+            streamStats.maxDispatchMs = maxDispatchMs;
+            streamStats.minDispatchMs = minDispatchMs;
+
+            timingData.msPerFrame = this.msPerFrame;
+            timingData.msDispatchPerFrame = this.msDispatchPerFrame;
+
+            resultsData.timing = {
+                csv: timingDataCSV,
+                obj: timingData
+            };
 
             this.msPerFrame = [];
-            this.msDispachPerFrame = [];
+            this.msDispatchPerFrame = [];
 
+            var metricsData = {};
             var metricsPerFrame = this.metricsPerFrame;
             if (metricsPerFrame)
             {
+                var metricsDataCSV = '';
                 var metricsFields = this.metricsFields;
-                metricsData = '';
                 var p;
                 for (p in metricsFields)
                 {
                     if (metricsFields.hasOwnProperty(p))
                     {
-                        metricsData += p + ',';
+                        metricsDataCSV += p + ',';
+                        metricsData[p] = [];
                     }
                 }
-                metricsData += '\n';
+                metricsDataCSV += '\n';
                 var metricsPerFrameLength = metricsPerFrame.length;
                 for (i = 0; i < metricsPerFrameLength; i += 1)
                 {
@@ -415,14 +638,204 @@ PlaybackController.prototype =
                     {
                         if (metricsFields.hasOwnProperty(p))
                         {
-                            metricsData += frameMetrics[p] + ',';
+                            metricsDataCSV += frameMetrics[p] + ',';
+                            metricsData[p].push(frameMetrics[p]);
                         }
                     }
-                    metricsData += '\n';
+                    metricsDataCSV += '\n';
                 }
-                this.postData('/local/v1/save/webgl-benchmark/data/' + testName + '-metrics.csv', metricsData);
+
+                resultsData.metrics = {
+                    csv: metricsDataCSV,
+                    obj: metricsData
+                };
 
                 this.metricsPerFrame = [];
+            }
+        }
+
+        resultsData.frameIndices = frameIndices;
+        resultsData.streamStats = this.streamStats;
+        this.streamStats = {};
+
+        // Same as sequence results
+        //TODO: Seperate tests out as seperate data
+        resultsData.testStats = [resultsData.streamStats];
+
+        this.resultsData = resultsData;
+        this.resultsData.userData = this.generateUserData(resultsData);
+        this.dataProcessed = true;
+
+        return this.resultsData;
+    },
+
+    loadResults : function playbackControllerloadResultsFn(resultLoadedCallback)
+    {
+        //TODO: Can only read from userdata
+        var that = this;
+        var resultLoadedCallbackFn = resultLoadedCallback;
+        function getKeysErrorFn()
+        {
+            window.alert('Could not read existing data');
+            that.loadingResults = false;
+        }
+        function generateGetResultsErrorFn(keyName)
+        {
+            var key = keyName;
+            return function getResultsErrorFn()
+            {
+                delete that.resultsToLoad[key];
+                if (that.loadingResults)
+                {
+                    window.alert('Could not read data for: ' + key);
+                }
+            };
+        }
+        that.savedResults = [];
+        that.resultsToLoad = {};
+
+        function getResultsCallbackFn(key, value)
+        {
+            var resultsToLoad = that.resultsToLoad;
+            delete resultsToLoad[key];
+
+            if (!that.loadingResults)
+            {
+                return;
+            }
+
+            var resultsData;
+            try {
+                resultsData = JSON.parse(value);
+            }
+            catch (e)
+            {
+                window.alert('Could not parse data for: ' + key);
+                return;
+            }
+            that.savedResults.push(resultsData);
+
+            var remainingResults = 0;
+            for (var r in resultsToLoad)
+            {
+                if (resultsToLoad.hasOwnProperty(r))
+                {
+                    remainingResults += 1;
+                }
+            }
+            that.loadingResults = remainingResults > 0;
+            resultLoadedCallbackFn(resultsData);
+        }
+
+        function getKeysCallbackFn(keyArray)
+        {
+            if (!that.loadingResults)
+            {
+                return;
+            }
+
+            var keyArrayLength = keyArray.length;
+            for (var i = 0; i < keyArrayLength; i += 1)
+            {
+                var key = keyArray[i];
+                that.userDataManager.get(key, getResultsCallbackFn, generateGetResultsErrorFn(key));
+                that.resultsToLoad[key] = true;
+            }
+        }
+
+        var userDataManager = this.userDataManager;
+        if (userDataManager)
+        {
+            userDataManager.getKeys(getKeysCallbackFn, getKeysErrorFn);
+            this.loadingResults = true;
+        }
+        return this.loadingResults;
+    },
+
+    cancelLoadResults : function cancelLoadResultsFn()
+    {
+        this.loadingResults = false;
+    },
+
+    outputData : function playbackcontrollerOutputDataFn(testName)
+    {
+        var browserTestPath = window.prompt('Save recording data in:', '');
+        if (!browserTestPath)
+        {
+            return;
+        }
+
+        var timestamp = (new Date()).getTime();
+        var filename = browserTestPath + '/' + timestamp;
+
+        var resultsData = this.processData();
+        if (resultsData.timing && resultsData.timing.csv)
+        {
+            this.postData('/local/v1/save/webgl-benchmark/data/' + filename + '-timing.csv', resultsData.timing.csv);
+        }
+
+        if (resultsData.metrics && resultsData.metrics.csv)
+        {
+            this.postData('/local/v1/save/webgl-benchmark/data/' + testName + '-metrics.csv', resultsData.metrics.csv);
+        }
+
+        if (resultsData.userData)
+        {
+            this.postData('/local/v1/save/webgl-benchmark/data/' + filename + '-results.json', JSON.stringify(resultsData.userData));
+        }
+
+        var that = this;
+        function getKeysErrorFn()
+        {
+            window.alert('Could not read existing data');
+        }
+
+        function setResultsErrorFn()
+        {
+            window.alert('Could not save data');
+        }
+
+        function setResultsCallbackFn(/*key*/)
+        {
+            //TODO: Confirm save for user
+        }
+
+        function generateGetKeysCallbackFn(timestamp, resultsData)
+        {
+            var data = resultsData;
+            return function getKeysCallbackFn(keyArray)
+            {
+                var overwrite = false;
+                var resultExists = false;
+                var resultsKey = timestamp + '-results';
+                var keyArrayLength = keyArray.length;
+                for (var i = 0; i < keyArrayLength; i += 1)
+                {
+                    var key = keyArray[i];
+                    if (key === resultsKey)
+                    {
+                        resultExists = true;
+                        var result = window.confirm("Data already exists with this name. Would you like to overwrite?");
+                        if (result)
+                        {
+                            overwrite = true;
+                        }
+                    }
+                }
+
+                if (!resultExists || (resultExists && overwrite))
+                {
+                    that.userDataManager.set(resultsKey, JSON.stringify(data.userData), setResultsCallbackFn, setResultsErrorFn);
+                }
+            };
+        }
+
+        var userDataManager = this.userDataManager;
+        if (userDataManager)
+        {
+            if (resultsData.userData)
+            {
+                userDataManager.getKeys(generateGetKeysCallbackFn(timestamp, resultsData), getKeysErrorFn);
             }
         }
     },
@@ -454,6 +867,13 @@ PlaybackController.prototype =
     destroy : function playbackcontrollerDestroyFn()
     {
         this.playbackGraphicsDevice.destroy();
+
+        var gameSession = this.gameSession;
+        if (gameSession)
+        {
+            gameSession.destroy();
+            this.gameSession = null;
+        }
     }
 };
 
@@ -472,6 +892,7 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
 
     playbackController.prefixAssetURL = null;
     playbackController.prefixCaptureURL = null;
+    playbackController.prefixTemplatesURL = null;
 
     var numTotalFrames = playbackController.numTotalFrames = config.numTotalFrames;
     var numFramesPerGroup = playbackController.numFramesPerGroup = config.numFramesPerGroup;
@@ -484,6 +905,8 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.newAverageFrameTime = 0;
     playbackController.addingResources = true;
     playbackController.loadingResources = false;
+    playbackController.loadingTemplates = false;
+    playbackController.loadingResults = false;
     playbackController.emptyData = [-1, -1, -1, -1];
 
     playbackController.step = false;
@@ -508,8 +931,7 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
 
     playbackController.xhrPool = [];
     playbackController.msPerFrame = [];
-    playbackController.msDispachPerFrame = [];
-    playbackController.testDetails = null;
+    playbackController.msDispatchPerFrame = [];
 
     if (config.outputMetrics)
     {
@@ -531,6 +953,46 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
         'drawCalls': 1,
         'primitives': 1
     };
+
+    playbackController.playbackConfig = {};
+
+    playbackController.resultsData = null;
+    playbackController.dataProcessed = false;
+
+    playbackController.resultsTemplateData = null;
+    playbackController.aborted = false;
+    playbackController.multisample = -1;
+    playbackController.antialias = false;
+
+    var requestHandlerParameters = {};
+    var requestHandler = RequestHandler.create(requestHandlerParameters);
+
+    playbackController.gameSession = null;
+    playbackController.userDataManager = null;
+
+    var gameSessionCreated = function gameSessionCreatedFn(gameSession)
+    {
+        if (TurbulenzServices.available())
+        {
+            playbackController.userDataManager = UserDataManager.create(requestHandler, gameSession);
+        }
+    };
+
+    var gameSessionError = function gameSessionErrorFn()
+    {
+        var gameSession = playbackController.gameSession;
+        if (gameSession)
+        {
+            gameSession.destroy();
+            playbackController.gameSession = null;
+        }
+        playbackController.userDataManager = null;
+    };
+
+    if (TurbulenzServices.available())
+    {
+        playbackController.gameSession = TurbulenzServices.createGameSession(requestHandler, gameSessionCreated, gameSessionError);
+    }
 
     return playbackController;
 };
