@@ -28,12 +28,12 @@ The benchmark can be run by:
 
         $ python benchmark_runner.py --config CONFIG --target TARGET
 
-    The script will prepare the benchmark and launch the browser with any require arguments.
+    The script will prepare the benchmark and launch the browser with any required arguments.
     The benchmark will run and the user can choose to save the results.
     Once the browser has been closed the benchmark runner will exit.
     The runner has a timeout which will force the browser to close if it is reached.
 
-    The CONFIG is the name of benchmark sequence that will be played when the benchmark starts.
+    The CONFIG is the name of the benchmark sequence that will be played when the benchmark starts.
     The available options for CONFIG are listed in the file *assets/config/stream_mapping.json*
 
     The available options for TARGET are:
