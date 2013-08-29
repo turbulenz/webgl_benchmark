@@ -238,10 +238,10 @@ def main():
     parser.add_argument("-s", "--silent", action="store_true", help="silent running")
     parser.add_argument("--version", action='version', version=__version__)
 
-    parser.add_argument("--config", action='store', default='shadows_norendertarget',
+    parser.add_argument("--config", action='store', default='story_shadows_rendertarget',
         help="the configuration to run (by name)")
     parser.add_argument("--target", action='store', default='offline',
-        help="the target to run [offline, online, local]")
+        help="the target to run [offline, online]")
     parser.add_argument("--browser", action='store', default='chrome',
         help="browser to run, must be one of [" + ','.join(list_browsers()) + "] (defaults to chrome)")
 

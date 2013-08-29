@@ -8,7 +8,7 @@ function BaseConfig() {}
 BaseConfig.prototype =
 {
     // The default stream to run on start
-    defaultCapture: 'noshadows_norendertarget',
+    defaultCapture: 'story_shadows_rendertarget',
 
     // The prefix URL to be added to any requests for capture data files
     prefixAssetURL: '',
