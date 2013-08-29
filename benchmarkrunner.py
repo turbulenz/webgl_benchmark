@@ -30,9 +30,9 @@ BROWSERRUNNER_TESTURL = "file://" + getcwd() + BROWSERRUNNER_TESTMODE
 CONFIG_PATH = "scripts/config.js"
 CONFIGS_DIR_PATH = "scripts/configurations/"
 
-STREAM_MAPPING_PATH = "config/stream_mapping.json"
-CAPTURES_PATH = "captures/"
-ASSETS_PATH = "captures/"
+STREAM_MAPPING_PATH = "assets/config/stream_mapping.json"
+CAPTURES_PATH = "capture/"
+ASSETS_PATH = "capture/"
 
 NUM_FRAMES = 3600
 NUM_FRAMES_BLOCK = 60
