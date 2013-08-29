@@ -29,6 +29,8 @@ BROWSERRUNNER_TESTURL = "file://" + getcwd() + BROWSERRUNNER_TESTMODE
 
 CONFIG_PATH = "scripts/config.js"
 CONFIGS_DIR_PATH = "scripts/configurations/"
+
+STREAM_MAPPING_PATH = "config/stream_mapping.json"
 CAPTURES_PATH = "test-captures/"
 ASSETS_PATH = "test-captures/"
 
@@ -156,7 +158,7 @@ def downloader(path, output_path, bounded_semaphore):
     bounded_semaphore.release()
 
 def download_assets(config_name="default", max_connections=20):
-    with open('scripts/testconfig.json', 'rt') as f:
+    with open(STREAM_MAPPING_PATH, 'rt') as f:
         config = json_load(f)
 
     try:
@@ -192,6 +194,7 @@ def download_assets(config_name="default", max_connections=20):
     for t in threads:
         t.join()
 
+    threads = []
     download_prefix = 'http://%s' % config['prefixAssetURL']
     output_prefix = ASSETS_PATH
     mkdir(output_prefix)
