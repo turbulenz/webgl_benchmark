@@ -24,6 +24,7 @@ BenchmarkApp.prototype =
         var abortElement = document.getElementById("buttonAbort");
         var fixedElement = document.getElementById("checkboxFixed");
         var multisamplingElement = document.getElementById("multisampling");
+        var fullscreenElement = document.getElementById("buttonFullscreen");
 
         var captureNameElement = document.getElementById("captureName");
         if (captureNameElement)
@@ -44,6 +45,18 @@ BenchmarkApp.prototype =
             saveElement.onclick = function ()
             {
                 playbackController.outputData(config.defaultCapture);
+            };
+        }
+
+        var that = this;
+        if (fullscreenElement)
+        {
+            fullscreenElement.onclick = function ()
+            {
+                if (!that.graphicsDevice.fullscreen)
+                {
+                    that.graphicsDevice.fullscreen = true;
+                }
             };
         }
 
@@ -95,7 +108,6 @@ BenchmarkApp.prototype =
             };
         }
 
-        var that = this;
         var requestAnimationFrame = (window.requestAnimationFrame ||
                                      window.webkitRequestAnimationFrame ||
                                      window.oRequestAnimationFrame ||
