@@ -6,7 +6,7 @@ import errno
 from sys import argv
 from argparse import ArgumentParser
 from os import getcwd, makedirs
-from os.path import join, exists as path_exists
+from os.path import join as path_join, exists as path_exists, abspath, dirname, normpath
 from json import load as json_load
 from threading import Thread, BoundedSemaphore
 
@@ -14,10 +14,16 @@ from urllib2 import urlopen, HTTPError, URLError
 from gzip import GzipFile
 from socket import error as socket_error
 from time import sleep
+from re import compile as re_compile
+
+from traceback import format_exc
 
 from logging import basicConfig, CRITICAL, INFO, WARNING, error, info
 
 from runner.browserrunner import BrowserRunner, list_browsers
+
+import urlparse
+from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
 __version__ = '0.0.1'
 
@@ -167,7 +173,7 @@ def download_assets(config_name="default", max_connections=20):
         error('No capture path for config name %s' % config_name)
         exit(1)
 
-    output_prefix = capture_output_path = join(CAPTURES_PATH, config_name)
+    output_prefix = capture_output_path = path_join(CAPTURES_PATH, config_name)
     mkdir(CAPTURES_PATH)
     mkdir(output_prefix)
 
@@ -176,7 +182,7 @@ def download_assets(config_name="default", max_connections=20):
 
     def add_downloader(file_name):
         download_path = '%s%s' % (download_prefix, file_name)
-        output_path = join(output_prefix, file_name)
+        output_path = path_join(output_prefix, file_name)
 
         if not path_exists(output_path):
             threads.append(Thread(target=downloader, args=[download_path, output_path, bounded_semaphore]))
@@ -202,7 +208,7 @@ def download_assets(config_name="default", max_connections=20):
 
     for start_frame in xrange(0, NUM_FRAMES, NUM_FRAMES_BLOCK):
         block_postfix = '%d-%d' % (start_frame, start_frame + NUM_FRAMES_BLOCK - 1)
-        with open(join(capture_output_path, 'resources-%s.json' % block_postfix)) as f:
+        with open(path_join(capture_output_path, 'resources-%s.json' % block_postfix)) as f:
             resources_data = json_load(f)
             if resources_data.has_key('resources'):
                 resources_data = resources_data['resources']
@@ -231,6 +237,100 @@ def download_assets(config_name="default", max_connections=20):
         t.join()
 
 
+def start_server(output_path):
+
+    # This is a hack to patch slow socket.getfqdn calls that
+    # BaseHTTPServer (and its subclasses) make.
+    # See: http://bugs.python.org/issue6085
+    # See: http://www.answermysearches.com/xmlrpc-server-slow-in-python-how-to-fix/2140/
+    def _bare_address_string(self):
+        host, _ = self.client_address[:2]
+        return str(host)
+
+    BaseHTTPRequestHandler.address_string = _bare_address_string
+
+    class RequestsSaveHandler(BaseHTTPRequestHandler):
+
+        local_save_regex = re_compile('/local/v1/save/([^/]+)/(.*)')
+
+        def do_POST(self):  # pylint: disable=C0103
+
+            def ok(msg='{"ok":true}'):  # pylint: disable=C0103
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html')
+                self.send_header('Pragma', 'no-cache')
+                self.send_header('Cache-Control', 'no-cache')
+                self.send_header('Cache-Control', 'no-store')
+                self.send_header('Expires', '-1')
+
+                self.end_headers()
+                self.wfile.write(msg)
+                self.wfile.close()
+
+            def save_file(args):
+                #game_slug = args[0]
+                filename = args[1]
+
+                content_type = self.headers.getheader('content-type')
+                if not content_type or not 'application/x-www-form-urlencoded' in content_type:
+                    self.send_error(400, 'Unsupported Content-Type')
+                    return
+
+                if '..' in filename:
+                    self.send_error(400, 'Filename must be a sub directory (cannot contain "..")')
+                    return
+
+                length = int(self.headers.getheader('content-length'))
+                content = self.rfile.read(length)
+
+                file_path = path_join(output_path, normpath(filename))
+
+                mkdir(dirname(file_path))
+
+                with open(file_path, 'wt') as f:
+                    f.write(content)
+
+                ok()
+
+            qs = {}
+            path = self.path
+            if '?' in path:
+                path, tmp = path.split('?', 1)
+                qs = urlparse.parse_qs(tmp)
+
+            print 'POST request: %s' % path
+
+            def get_param(key):
+                return qs[key][0]
+
+            try:
+                match = self.local_save_regex.match(path)
+                if match:
+                    save_file(match.groups())
+                else:
+                    self.send_error(404, 'Not Found: %s' % self.path)
+
+            except IOError:
+                self.send_error(404, 'File Not Found: %s' % self.path)
+            except Exception:
+                log_msg = 'Exception when processing request: %s' % self.path
+                trace_string = format_exc()
+
+                print(log_msg)
+                print(trace_string)
+
+                self.send_error('500 Internal Server Error')
+
+    try:
+        server = HTTPServer(('', 8070), RequestsSaveHandler)
+        def run_server_thread(server):
+            server.serve_forever()
+
+        t = Thread(target=run_server_thread, args=[server])
+        t.start()
+        return server
+    except socket_error:
+        return None
 
 def main():
     parser = ArgumentParser(description="Run the benchmark with given settings.")
@@ -244,6 +344,8 @@ def main():
         help="the target to run [offline, online]")
     parser.add_argument("--browser", action='store', default='chrome',
         help="browser to run, must be one of [" + ','.join(list_browsers()) + "] (defaults to chrome)")
+    parser.add_argument("--server", action='store_true',
+        help="only run the server (for saving data files to disk)")
 
     args = parser.parse_args(argv[1:])
 
@@ -254,6 +356,19 @@ def main():
     else:
         basicConfig(level=WARNING)
 
+    if args.server:
+        server = start_server(abspath('.'))
+        if not server:
+            print 'Address 127.0.0.1:8070 already in use'
+            return
+        print 'Press enter to stop ...'
+        try:
+            raw_input()
+        except KeyboardInterrupt:
+            pass
+        server.shutdown()
+        return
+
     try:
         generate_config(config_name=args.config, config_target=args.target, allow_querystring=True)
         if args.target == 'offline':
@@ -262,8 +377,13 @@ def main():
         error(str(ex))
         return 1
 
+    server = start_server(abspath('.'))
+
     browser_runner = BrowserRunner(None, args.browser)
     browser_runner.run(BROWSERRUNNER_TESTURL, timeout=300) # 5 minute timeout
+
+    if server:
+        server.shutdown()
 
     return 0
 
