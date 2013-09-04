@@ -137,8 +137,6 @@ def read_csv(filepath, fields=None):
                     read_fields = [add_to_field_dict(i, row[i]) for i in range(len(row))]
                 else:
                     read_fields = [add_to_field_dict(row.index(field), field) for field in row if field in fields]
-
-                info(field_dict)
             else:
                 read_values = [add_to_file_dict(field_dict[i], row[i])  for i in range(len(row)) if i in field_dict]
 
@@ -255,18 +253,22 @@ def generate_results_template(results_template_name=None, config_target=None, ha
         results_config = base_template['config']
 
         # Add hardware information
+        info("Adding configuration: hardware")
         hardware_config = results_config['hardware']
 
         if hardware_name is not None:
+            info("Hardware name: %s" % hardware_name)
             # A blank hardware name will require the browser to prompt
             hardware_config['name'] = hardware_name
 
-        # Add system info if it exists
-        systeminfo_dict = get_systeminfo(hardware_name=hardware_name)
-        if systeminfo_dict is not None:
-            for s in systeminfo_dict:
-                hardware_config[s] = systeminfo_dict[s]
-
+            # Add system info if it exists
+            systeminfo_dict = get_systeminfo(hardware_name=hardware_name)
+            if systeminfo_dict is not None:
+                info("Adding systeminfo")
+                for s in systeminfo_dict:
+                    hardware_config[s] = systeminfo_dict[s]
+        else:
+            info("No hardware name, skipping systeminfo")
 
     except KeyError as e:
         raise Exception("Results template is missing section: %s" % e)
