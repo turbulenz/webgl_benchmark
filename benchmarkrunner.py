@@ -587,9 +587,8 @@ def main():
         browser_runner = BrowserRunner(None, args.browser)
         browser_runner.run(BROWSERRUNNER_TESTURL, timeout=300) # 5 minute timeout
         server = start_server(abspath('.'))
-
-    if server:
-        server.shutdown()
+        if server:
+            server.shutdown()
 
     return 0
 
