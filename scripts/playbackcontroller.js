@@ -967,7 +967,20 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
         }
 
         var templateRequest = playbackController.prefixTemplatesURL + playbackController.config.resultsTemplate + '.json';
-        TurbulenzEngine.request(mappingTable.getURL(templateRequest), templateLoaded);
+
+        function retryTemplateOnFail(responseText, status)
+        {
+            if (responseText && status === 200)
+            {
+                templateLoaded(responseText, status);
+            }
+            else
+            {
+                TurbulenzEngine.request(mappingTable.getURL(templateRequest), templateLoaded);
+            }
+        }
+
+        TurbulenzEngine.request(templateRequest, retryTemplateOnFail);
     };
 
     var gameSessionCreated = function gameSessionCreatedFn(gameSession)
