@@ -6,6 +6,7 @@ import json
 import re
 import csv
 import time
+import calendar
 
 from sys import argv
 from argparse import ArgumentParser
@@ -27,7 +28,7 @@ from traceback import format_exc
 from logging import basicConfig, CRITICAL, INFO, WARNING, error, info, warn
 
 from runner.browserrunner import BrowserRunner, list_browsers
-from runner.utils import simple_config
+from runner.utils import simple_config, sh, CalledProcessError
 
 import urlparse
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
@@ -155,6 +156,18 @@ def get_systeminfo(hardware_name):
     hardware_filename = generate_filename(hardware_name)
     hardware_dir = join(DATA_DIR, hardware_filename)
     if OS == 'win32':
+
+        timestamp = calendar.timegm(datetime.utcnow().utctimetuple()) * 1000
+        systeminfo_filename = '%s-systeminfo.csv' % timestamp
+        systeminfo_filepath = join(PWD, hardware_dir, systeminfo_filename)
+
+        info("Generating systeminfo: %s" % systeminfo_filepath)
+        systeminfo_command_win = ["systeminfo", "/FO", "CSV",  ">", systeminfo_filepath]
+        try:
+            sh(systeminfo_command_win, shell=True)
+        except CalledProcessError as e:
+            raise Exception("System information gathering failed: %s" % e)
+
         info("OS:%s: Looking for systeminfo.csv" % OS)
         systeminfo_filenames = []
         for root, dirs, files in walk(hardware_dir):

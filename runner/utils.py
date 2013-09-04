@@ -7,7 +7,9 @@ import sys
 import platform
 import glob
 import inspect
-import subprocess
+from subprocess import Popen, PIPE, STDOUT, call as subprocess_call
+
+from logging import info
 
 # pylint:disable=W0102
 
@@ -94,14 +96,68 @@ def glob_with_filter(glob_pattern, filter_words = []):
 
 # Run killall, keeping error output hidden
 def unix_killall(procname):
-    subprocess.call(['killall', procname], stderr=open('/dev/null', 'w'))
+    subprocess_call(['killall', procname], stderr=open('/dev/null', 'w'))
 
 # Kill any process that is listed in ps -A | grep <name>
 def unix_killall_grep(name):
     cmd = "kill -9 `ps -A | grep %s | grep -oe '^ *[0-9]\\+'`" % name
     # print "KILLCMD: %s" % cmd
-    subprocess.call(cmd, shell=True, stderr=open('/dev/null', 'w'))
+    subprocess_call(cmd, shell=True, stderr=open('/dev/null', 'w'))
 
 # Return true if a command called 'cmd' exists
 def unix_have_command(cmd):
-    return 0 == subprocess.call(['which', cmd], stdout=open('/dev/null', 'w'))
+    return 0 == subprocess_call(['which', cmd], stdout=open('/dev/null', 'w'))
+
+#######################################################################################################################
+
+# pylint: disable=W0231
+class CalledProcessError(Exception):
+    def __init__(self, retcode, cmd, output=None):
+        self.retcode = retcode
+        self.cmd = cmd
+        self.output = output
+    def __str__(self):
+        cmd = self.cmd
+        if isinstance(cmd, list):
+            cmd = ' '.join(cmd)
+        return "Command '%s' returned non-zero exit status %d" % (cmd, self.retcode)
+# pylint: enable=W0231
+
+# pylint: disable=C0103
+def sh(command, cwd=None, env=None, verbose=True, console=False, ignore=False, shell=False, wait=True):
+    if isinstance(command, list):
+        command_list = command
+        command_string = ' '.join(command)
+    else:
+        command_list = command.split()
+        command_string = command
+
+    if verbose:
+        info('Executing: %s' % command_string)
+
+    if wait:
+        if console:
+            process = Popen(command_list, stderr=STDOUT, cwd=cwd, shell=shell, env=env)
+        else:
+            process = Popen(command_list, stdout=PIPE, stderr=STDOUT, cwd=cwd, shell=shell, env=env)
+
+        output, _ = process.communicate()
+        output = str(output)
+        retcode = process.poll()
+        if retcode:
+            if ignore is False:
+                raise CalledProcessError(retcode, command_list, output=output)
+
+        if output is not None:
+            output = output.rstrip()
+
+        return output
+    else:
+        if SYSNAME == 'Windows':
+            DETACHED_PROCESS = 0x00000008
+            return Popen(command_list, creationflags=DETACHED_PROCESS, cwd=cwd, shell=shell, env=env)
+        else:
+            return Popen(command_list, stdout=PIPE, stderr=STDOUT, cwd=cwd, shell=shell, env=env)
+# pylint: enable=C0103
+
+#######################################################################################################################
