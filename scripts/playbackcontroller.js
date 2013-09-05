@@ -722,19 +722,26 @@ PlaybackController.prototype =
         var timestamp = (new Date()).getTime();
         var filename = filePath + '/' + timestamp;
 
+        var domain = '';
+        if (!TurbulenzServices.available())
+        {
+            // try to make requests to a local server if it is running
+            domain = 'http://127.0.0.1:8070';
+        }
+
         if (resultsData.timing && resultsData.timing.csv)
         {
-            this.postData('/local/v1/save/webgl-benchmark/data/' + filename + '-timing.csv', resultsData.timing.csv);
+            this.postData(domain + '/local/v1/save/webgl-benchmark/data/' + filename + '-timing.csv', resultsData.timing.csv);
         }
 
         if (resultsData.metrics && resultsData.metrics.csv)
         {
-            this.postData('/local/v1/save/webgl-benchmark/data/' + testName + '-metrics.csv', resultsData.metrics.csv);
+            this.postData(domain + '/local/v1/save/webgl-benchmark/data/' + testName + '-metrics.csv', resultsData.metrics.csv);
         }
 
         if (resultsData.userData)
         {
-            this.postData('/local/v1/save/webgl-benchmark/data/' + filename + '-results.json', JSON.stringify(resultsData.userData));
+            this.postData(domain + '/local/v1/save/webgl-benchmark/data/' + filename + '-results.json', JSON.stringify(resultsData.userData));
         }
 
         var that = this;

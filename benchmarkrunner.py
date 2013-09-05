@@ -497,8 +497,8 @@ def start_server(output_path):
                 filename = args[1]
 
                 content_type = self.headers.getheader('content-type')
-                if not content_type or not 'application/x-www-form-urlencoded' in content_type:
-                    self.send_error(400, 'Unsupported Content-Type')
+                if not content_type or not 'application/xml' in content_type:
+                    self.send_error(400, 'Unsupported Content-Type: %s' % content_type)
                     return
 
                 if '..' in filename:
