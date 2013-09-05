@@ -729,19 +729,73 @@ PlaybackController.prototype =
             domain = 'http://127.0.0.1:8070';
         }
 
+        function postSuccessFn()
+        {
+            window.alert('Saved results');
+        }
+
+        function postFailedFn(request)
+        {
+            window.alert('Saving result failed: ' + request);
+        }
+
+        function generatePostCallbackFn(postRequest, requests)
+        {
+            var requestList = requests;
+            var request = postRequest;
+            return function postCallbackFn(success)
+            {
+                if (!success)
+                {
+                    postFailedFn(request);
+                }
+                else
+                {
+                    delete requestList[request];
+                }
+
+                var remainingRequests = 0;
+                for (var r in requestList)
+                {
+                    if (requestList.hasOwnProperty(r))
+                    {
+                        remainingRequests += 1;
+                    }
+                }
+
+                if (remainingRequests === 0)
+                {
+                    postSuccessFn();
+                }
+            };
+        }
+
+        var postRequest;
+        var requests = {};
         if (resultsData.timing && resultsData.timing.csv)
         {
-            this.postData(domain + '/local/v1/save/webgl-benchmark/data/' + filename + '-timing.csv', resultsData.timing.csv);
+            postRequest = domain + '/local/v1/save/webgl-benchmark/data/' + filename + '-timing.csv';
+            requests[postRequest] = resultsData.timing.csv;
         }
 
         if (resultsData.metrics && resultsData.metrics.csv)
         {
-            this.postData(domain + '/local/v1/save/webgl-benchmark/data/' + testName + '-metrics.csv', resultsData.metrics.csv);
+            postRequest = domain + '/local/v1/save/webgl-benchmark/data/' + testName + '-metrics.csv';
+            requests[postRequest] = resultsData.metrics.csv;
         }
 
         if (resultsData.userData)
         {
-            this.postData(domain + '/local/v1/save/webgl-benchmark/data/' + filename + '-results.json', JSON.stringify(resultsData.userData));
+            postRequest = domain + '/local/v1/save/webgl-benchmark/data/' + filename + '-results.json';
+            requests[postRequest] = JSON.stringify(resultsData.userData);
+        }
+
+        for (var r in requests)
+        {
+            if (requests.hasOwnProperty(r))
+            {
+                this.postData(r, requests[r], generatePostCallbackFn(r, requests));
+            }
         }
 
         var that = this;
@@ -800,7 +854,7 @@ PlaybackController.prototype =
         }
     },
 
-    postData : function playbackRecorderPostData(url, dataString)
+    postData : function playbackRecorderPostData(url, dataString, callbackFn)
     {
         var that = this;
         var xhr;
@@ -812,13 +866,30 @@ PlaybackController.prototype =
         {
             xhr = this.xhrPool.pop();
         }
+
+        function generateCallbackFn(result, callback)
+        {
+            var callbackFn = callback;
+            var resultArg = result;
+            return function ()
+            {
+                callbackFn(resultArg);
+            };
+        }
+
         xhr.open('POST', url, true);
         xhr.onreadystatechange = function ()
         {
             if (xhr.readyState === 4)
             {
+                var xhrStatus = xhr.status;
                 xhr.onreadystatechange = null;
                 that.xhrPool.push(xhr);
+
+                if (callbackFn)
+                {
+                    TurbulenzEngine.setTimeout(generateCallbackFn(xhrStatus === 200, callbackFn), 0);
+                }
             }
         };
         xhr.send(dataString);
