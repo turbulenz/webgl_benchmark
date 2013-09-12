@@ -33,6 +33,7 @@ from runner.utils import simple_config, sh, CalledProcessError
 import urlparse
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
+
 (PWD, OS, _) = simple_config()
 
 __version__ = '0.0.2'
@@ -98,6 +99,8 @@ SYSTEM_INFO_MAPPING_WIN = {
     'OS Version': ['osVersion'],
     'Processor(s)': ['processor']
 }
+
+total_downloads = 0
 
 def mkdir(path, verbose=True):
     if verbose:
@@ -427,7 +430,8 @@ def download(url, target_filename=None, retries=0, return_data=False):
             sleep(2)
     return None
 
-def downloader(path, output_path, bounded_semaphore):
+def downloader(path, output_path, bounded_semaphore, download_count):
+    print 'Downloading file %d of %d' % (download_count, total_downloads)
     info('Downloading %s' % path)
     download(path, output_path, retries=3)
     bounded_semaphore.release()
@@ -458,12 +462,17 @@ def download_assets(config_name="default", max_connections=20, force_download=Fa
     if force_download:
         info("Force download enabled")
 
+    global total_downloads
+    total_downloads = 0
+
     def add_downloader(file_name):
+        global total_downloads
         download_path = '%s%s' % (download_prefix, file_name)
         output_path = path_join(output_prefix, file_name)
 
         if not path_exists(output_path) or force_download:
-            threads.append(Thread(target=downloader, args=[download_path, output_path, bounded_semaphore]))
+            total_downloads += 1
+            threads.append(Thread(target=downloader, args=[download_path, output_path, bounded_semaphore, total_downloads]))
         else:
             info("File exists, skipping: %s" % output_path)
 
@@ -494,6 +503,8 @@ def download_assets(config_name="default", max_connections=20, force_download=Fa
     # Create path for assets
     output_staticmax_path = path_join(output_prefix, 'staticmax')
     mkdir(output_staticmax_path)
+
+    total_downloads = 0
 
     asset_files = 0
     for start_frame in xrange(0, NUM_FRAMES, NUM_FRAMES_BLOCK):
@@ -528,7 +539,6 @@ def download_assets(config_name="default", max_connections=20, force_download=Fa
 
     for t in threads:
         t.join()
-
 
 def start_server(output_path):
 
