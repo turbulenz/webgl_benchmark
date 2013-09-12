@@ -27,7 +27,8 @@ BaseConfig.prototype =
         'zoom_shadows_norendertarget': 'capture/zoom_shadows_norendertarget/',
         'zoom2_shadows_tiltshift': 'capture/zoom2_shadows_tiltshift/',
         'zoom_noshadows_norendertarget': 'capture/zoom_noshadows_norendertarget/',
-        'story_shadows_rendertarget': 'capture/story_shadows_rendertarget/'
+        'story_shadows_rendertarget': 'capture/story_shadows_rendertarget/',
+        'story_high': 'capture/story_high'
     },
 
     // The total number of frames to playback
@@ -52,7 +53,22 @@ BaseConfig.prototype =
     outputMetrics: false,
 
     // The JSON template to use to save results
-    resultsTemplate: "results_template"
+    resultsTemplate: "results_template",
+
+    // The name of the default sequence to run on start
+    defaultSequenceName: "",
+
+    // The version of the default sequence
+    defaultSequenceVersion: "",
+
+    // The name of the default test to run on start
+    defaultTestName: "",
+
+    // A dictionary containing the mapping of a stream ID to the configuration information for that stream
+    streamsConfig: {},
+
+    // A mapping of capture names to stream IDs
+    streamIDs: {}
 };
 
 BaseConfig.create = function baseConfigCreateFn()

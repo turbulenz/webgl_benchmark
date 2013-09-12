@@ -15,7 +15,44 @@ BenchmarkApp.prototype =
     init : function benchmarkappInitFn()
     {
         var config = this.config;
-        this.playbackController.init(config.prefixAssetURL, config.captureLookUp[config.defaultCapture], config.prefixTemplatesURL);
+
+        var streamsConfig = config.streamsConfig || {};
+        var streamIDs = config.streamIDs || {};
+
+        //TODO: load tests config from capture data
+        var testsConfig = {
+            "0": {
+                startFrame: 0,
+                endFrame: config.numTotalFrames - 1
+            }
+        };
+
+        // Default benchmark behaviour
+        // Single sequence, single stream, single test
+
+        var test = {
+            name: config.defaultTestName || "default",
+            id: "0"
+        };
+
+        var stream = {
+            name: config.defaultCapture,
+            tests: [test]
+        };
+
+        //TODO: Enforce a streamID is present
+        var streamID = streamIDs[config.defaultCapture];
+        if (streamID)
+        {
+            stream.id = streamID;
+        }
+
+        var sequenceList = [{
+            name: config.defaultSequenceName || "Default Sequence",
+            streams: [stream]
+        }];
+
+        this.playbackController.init(config.prefixAssetURL, config.captureLookUp[config.defaultCapture], config.prefixTemplatesURL, streamsConfig, testsConfig, sequenceList);
 
         // Controls
         var saveElement = document.getElementById("buttonSave");

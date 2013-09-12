@@ -13,11 +13,21 @@ function PlaybackController() {}
 PlaybackController.prototype =
 {
 
-    init : function playbackcontrollerInitFn(prefixAssetURL, prefixCaptureURL, prefixTemplatesURL)
+    init : function playbackcontrollerInitFn(prefixAssetURL, prefixCaptureURL, prefixTemplatesURL, streamsConfig, testsConfig, sequenceList)
     {
         this.prefixAssetURL = prefixAssetURL;
         this.prefixCaptureURL = prefixCaptureURL;
         this.prefixTemplatesURL = prefixTemplatesURL;
+        this.streamsConfig = streamsConfig;
+        this.testsConfig = testsConfig;
+        if (!sequenceList)
+        {
+            this.sequenceList = [];
+        }
+        else
+        {
+            this.sequenceList = sequenceList;
+        }
         this.loadAssets();
     },
 
@@ -401,6 +411,19 @@ PlaybackController.prototype =
         //TODO: Add browser config
 
         //TODO: Add online hardware config
+
+        var sequences = userDataResult.config.sequences;
+        if (sequences.length === 0)
+        {
+            userDataResult.config.sequences = this.sequenceList;
+            this.sequenceList = [];
+        }
+
+        userDataResult.config.streams = this.streamsConfig;
+        this.streamsConfig = {};
+
+        userDataResult.config.tests = this.testsConfig;
+        this.testsConfig = {};
 
         // Add data
         var framesData = {};
@@ -986,6 +1009,9 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     };
 
     playbackController.playbackConfig = {};
+    playbackController.streamsConfig = {};
+    playbackController.testsConfig = {};
+    playbackController.sequenceList = [];
 
     playbackController.resultsData = null;
     playbackController.dataProcessed = false;

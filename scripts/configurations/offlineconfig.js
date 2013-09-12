@@ -28,9 +28,10 @@ OfflineConfig.create = function offlineCreateFn()
     captureLookUp['zoom2_shadows_norendertarget']      = 'capture/zoom2_shadows_norendertarget/';
     captureLookUp['seige_shadows_norendertarget']      = 'capture/seige_shadows_norendertarget/';
     captureLookUp['story_shadows_rendertarget']        = 'capture/story_shadows_rendertarget/';
+    captureLookUp['story_high']                        = 'capture/story_high/';
 
     config.prefixAssetURL = "capture/";
-    config.prefixTemplatesURL = "config/templates/offline/";
+    config.prefixTemplatesURL = "assets/config/templates/offline/";
 
     return config;
 };

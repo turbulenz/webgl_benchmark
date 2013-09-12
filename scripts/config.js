@@ -3,7 +3,7 @@
 /*globals updateDictFromQueryString: false*/
 
 //
-// Name: story_shadows_rendertarget
+// Name: story_high
 //
 // Config - The offline configuration, to run without an internet connection or local server
 //
@@ -14,7 +14,24 @@ Config.prototype = {};
 Config.create = function configCreateFn()
 {
     var config = OfflineConfig.create();
-    config.defaultCapture = "story_shadows_rendertarget";
+
+    config.defaultSequenceName = "Story";
+    config.defaultCapture = "story_high";
+    config.defaultTestName = "story_flythrough_full";
+    config.streamIDs = {
+        "story_high" : "5230dc14"
+    };
+    config.streamsConfig = {
+        "5230dc14": {
+            "renderTarget": true,
+            "shadows": true,
+            "postFxBloom": false,
+            "postFxFXAA": false,
+            "postFxColorization": true,
+            "postFxTiltShift": false
+        }
+    };
+
     updateDictFromQueryString(config);
     return config;
 };

@@ -319,11 +319,12 @@ def generate_config(config_name="default", config_target=None, allow_querystring
 
     config_globals = generate_globals(globals_list)
 
+    config_prefix_templates_url = ""
     if config_target == "online":
         config_desc = "The online configuration, targeting online data"
     elif config_target == "offline":
         config_desc = "The offline configuration, to run without an internet connection or local server"
-        config_prefix_templates_url = "config.prefixTemplatesURL = \"assets/config/templates/offline/\";"
+
     elif config_target == "local":
         config_desc = "The local configuration, to run with either online or offline data via the local server"
     else: #default
