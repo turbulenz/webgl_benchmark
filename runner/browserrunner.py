@@ -27,6 +27,7 @@ class BrowserRunner(object):
         self.browsercontrol = None
         self.profile = None
         self.browser_bin = None
+        self.command_line_args = None
 
         self.verbose("BrowserRunner( %s )" % (browser_name))
 
@@ -37,12 +38,9 @@ class BrowserRunner(object):
         if self.browsercontrol:
             self.browsercontrol.shutdown()
 
-    def run(self, url, timeout=60):
+    def run(self, url, timeout=60, command_line_args=None):
 
-        if self.browser_name == 'chrome':
-            self.command_line_args = " --disable-web-security"
-        else:
-            self.command_line_args = None
+        self.command_line_args = command_line_args
 
         def launch():
             self.verbose("Launching browsercontrol at url: %s" % url)

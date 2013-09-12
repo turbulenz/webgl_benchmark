@@ -38,10 +38,8 @@ from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 __version__ = '0.0.2'
 
 BROWSERRUNNER_DEVSERVER = "127.0.0.1:8070"
-BROWSERRUNNER_TESTURLPATH = "/play/webgl-benchmark"
+BROWSERRUNNER_TESTURLPATH = "/#/play/webgl-benchmark"
 BROWSERRUNNER_TESTMODE = '/benchmark.canvas.debug.html'
-#BROWSERRUNNER_TESTURL = "http://" + BROWSERRUNNER_DEVSERVER + BROWSERRUNNER_TESTURLPATH + BROWSERRUNNER_TESTMODE
-BROWSERRUNNER_TESTURL = "file://" + getcwd() + BROWSERRUNNER_TESTMODE
 
 # The name used by the server
 SERVERNAME = "WebGL Benchmark Server"
@@ -56,6 +54,8 @@ ASSETS_PATH = "capture/"
 DEFAULT_SEQUENCE_NAME = "Story"
 DEFAULT_CAPTURE_NAME = "story_high"
 DEFAULT_TEST_NAME = "story_flythrough_full"
+
+BENCHMARK_TIMEOUT = 300
 
 NUM_FRAMES = 3600
 NUM_FRAMES_BLOCK = 60
@@ -653,12 +653,15 @@ def main():
     parser.add_argument("-s", "--silent", action="store_true", help="silent running")
     parser.add_argument("--version", action='version', version=__version__)
 
+    #TODO: Test additional browser configurations
+    browser_list = ['chrome'] #list_browsers()
+
     parser.add_argument("--config", action='store', default=DEFAULT_CAPTURE_NAME,
         help="the configuration to run (by name)")
-    parser.add_argument("--target", action='store', default='offline',
-        help="the target to run [offline, online]")
-    parser.add_argument("--browser", action='store', default='chrome',
-        help="browser to run, must be one of [" + ','.join(list_browsers()) + "] (defaults to chrome)")
+    parser.add_argument("--target", action='store', choices=['online', 'offline'], default='offline',
+        help="the target to run")
+    parser.add_argument("--browser", action='store', choices=browser_list, default='chrome',
+        help="browser to run (defaults to chrome)")
     parser.add_argument("--server", action='store_true',
         help="only run the server (for saving data files to disk)")
     parser.add_argument("--hardware-name", action='store', default='default',
@@ -710,11 +713,25 @@ def main():
         error(str(ex))
         return 1
 
+    if args.browser != 'chrome':
+        warn("Browser option: %s is untested. For a tested browser, use chrome." % args.browser)
+
     if not args.no_run:
         server = start_server(abspath('.'))
 
+        warn("Browser will automatically close if benchmark takes longer than %d seconds to run" % BENCHMARK_TIMEOUT)
+        command_line_args = None
+
+        if args.browser == 'chrome':
+            command_line_args = "--disable-web-security"
+
+        if args.target == 'offline':
+            BROWSERRUNNER_TESTURL = "file://" + getcwd() + BROWSERRUNNER_TESTMODE
+        else:
+            BROWSERRUNNER_TESTURL = "http://" + BROWSERRUNNER_DEVSERVER + BROWSERRUNNER_TESTURLPATH + BROWSERRUNNER_TESTMODE
+
         browser_runner = BrowserRunner(None, args.browser)
-        browser_runner.run(BROWSERRUNNER_TESTURL, timeout=300) # 5 minute timeout
+        browser_runner.run(BROWSERRUNNER_TESTURL, timeout=BENCHMARK_TIMEOUT, command_line_args=command_line_args) # 5 minute timeout
 
         if server:
             server.shutdown()
