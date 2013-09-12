@@ -43,6 +43,9 @@ BROWSERRUNNER_TESTMODE = '/benchmark.canvas.debug.html'
 #BROWSERRUNNER_TESTURL = "http://" + BROWSERRUNNER_DEVSERVER + BROWSERRUNNER_TESTURLPATH + BROWSERRUNNER_TESTMODE
 BROWSERRUNNER_TESTURL = "file://" + getcwd() + BROWSERRUNNER_TESTMODE
 
+# The name used by the server
+SERVERNAME = "WebGL Benchmark Server"
+
 CONFIG_PATH = "scripts/config.js"
 CONFIGS_DIR_PATH = "scripts/configurations/"
 
@@ -297,6 +300,7 @@ def generate_results_template(results_template_name=None, config_target=None, ha
 
 def generate_config(config_name="default", config_target=None, allow_querystring=False, results_template_name=None):
 
+    info("Generating config for %s" % config_name)
     config_inherit = "BaseConfig"
     if config_target == "online":
         config_inherit = "OnlineConfig"
@@ -304,6 +308,7 @@ def generate_config(config_name="default", config_target=None, allow_querystring
     if config_target == "offline":
         config_inherit = "OfflineConfig"
 
+    info("Base config: %s" % config_inherit)
     globals_list = [config_inherit]
 
     if allow_querystring:
@@ -327,8 +332,10 @@ def generate_config(config_name="default", config_target=None, allow_querystring
     config_override = "config.defaultCapture = \"" + config_name + "\";"
 
     if results_template_name is not None:
+        info("Using resultsTemplate: %s" % results_template_name)
         config_results_template = "config.resultsTemplate = \"" + results_template_name + "\";"
     else:
+        info("Using default resultsTemplate")
         config_results_template = ""
 
     #TODO: Output to file
@@ -342,6 +349,7 @@ def generate_config(config_name="default", config_target=None, allow_querystring
                                         config_prefix_templates_url)
 
     try:
+        info("Writing resultsTemplate: %s" % CONFIG_PATH)
         f = open(CONFIG_PATH, 'w')
         f.write(config_output)
         f.close()
@@ -359,7 +367,7 @@ def download(url, target_filename=None, retries=0, return_data=False):
         except URLError as e:
             error('Failed downloading %s: URLError %s' % (url, e))
         except socket_error:
-            print 'Error during download%s' % ' will retry in 2 secs' if num_attempts else ''
+            info('Error during download%s' % ' will retry in 2 secs' if num_attempts else '')
         else:
             output = StringIO.StringIO()
             try:
@@ -376,7 +384,7 @@ def download(url, target_filename=None, retries=0, return_data=False):
                 if return_data:
                     return output.getvalue()
             except socket_error:
-                print 'Error during download%s' % ' will retry in 2 secs' if num_attempts else ''
+                error('Error during download%s' % ' will retry in 2 secs' if num_attempts else '')
 
         num_attempts -= 1
         if num_attempts:
@@ -384,12 +392,12 @@ def download(url, target_filename=None, retries=0, return_data=False):
     return None
 
 def downloader(path, output_path, bounded_semaphore):
-    print 'Downloading %s' % path
+    info('Downloading %s' % path)
     download(path, output_path, retries=3)
     bounded_semaphore.release()
 
-def download_assets(config_name="default", max_connections=20):
-    with open(STREAM_MAPPING_PATH, 'rt') as f:
+def download_assets(config_name="default", max_connections=20, force_download=False):
+    with open(STREAM_MAPPING_PATH, 'r') as f:
         config = json_load(f)
 
     try:
@@ -398,26 +406,40 @@ def download_assets(config_name="default", max_connections=20):
         error('No capture path for config name %s' % config_name)
         exit(1)
 
+    info("Looking for config '%s' data: %s" % (config_name, download_prefix))
+
     output_prefix = capture_output_path = path_join(CAPTURES_PATH, config_name)
+
+    # Create capture path if missing
     mkdir(CAPTURES_PATH)
+
+    # Create path for capture data
     mkdir(output_prefix)
 
     bounded_semaphore = BoundedSemaphore(max_connections)
     threads = []
 
+    if force_download:
+        info("Force download enabled")
+
     def add_downloader(file_name):
         download_path = '%s%s' % (download_prefix, file_name)
         output_path = path_join(output_prefix, file_name)
 
-        if not path_exists(output_path):
+        if not path_exists(output_path) or force_download:
             threads.append(Thread(target=downloader, args=[download_path, output_path, bounded_semaphore]))
+        else:
+            info("File exists, skipping: %s" % output_path)
 
+    capture_files = 0
     for start_frame in xrange(0, NUM_FRAMES, NUM_FRAMES_BLOCK):
         block_postfix = '%d-%d' % (start_frame, start_frame + NUM_FRAMES_BLOCK - 1)
         add_downloader('resources-%s.json' % block_postfix)
         add_downloader('frames-%s.json' % block_postfix)
         add_downloader('data-%s.bin' % block_postfix)
+        capture_files += 3
 
+    print "Processing capture files: %d" % capture_files
     for t in threads:
         bounded_semaphore.acquire()
         t.start()
@@ -428,9 +450,15 @@ def download_assets(config_name="default", max_connections=20):
     threads = []
     download_prefix = 'http://%s' % config['prefixAssetURL']
     output_prefix = ASSETS_PATH
-    mkdir(output_prefix)
-    mkdir(output_prefix + '/staticmax')
 
+    # Create assets path if missing
+    mkdir(output_prefix)
+
+    # Create path for assets
+    output_staticmax_path = path_join(output_prefix, 'staticmax')
+    mkdir(output_staticmax_path)
+
+    asset_files = 0
     for start_frame in xrange(0, NUM_FRAMES, NUM_FRAMES_BLOCK):
         block_postfix = '%d-%d' % (start_frame, start_frame + NUM_FRAMES_BLOCK - 1)
         with open(path_join(capture_output_path, 'resources-%s.json' % block_postfix)) as f:
@@ -445,6 +473,7 @@ def download_assets(config_name="default", max_connections=20):
                             src = tex['src']
                             if src:
                                 add_downloader(src)
+                                asset_files += 1
 
                 if resources_data.has_key('videos'):
                     videos = resources_data['videos']
@@ -453,7 +482,9 @@ def download_assets(config_name="default", max_connections=20):
                             src = video['src']
                             if src:
                                 add_downloader(src)
+                                asset_files += 1
 
+    print "Processing asset files: %d" % asset_files
     for t in threads:
         bounded_semaphore.acquire()
         t.start()
@@ -476,7 +507,8 @@ def start_server(output_path):
 
     class RequestsSaveHandler(BaseHTTPRequestHandler):
 
-        local_save_regex = re_compile('/local/v1/save/([^/]+)/(.*)')
+        # Forced regex to include 'data' to avoid overwriting any files with the API
+        local_save_regex = re_compile('/local/v1/save/([^/]+)/data/([^/]+)/(.*)')
 
         def do_POST(self):  # pylint: disable=C0103
 
@@ -493,26 +525,33 @@ def start_server(output_path):
                 self.wfile.close()
 
             def save_file(args):
-                #game_slug = args[0]
-                filename = args[1]
+                game_slug = args[0]
+                username = args[1]
+                filepath = args[2]
+
+                info("Save file request: game_slug=%s, username=%s, filepath=%s" % (game_slug, username, filepath))
 
                 content_type = self.headers.getheader('content-type')
                 if not content_type or not 'application/xml' in content_type:
-                    self.send_error(400, 'Unsupported Content-Type: %s' % content_type)
+                    unsupported_error = 'Unsupported Content-Type: %s' % content_type
+                    error(unsupported_error)
+                    self.send_error(400, unsupported_error)
                     return
 
-                if '..' in filename:
-                    self.send_error(400, 'Filename must be a sub directory (cannot contain "..")')
+                if '..' in filepath:
+                    subdir_error = 'Filename must be a sub directory (cannot contain "..")'
+                    self.send_error(400, subdir_error)
                     return
 
                 length = int(self.headers.getheader('content-length'))
                 content = self.rfile.read(length)
 
-                file_path = path_join(output_path, normpath(filename))
+                file_path = normpath(path_join(output_path, 'data', username, normpath(filepath)))
 
+                info("Writing to path %s: " % file_path)
                 mkdir(dirname(file_path))
 
-                with open(file_path, 'wt') as f:
+                with open(file_path, 'w') as f:
                     f.write(content)
 
                 ok()
@@ -523,7 +562,7 @@ def start_server(output_path):
                 path, tmp = path.split('?', 1)
                 qs = urlparse.parse_qs(tmp)
 
-            print 'POST request: %s' % path
+            info('POST request: %s' % path)
 
             def get_param(key):
                 return qs[key][0]
@@ -531,21 +570,36 @@ def start_server(output_path):
             try:
                 match = self.local_save_regex.match(path)
                 if match:
+                    info(match.groups())
                     save_file(match.groups())
                 else:
-                    self.send_error(404, 'Not Found: %s' % self.path)
+                    match_error = 'Not Found: %s' % self.path
+                    error(match_error)
+                    self.send_error(404, match_error)
 
             except IOError:
-                self.send_error(404, 'File Not Found: %s' % self.path)
+                io_error = 'File Not Found: %s' % self.path
+                error(io_error)
+                self.send_error(404, io_error)
             except Exception:
                 log_msg = 'Exception when processing request: %s' % self.path
                 trace_string = format_exc()
 
-                print(log_msg)
-                print(trace_string)
+                error(log_msg)
+                error(trace_string)
 
-                self.send_error('500 Internal Server Error')
+                self.send_error(500, 'Internal Server Error')
 
+        def do_GET(self):
+            # Respond with a blank page
+            info('GET request: %s' % self.path)
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            self.wfile.write("<html><head><title>%s</title></head><body></body></html>" % SERVERNAME)
+
+    print "Starting capture server: %s" % SERVERNAME
+    info("Running in directory: %s" % output_path)
     try:
         server = HTTPServer(('', 8070), RequestsSaveHandler)
         def run_server_thread(server):
@@ -575,6 +629,8 @@ def main():
         help="the name of the hardware to save in the results")
     parser.add_argument("--no-run", action='store_true',
         help="do not run the browser after the configuration step")
+    parser.add_argument("--force-download", action='store_true',
+        help="download the capture date, even if the file(s) already exists")
 
     args = parser.parse_args(argv[1:])
 
@@ -586,6 +642,7 @@ def main():
         basicConfig(level=WARNING)
 
     if args.server:
+        info("Starting server only mode")
         server = start_server(abspath('.'))
         if not server:
             print 'Address 127.0.0.1:8070 already in use'
@@ -604,13 +661,15 @@ def main():
     else:
         hardware_name = args.hardware_name
 
+    info("Benchmark Runner Arguments: %s" % args)
+
     results_template_name = 'results_template-' + hardware_name_filename
 
     try:
         generate_config(config_name=args.config, config_target=args.target, allow_querystring=True, results_template_name=results_template_name)
         generate_results_template(results_template_name=results_template_name, config_target=args.target, hardware_name=hardware_name)
         if args.target == 'offline':
-            download_assets(config_name=args.config)
+            download_assets(config_name=args.config, force_download=args.force_download)
     except Exception as ex:
         error(str(ex))
         return 1
@@ -623,7 +682,10 @@ def main():
 
         if server:
             server.shutdown()
+    else:
+        info("No-run called")
 
+    info("Done")
     return 0
 
 if __name__ == '__main__':
