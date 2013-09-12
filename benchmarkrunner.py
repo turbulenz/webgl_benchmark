@@ -477,6 +477,7 @@ def download_assets(config_name="default", max_connections=20, force_download=Fa
 
     print "Processing capture files: %d" % capture_files
     for t in threads:
+        t.daemon = True
         bounded_semaphore.acquire()
         t.start()
 
@@ -642,6 +643,7 @@ def start_server(output_path):
             server.serve_forever()
 
         t = Thread(target=run_server_thread, args=[server])
+        t.daemon = True
         t.start()
         return server
     except socket_error:
