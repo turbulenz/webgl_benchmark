@@ -20,7 +20,7 @@ def list_browsers():
 # Browser Runner
 ############################################################
 
-class BrowserRunner():
+class BrowserRunner(object):
 
     def __init__(self, config, browser_name):
         self.browser_name = browser_name
