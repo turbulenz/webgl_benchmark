@@ -22,11 +22,11 @@ def list_browsers():
 
 class BrowserRunner(object):
 
-    def __init__(self, config, browser_name):
+    def __init__(self, config, browser_name, browser_bin=None):
         self.browser_name = browser_name
         self.browsercontrol = None
         self.profile = None
-        self.browser_bin = None
+        self.browser_bin = browser_bin
         self.command_line_args = None
 
         self.verbose("BrowserRunner( %s )" % (browser_name))

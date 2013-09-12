@@ -670,6 +670,8 @@ def main():
         help="do not run the browser after the configuration step")
     parser.add_argument("--force-download", action='store_true',
         help="download the capture date, even if the file(s) already exists")
+    parser.add_argument("--browser-path", action='store', default=None,
+        help="the path to the browser binary to run")
 
     args = parser.parse_args(argv[1:])
 
@@ -730,7 +732,7 @@ def main():
         else:
             BROWSERRUNNER_TESTURL = "http://" + BROWSERRUNNER_DEVSERVER + BROWSERRUNNER_TESTURLPATH + BROWSERRUNNER_TESTMODE
 
-        browser_runner = BrowserRunner(None, args.browser)
+        browser_runner = BrowserRunner(None, args.browser, args.browser_path)
         browser_runner.run(BROWSERRUNNER_TESTURL, timeout=BENCHMARK_TIMEOUT, command_line_args=command_line_args) # 5 minute timeout
 
         if server:
