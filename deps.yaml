@@ -1,3 +1,5 @@
 - config/templates/online/results_template.json
+- config/templates/online/results_template-default.json
 - config/templates/offline/results_template.json
+- config/templates/offline/results_template-default.json
 - config/stream_mapping.json
