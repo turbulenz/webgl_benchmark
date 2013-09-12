@@ -1,1 +1,1 @@
-story_shadows_rendertarget
+story_high

@@ -16,6 +16,18 @@
         "noshadows_rendertarget2" : "520e3eb2",
         "noshadows_norendertarget2" : "520e4fae",
         "zoom2_shadows_norendertarget" : "520e3905",
-        "story_shadows_rendertarget" : "521f13a3"
+        "story_shadows_rendertarget" : "521f13a3",
+        "story_high" : "5230dc14"
+    },
+    "streamsConfig":
+    {
+        "5230dc14": {
+            "renderTarget": true,
+            "shadows": true,
+            "postFxBloom": false,
+            "postFxFXAA": false,
+            "postFxColorization": true,
+            "postFxTiltShift": false
+        }
     }
 }

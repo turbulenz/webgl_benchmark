@@ -35,7 +35,7 @@ from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
 (PWD, OS, _) = simple_config()
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 BROWSERRUNNER_DEVSERVER = "127.0.0.1:8070"
 BROWSERRUNNER_TESTURLPATH = "/play/webgl-benchmark"
@@ -617,7 +617,7 @@ def main():
     parser.add_argument("-s", "--silent", action="store_true", help="silent running")
     parser.add_argument("--version", action='version', version=__version__)
 
-    parser.add_argument("--config", action='store', default='story_shadows_rendertarget',
+    parser.add_argument("--config", action='store', default='story_high',
         help="the configuration to run (by name)")
     parser.add_argument("--target", action='store', default='offline',
         help="the target to run [offline, online]")
