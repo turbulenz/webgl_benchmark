@@ -20,13 +20,13 @@ The benchmark can be run by:
 
 1)  Adding the project folder to the `Turbulenz local server <https://github.com/turbulenz/turbulenz_local>`_ and playing the debug or release build html files.
 
-2)  Running using the benchmark_runner script:
+2)  Running using the benchmarkrunner script:
     ::
-        $ python benchmark_runner.py
+        $ python benchmarkrunner.py
 
         or
 
-        $ python benchmark_runner.py --config CONFIG --target TARGET
+        $ python benchmarkrunner.py --config CONFIG --target TARGET
 
     The script will prepare the benchmark and launch the browser with any required arguments.
     The benchmark will run and the user can choose to save the results.
@@ -44,19 +44,21 @@ The benchmark can be run by:
 
     Examples::
 
-        $ python benchmark_runner.py --config zoom2_shadows_tiltshift --target offline
+        $ python benchmarkrunner.py
 
-        $ python benchmark_runner.py --config story_shadows_rendertarget --target online
+        $ python benchmarkrunner.py --config story_hard --target offline
 
-        $ python benchmark_runner.py --target online
+        $ python benchmarkrunner.py --config story_hard --target online
+
+        $ python benchmarkrunner.py --target online
 
     For more options::
 
-        $ python benchmark_runner.py --help
+        $ python benchmarkrunner.py --help
 
 **WINDOWS ONLY**
 
-3)  Double-clicking the "run.bat" batch file, which will set the resolution of the machine before running the benchmark_runner script.
+3)  Double-clicking the "run.bat" batch file, which will set the resolution of the machine before running the benchmarkrunner script.
     Once the browser has closed the screen resolution will be restored.
     ::
         > run.bat
