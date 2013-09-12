@@ -720,27 +720,32 @@ def main():
     if args.browser != 'chrome':
         warn("Browser option: %s is untested. For a tested browser, use chrome." % args.browser)
 
-    if not args.no_run:
-        server = start_server(abspath('.'))
+    server = None
+    try:
+        if not args.no_run:
+            server = start_server(abspath('.'))
 
-        warn("Browser will automatically close if benchmark takes longer than %d seconds to run" % BENCHMARK_TIMEOUT)
-        command_line_args = None
+            warn("Browser will automatically close if benchmark takes longer than %d seconds to run" % BENCHMARK_TIMEOUT)
+            command_line_args = None
 
-        if args.browser == 'chrome':
-            command_line_args = "--disable-web-security"
+            if args.browser == 'chrome':
+                command_line_args = "--disable-web-security"
 
-        if args.target == 'offline':
-            BROWSERRUNNER_TESTURL = "file://" + getcwd() + BROWSERRUNNER_TESTMODE
+            if args.target == 'offline':
+                BROWSERRUNNER_TESTURL = "file://" + getcwd() + BROWSERRUNNER_TESTMODE
+            else:
+                BROWSERRUNNER_TESTURL = "http://" + BROWSERRUNNER_DEVSERVER + BROWSERRUNNER_TESTURLPATH + BROWSERRUNNER_TESTMODE
+
+            browser_runner = BrowserRunner(None, args.browser, args.browser_path)
+            browser_runner.run(BROWSERRUNNER_TESTURL, timeout=BENCHMARK_TIMEOUT, command_line_args=command_line_args) # 5 minute timeout
         else:
-            BROWSERRUNNER_TESTURL = "http://" + BROWSERRUNNER_DEVSERVER + BROWSERRUNNER_TESTURLPATH + BROWSERRUNNER_TESTMODE
+            info("No-run called")
+    except Exception as e:
+        # Catch exceptions to shutdown server correctly
+        error(str(e))
 
-        browser_runner = BrowserRunner(None, args.browser, args.browser_path)
-        browser_runner.run(BROWSERRUNNER_TESTURL, timeout=BENCHMARK_TIMEOUT, command_line_args=command_line_args) # 5 minute timeout
-
-        if server:
-            server.shutdown()
-    else:
-        info("No-run called")
+    if server:
+        server.shutdown()
 
     info("Done")
     return 0
