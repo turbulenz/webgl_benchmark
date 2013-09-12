@@ -795,29 +795,32 @@ PlaybackController.prototype =
 
         var postRequest;
         var requests = {};
-        if (resultsData.timing && resultsData.timing.csv)
+        if (this.config.useSaveAPI)
         {
-            postRequest = domain + '/local/v1/save/webgl-benchmark/data/' + filename + '-timing.csv';
-            requests[postRequest] = resultsData.timing.csv;
-        }
-
-        if (resultsData.metrics && resultsData.metrics.csv)
-        {
-            postRequest = domain + '/local/v1/save/webgl-benchmark/data/' + testName + '-metrics.csv';
-            requests[postRequest] = resultsData.metrics.csv;
-        }
-
-        if (resultsData.userData)
-        {
-            postRequest = domain + '/local/v1/save/webgl-benchmark/data/' + filename + '-results.json';
-            requests[postRequest] = JSON.stringify(resultsData.userData);
-        }
-
-        for (var r in requests)
-        {
-            if (requests.hasOwnProperty(r))
+            if (resultsData.timing && resultsData.timing.csv)
             {
-                this.postData(r, requests[r], generatePostCallbackFn(r, requests));
+                postRequest = domain + '/local/v1/save/webgl-benchmark/data/' + filename + '-timing.csv';
+                requests[postRequest] = resultsData.timing.csv;
+            }
+
+            if (resultsData.metrics && resultsData.metrics.csv)
+            {
+                postRequest = domain + '/local/v1/save/webgl-benchmark/data/' + testName + '-metrics.csv';
+                requests[postRequest] = resultsData.metrics.csv;
+            }
+
+            if (resultsData.userData)
+            {
+                postRequest = domain + '/local/v1/save/webgl-benchmark/data/' + filename + '-results.json';
+                requests[postRequest] = JSON.stringify(resultsData.userData);
+            }
+
+            for (var r in requests)
+            {
+                if (requests.hasOwnProperty(r))
+                {
+                    this.postData(r, requests[r], generatePostCallbackFn(r, requests));
+                }
             }
         }
 

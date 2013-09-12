@@ -68,7 +68,10 @@ BaseConfig.prototype =
     streamsConfig: {},
 
     // A mapping of capture names to stream IDs
-    streamIDs: {}
+    streamIDs: {},
+
+    // Save the results using the server based save API
+    useSaveAPI: true
 };
 
 BaseConfig.create = function baseConfigCreateFn()

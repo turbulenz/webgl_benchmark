@@ -31,6 +31,7 @@ OnlineConfig.create = function onlineCreateFn()
 
     config.prefixAssetURL = '//tzawsuser-benchmark.s3.amazonaws.com/';
     config.prefixTemplatesURL = "config/templates/online/";
+    config.useSaveAPI = false;
 
     return config;
 };
