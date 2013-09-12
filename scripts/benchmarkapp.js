@@ -200,6 +200,11 @@ BenchmarkApp.prototype =
 
     displayResults : function benchmarkAppDisplayResultsFn()
     {
+        if (this.graphicsDevice.fullscreen)
+        {
+            this.graphicsDevice.fullscreen = false;
+        }
+
         var engineElem = document.getElementById("engine");
         if (!engineElem)
         {
