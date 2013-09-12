@@ -46,9 +46,9 @@ The benchmark can be run by:
 
         $ python benchmarkrunner.py
 
-        $ python benchmarkrunner.py --config story_hard --target offline
+        $ python benchmarkrunner.py --config story_high --target offline
 
-        $ python benchmarkrunner.py --config story_hard --target online
+        $ python benchmarkrunner.py --config story_high --target online
 
         $ python benchmarkrunner.py --target online
 
