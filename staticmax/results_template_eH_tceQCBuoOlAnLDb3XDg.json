@@ -3,7 +3,7 @@
 	"config": {
 		"benchmark": {
 			"name": "webgl_benchmark",
-			"version": "0.0.7",
+			"version": "0.0.8",
 			"type": "offline"
 		},
 		"hardware": {},

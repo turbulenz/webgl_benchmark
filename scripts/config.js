@@ -14,24 +14,12 @@ Config.prototype = {};
 Config.create = function configCreateFn()
 {
     var config = OfflineConfig.create();
+    config.defaultCapture = "story_high";
+    updateDictFromQueryString(config);
 
     config.defaultSequenceName = "Story";
-    config.defaultCapture = "story_high";
     config.defaultTestName = "story_flythrough_full";
-    config.streamIDs = {
-        "story_high" : "5230dc14"
-    };
-    config.streamsConfig = {
-        "5230dc14": {
-            "renderTarget": true,
-            "shadows": true,
-            "postFxBloom": false,
-            "postFxFXAA": false,
-            "postFxColorization": true,
-            "postFxTiltShift": false
-        }
-    };
-
-    updateDictFromQueryString(config);
+    config.streamIDs = {"story_shadows_rendertarget": "521f13a3", "zoom2_shadows_tiltshift": "5214d902", "noshadows_norendertarget": "51f94db3", "noshadows_rendertarget": "51f94bd6", "shadows_norendertarget2": "51f94867", "shadows_norendertarget": "51f94867", "zoom2_shadows_norendertarget": "520e3905", "noshadows_rendertarget2": "520e3eb2", "shadows_rendertarget": "51f92bf7", "zoom_shadows_norendertarget": "5200c983", "noshadows_norendertarget2": "520e4fae", "shadows_rendertarget2": "520e3eb2", "story_high": "5230dc14", "waves3_noshadows_norendertarget": "520106fe", "waves3_shadows_norendertarget": "520109eb"};
+    config.streamsConfig = {"5230dc14": {"shadows": true, "postFxColorization": true, "renderTarget": true, "postFxTiltShift": false, "postFxBloom": false, "postFxFXAA": false}};
     return config;
 };
