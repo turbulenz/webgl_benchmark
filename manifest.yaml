@@ -1,0 +1,25 @@
+aspect_ratio: '16:9'
+canvas_main: benchmark.canvas.debug.html
+cover_art: ''
+deploy_files:
+- benchmark.canvas.debug.html
+- mapping_table.json
+- staticmax/*
+- scripts/*
+- js/*
+- css/*
+- img/*
+- jslib/*
+deployed: Never
+engine_version: '0.26'
+flash_main: ''
+has_notifications: false
+is_multiplayer: false
+is_temp: false
+mapping_table: mapping_table.json
+modified: Never
+path: webgl_benchmark
+plugin_main: ''
+slug: webgl-benchmark
+title: WebGL Benchmark
+title_logo: ''
