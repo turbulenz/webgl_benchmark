@@ -665,8 +665,7 @@ def main():
     parser.add_argument("-s", "--silent", action="store_true", help="silent running")
     parser.add_argument("--version", action='version', version=__version__)
 
-    #TODO: Test additional browser configurations
-    browser_list = ['chrome'] #list_browsers()
+    browser_list = [browser for browser in list_browsers() if browser != 'explorer']
 
     parser.add_argument("--config", action='store', default=DEFAULT_CAPTURE_NAME,
         help="the configuration to run (by name)")
@@ -683,7 +682,7 @@ def main():
     parser.add_argument("--force-download", action='store_true',
         help="download the capture date, even if the file(s) already exists")
     parser.add_argument("--browser-path", action='store', default=None,
-        help="the path to the browser binary to run")
+        help="the path to the browser binary to run. This must be used in conjunction with the --browser option in the case where the user wants to override the default browser path")
 
     args = parser.parse_args(argv[1:])
 
