@@ -316,7 +316,7 @@ class LinuxBrowserControl(BrowserControl):
 
 class FirefoxLinuxBrowserControl(LinuxBrowserControl):
 
-    def __init__(self, url, browser_bin, profile):
+    def __init__(self, url, browser_bin, profile, command_line_args):
 
         if browser_bin is not None:
             raise Exception("No support for custom browser binary")
@@ -387,7 +387,7 @@ class FirefoxLinuxBrowserControl(LinuxBrowserControl):
 
 class ChromiumLinuxBrowserControl(LinuxBrowserControl):
 
-    def __init__(self, url, browser_bin, profile):
+    def __init__(self, url, browser_bin, profile, command_line_args):
 
         if browser_bin is not None:
             raise Exception("No support for custom browser binary")
@@ -426,7 +426,7 @@ class ChromiumLinuxBrowserControl(LinuxBrowserControl):
 
 class ChromeLinuxBrowserControl(LinuxBrowserControl):
 
-    def __init__(self, url, browser_bin, profile):
+    def __init__(self, url, browser_bin, profile, command_line_args):
 
         if browser_bin is not None:
             raise Exception("No support for custom browser binary")
@@ -574,7 +574,7 @@ class WindowsBrowserControl(BrowserControl):
 
 class FirefoxWindowsBrowserControl(WindowsBrowserControl):
 
-    def __init__(self, url, browser_bin, profile):
+    def __init__(self, url, browser_bin, profile, command_line_args):
 
         # Find firefox executable
 
@@ -605,7 +605,7 @@ class FirefoxWindowsBrowserControl(WindowsBrowserControl):
 
 class ChromeWindowsBrowserControl(WindowsBrowserControl):
 
-    def __init__(self, url, browser_bin, profile, command_line_args=None):
+    def __init__(self, url, browser_bin, profile, command_line_args):
 
         if 'LOCALAPPDATA' in os.environ:
             localDataPath = os.environ['LOCALAPPDATA']
@@ -650,7 +650,7 @@ class ChromeWindowsBrowserControl(WindowsBrowserControl):
 
 class ExplorerWindowsBrowserControl(WindowsBrowserControl):
 
-    def __init__(self, url, browser_bin, profile):
+    def __init__(self, url, browser_bin, profile, command_line_args):
 
         exe = check_exe(browser_bin) or \
             windows_get_program_path('/Internet Explorer/iexplore.exe')
@@ -682,7 +682,7 @@ class ExplorerWindowsBrowserControl(WindowsBrowserControl):
 
 class SafariWindowsBrowserControl(WindowsBrowserControl):
 
-    def __init__(self, url, browser_bin, profile):
+    def __init__(self, url, browser_bin, profile, command_line_args):
 
         exe = check_exe(browser_bin) or \
             windows_get_program_path("/Safari/Safari.exe")
@@ -706,7 +706,7 @@ class SafariWindowsBrowserControl(WindowsBrowserControl):
 
 class OperaWindowsBrowserControl(WindowsBrowserControl):
 
-    def __init__(self, url, browser_bin, profile):
+    def __init__(self, url, browser_bin, profile, command_line_args):
 
         exe = check_exe(browser_bin) or \
             windows_get_program_path('/Opera/opera.exe')
@@ -840,7 +840,7 @@ class ChromeMacOSXBrowserControl(MacOSXBrowserControl):
 
     app_bin = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
-    def __init__(self, url, browser_bin, profile):
+    def __init__(self, url, browser_bin, profile, command_line_args):
         self._finalize()
         time.sleep(2)
 
@@ -867,7 +867,7 @@ class FirefoxMacOSXBrowserControl(MacOSXBrowserControl):
 
     app_bin = "/Applications/Firefox.app/Contents/MacOS/firefox-bin"
 
-    def __init__(self, url, browser_bin, profile):
+    def __init__(self, url, browser_bin, profile, command_line_args):
 
         # Kill existing browsers and give them time to die
 
@@ -902,7 +902,7 @@ class SafariMacOSXBrowserControl(MacOSXBrowserControl):
 
     app_bin = "/Applications/Safari.app/Contents/MacOS/Safari"
 
-    def __init__(self, url, browser_bin, profile):
+    def __init__(self, url, browser_bin, profile, command_line_args):
         proc = self._safari_startup(url, browser_bin, self.app_bin, 'x86_64')
         MacOSXBrowserControl.__init__(self, url, proc, "Safari")
 
@@ -945,7 +945,7 @@ class Safari32MacOSXBrowserControl(SafariMacOSXBrowserControl):
 
     app_bin = "/Applications/Safari.app/Contents/MacOS/Safari"
 
-    def __init__(self, url, browser_bin, profile):
+    def __init__(self, url, browser_bin, profile, command_line_args):
         proc = self._safari_startup(url, browser_bin, self.app_bin, 'i386')
         MacOSXBrowserControl.__init__(self, url, proc, "Safari")
 
@@ -957,7 +957,7 @@ class Safari5MacOSXBrowserControl(SafariMacOSXBrowserControl):
 
     app_bin = "/Applications/Safari-5.0.app/Contents/MacOS/Safari"
 
-    def __init__(self, url, browser_bin, profile):
+    def __init__(self, url, browser_bin, profile, command_line_args):
         proc = self._safari_startup(url, browser_bin, self.app_bin, 'x86_64')
         MacOSXBrowserControl.__init__(self, url, proc, "Safari")
 
@@ -966,7 +966,7 @@ class Safari5_32_MacOSXBrowserControl(SafariMacOSXBrowserControl):
 
     app_bin = "/Applications/Safari-5.0.app/Contents/MacOS/Safari"
 
-    def __init__(self, url, browser_bin, profile):
+    def __init__(self, url, browser_bin, profile, command_line_args):
         proc = self._safari_startup(url, browser_bin, self.app_bin, 'i386')
         MacOSXBrowserControl.__init__(self, url, proc, "Safari-5.0")
 
