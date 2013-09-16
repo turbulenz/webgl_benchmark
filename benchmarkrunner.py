@@ -52,9 +52,9 @@ STREAM_MAPPING_PATH = "assets/config/stream_mapping.json"
 CAPTURES_PATH = "capture/"
 ASSETS_PATH = "capture/"
 
-DEFAULT_SEQUENCE_NAME = "Story"
-DEFAULT_CAPTURE_NAME = "story_high"
-DEFAULT_TEST_NAME = "story_flythrough_full"
+DEFAULT_SEQUENCE_NAME = "Stress"
+DEFAULT_CAPTURE_NAME = "stress_high"
+DEFAULT_TEST_NAME = "stress_zoom_full"
 
 BENCHMARK_TIMEOUT = 300
 
@@ -737,11 +737,10 @@ def main():
             warn("Browser will automatically close if benchmark takes longer than %d seconds to run" % BENCHMARK_TIMEOUT)
             command_line_args = None
 
-            if args.browser == 'chrome':
-                command_line_args = "--disable-web-security"
-
             if args.target == 'offline':
                 server = start_server(abspath('.'))
+                if args.browser == 'chrome':
+                    command_line_args = "--disable-web-security"
                 BROWSERRUNNER_TESTURL = "file://" + getcwd() + BROWSERRUNNER_TESTMODE
             else:
                 BROWSERRUNNER_TESTURL = "http://" + BROWSERRUNNER_DEVSERVER + BROWSERRUNNER_TESTURLPATH + BROWSERRUNNER_TESTMODE
