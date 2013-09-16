@@ -531,7 +531,8 @@ def download_assets(config_name="default", max_connections=20, force_download=Fa
                                 add_downloader(src)
                                 asset_files += 1
 
-    for t in threads:
+    for (i, t) in enumerate(threads):
+        t.daemon = True
         bounded_semaphore.acquire()
         print('Downloading assets %-3d/%d (%s)' % (i + 1, len(threads), paths[i]))
         t.start()
