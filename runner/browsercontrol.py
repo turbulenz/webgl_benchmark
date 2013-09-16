@@ -446,11 +446,21 @@ class ChromeLinuxBrowserControl(LinuxBrowserControl):
         # Create the 'First Run' file to stop chrome asking about
         # default search engines.
 
+        if command_line_args is None:
+            command_line_str = ""
+        else:
+            command_line_str = command_line_args
+
+        if profile is None:
+            profile_str = ""
+        else:
+            profile_str = "--profile-directory=\"%s\"" % profile
+
         _popen('mkdir -p ~/.config/{0} && touch ~/.config/{0}/First\ Run'.format(self._chrome_bin), shell=True)
 
         # Run
 
-        _popen('"%s" %s ' % (self._chrome_bin, url), shell=True)
+        _popen('"%s" %s %s %s ' % (self._chrome_bin, profile_str, command_line_str, url), shell=True)
         LinuxBrowserControl.__init__(self, url, self._chrome_bin, 'Chrome')
 
     def _finalize(self):
@@ -556,7 +566,7 @@ class WindowsBrowserControl(BrowserControl):
         r = subprocess.call(['external\\screenshot-cmd-r3\\bin\\win32\\screenshot-cmd.exe',
                          '-o', filename])
         if 0 != r:
-            raise Exception("Error runnign screenshot tool")
+            raise Exception("Error running screenshot tool")
 
     # Gracefuly shut down the browser
     def close(self):
@@ -848,7 +858,17 @@ class ChromeMacOSXBrowserControl(MacOSXBrowserControl):
         if app is None:
             app = macosx_check_app(self.app_bin)
 
-        cmd = '"%s" --enable-webgl --ignore-gpu-blacklist %s' % (app, url)
+        if command_line_args is None:
+            command_line_str = ""
+        else:
+            command_line_str = command_line_args
+
+        if profile is None:
+            profile_str = ""
+        else:
+            profile_str = "--profile-directory=\"%s\"" % profile
+
+        cmd = '"%s" --enable-webgl --ignore-gpu-blacklist %s %s %s' % (app, command_line_str, profile_str, url)
         verbose("Browser cmd: %s" % cmd)
         proc = _popen(cmd, shell=True)
 
