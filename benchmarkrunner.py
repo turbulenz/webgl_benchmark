@@ -114,7 +114,7 @@ def mkdir(path, verbose=True):
             raise
 
 def generate_filename(name):
-    return "".join([c for c in name if re.match(r'\w', c)]).lower()
+    return re.sub(r'[^a-zA-Z0-9 ]', '-', name).lower().replace(' ', '_')
 
 def generate_globals(globals_list=None):
     if globals_list is None:

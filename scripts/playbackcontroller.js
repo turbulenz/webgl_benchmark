@@ -740,7 +740,7 @@ PlaybackController.prototype =
         }
 
         var hardwareName = resultsData.userData.config.hardware.name;
-        var filePath = hardwareName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        var filePath = hardwareName.replace(/[^a-zA-Z0-9 ]/g, '-').toLowerCase().replace(/ /g, '_');
 
         var timestamp = (new Date()).getTime();
         var filename = filePath + '/' + timestamp;
