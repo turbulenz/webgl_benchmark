@@ -171,9 +171,14 @@ def get_systeminfo(hardware_name):
     hardware_dir = join(DATA_DIR, hardware_filename)
     if OS == 'win32':
 
+        print "Gathering System Information..."
         timestamp = calendar.timegm(datetime.utcnow().utctimetuple()) * 1000
         systeminfo_filename = '%s-systeminfo.csv' % timestamp
-        systeminfo_filepath = join(PWD, hardware_dir, systeminfo_filename)
+        systeminfo_dir = join(PWD, hardware_dir)
+        systeminfo_filepath = join(systeminfo_dir, systeminfo_filename)
+
+        if not path_exists(systeminfo_dir):
+            mkdir(systeminfo_dir)
 
         info("Generating systeminfo: %s" % systeminfo_filepath)
         systeminfo_command_win = ["systeminfo", "/FO", "CSV",  ">", systeminfo_filepath]
