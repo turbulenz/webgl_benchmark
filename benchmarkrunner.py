@@ -683,6 +683,8 @@ def main():
         help="download the capture date, even if the file(s) already exists")
     parser.add_argument("--browser-path", action='store', default=None,
         help="the path to the browser binary to run. This must be used in conjunction with the --browser option in the case where the user wants to override the default browser path")
+    parser.add_argument("--browser-profile", action='store', default=None,
+        help="the name of the profile to launch the browser with if supported. On Firefox this is name of the profile. On Chrome this the profile directory.")
 
     args = parser.parse_args(argv[1:])
 
@@ -744,7 +746,7 @@ def main():
             else:
                 BROWSERRUNNER_TESTURL = "http://" + BROWSERRUNNER_DEVSERVER + BROWSERRUNNER_TESTURLPATH + BROWSERRUNNER_TESTMODE
 
-            browser_runner = BrowserRunner(None, args.browser, args.browser_path)
+            browser_runner = BrowserRunner(None, args.browser, browser_bin=args.browser_path, profile=args.browser_profile)
             browser_runner.run(BROWSERRUNNER_TESTURL, timeout=BENCHMARK_TIMEOUT, command_line_args=command_line_args) # 5 minute timeout
         else:
             info("No-run called")

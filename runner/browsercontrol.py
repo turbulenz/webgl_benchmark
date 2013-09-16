@@ -605,7 +605,7 @@ class FirefoxWindowsBrowserControl(WindowsBrowserControl):
 
 class ChromeWindowsBrowserControl(WindowsBrowserControl):
 
-    def __init__(self, url, browser_bin, profile, command_line_args):
+    def __init__(self, url, browser_bin, profile, command_line_args=None):
 
         if 'LOCALAPPDATA' in os.environ:
             localDataPath = os.environ['LOCALAPPDATA']
@@ -627,9 +627,16 @@ class ChromeWindowsBrowserControl(WindowsBrowserControl):
         self.shutdown()
 
         if command_line_args is None:
-            cmdline = '"%s" --start-maximized %s' % (exe, url)
+            command_line_str = ""
         else:
-            cmdline = '"%s" --start-maximized %s %s' % (exe, command_line_args, url)
+            command_line_str = command_line_args
+
+        if profile is None:
+            profile_str = ""
+        else:
+            profile_str = "--profile-directory=\"%s\"" % profile
+
+        cmdline = '"%s" --start-maximized %s %s %s' % (exe, command_line_str, profile_str, url)
         verbose("Browser CMDLINE: %s" % cmdline)
         proc = _popen(cmdline, shell=True)
         time.sleep(2)
