@@ -5,14 +5,12 @@ import errno
 import json
 import re
 import csv
-import time
 import calendar
 
 from sys import argv
 from argparse import ArgumentParser
 from os import getcwd, makedirs, walk
 from os.path import join as path_join, exists as path_exists, abspath, dirname, normpath
-from os.path import join, exists as path_exists, normpath
 from json import load as json_load, dumps as json_dumps
 from threading import Thread, BoundedSemaphore
 
@@ -20,7 +18,7 @@ from urllib2 import urlopen, HTTPError, URLError
 from gzip import GzipFile
 from socket import error as socket_error
 from time import sleep
-from datetime import date, datetime
+from datetime import datetime
 from re import compile as re_compile
 
 from traceback import format_exc
@@ -100,8 +98,6 @@ SYSTEM_INFO_MAPPING_WIN = {
     'Processor(s)': ['processor']
 }
 
-total_downloads = 0
-
 def mkdir(path, verbose=True):
     if verbose:
         info('Creating: %s' % path)
@@ -130,7 +126,6 @@ def read_csv(filepath, fields=None):
     if not path_exists(filepath):
         raise Exception("File does not exist: %s" % filepath)
 
-    read_fields = []
     file_dict = {}
     field_dict = {}
 
@@ -151,11 +146,16 @@ def read_csv(filepath, fields=None):
         for row in reader:
             if rownum == 0:
                 if fields is None:
-                    read_fields = [add_to_field_dict(i, row[i]) for i in range(len(row))]
+                    for i in range(len(row)):
+                        add_to_field_dict(i, row[i])
                 else:
-                    read_fields = [add_to_field_dict(row.index(field), field) for field in row if field in fields]
+                    for field in row:
+                        if field in fields:
+                            add_to_field_dict(row.index(field), field)
             else:
-                read_values = [add_to_file_dict(field_dict[i], row[i])  for i in range(len(row)) if i in field_dict]
+                for i in range(len(row)):
+                    if i in field_dict:
+                        add_to_file_dict(field_dict[i], row[i])
 
             rownum += 1
         f.close()
@@ -168,12 +168,12 @@ def read_csv(filepath, fields=None):
 def get_systeminfo(hardware_name):
     hardware_dict = {}
     hardware_filename = generate_filename(hardware_name)
-    hardware_dir = join(DATA_DIR, hardware_filename)
+    hardware_dir = path_join(DATA_DIR, hardware_filename)
     if OS == 'win32':
 
         timestamp = calendar.timegm(datetime.utcnow().utctimetuple()) * 1000
         systeminfo_filename = '%s-systeminfo.csv' % timestamp
-        systeminfo_filepath = join(PWD, hardware_dir, systeminfo_filename)
+        systeminfo_filepath = path_join(PWD, hardware_dir, systeminfo_filename)
 
         info("Generating systeminfo: %s" % systeminfo_filepath)
         systeminfo_command_win = ["systeminfo", "/FO", "CSV",  ">", systeminfo_filepath]
@@ -221,7 +221,7 @@ def get_systeminfo(hardware_name):
         except ValueError as e:
             raise Exception("System Info timestamp cannot be read: %s" % e)
 
-        systeminfo_filepath = join(hardware_dir, latest_systeminfo_filename)
+        systeminfo_filepath = path_join(hardware_dir, latest_systeminfo_filename)
         systeminfo_dict = read_csv(systeminfo_filepath, fields=SYSTEM_INFO_FIELDS_WIN)
 
         def process_systeminfo_field(fieldname):
@@ -430,15 +430,20 @@ def download(url, target_filename=None, retries=0, return_data=False):
             sleep(2)
     return None
 
-def downloader(path, output_path, bounded_semaphore, download_count):
-    print 'Downloading file %d of %d' % (download_count, total_downloads)
-    info('Downloading %s' % path)
+def downloader(path, output_path, bounded_semaphore):
     download(path, output_path, retries=3)
     bounded_semaphore.release()
 
 def download_assets(config_name="default", max_connections=20, force_download=False):
-    with open(STREAM_MAPPING_PATH, 'r') as f:
-        config = json_load(f)
+    try:
+        with open(STREAM_MAPPING_PATH, 'r') as f:
+            config = json_load(f)
+    except IOError:
+        error('Missing stream mapping file: %s' % STREAM_MAPPING_PATH)
+        exit(1)
+    except ValueError as e:
+        error('Stream mapping file %s has invalid format: %s' % (STREAM_MAPPING_PATH, str(e)))
+        exit(1)
 
     try:
         download_prefix = 'http://%s%s/' % (config['prefixCaptureURL'], config['captureLookUp'][config_name])
@@ -458,23 +463,18 @@ def download_assets(config_name="default", max_connections=20, force_download=Fa
 
     bounded_semaphore = BoundedSemaphore(max_connections)
     threads = []
+    paths = []
 
     if force_download:
         info("Force download enabled")
 
-    global total_downloads
-    total_downloads = 0
-
     def add_downloader(file_name):
-        global total_downloads
         download_path = '%s%s' % (download_prefix, file_name)
         output_path = path_join(output_prefix, file_name)
 
         if not path_exists(output_path) or force_download:
-            total_downloads += 1
-            threads.append(Thread(target=downloader, args=[download_path, output_path, bounded_semaphore, total_downloads]))
-        else:
-            info("File exists, skipping: %s" % output_path)
+            threads.append(Thread(target=downloader, args=[download_path, output_path, bounded_semaphore]))
+            paths.append(download_path)
 
     capture_files = 0
     for start_frame in xrange(0, NUM_FRAMES, NUM_FRAMES_BLOCK):
@@ -484,16 +484,17 @@ def download_assets(config_name="default", max_connections=20, force_download=Fa
         add_downloader('data-%s.bin' % block_postfix)
         capture_files += 3
 
-    print "Processing capture files: %d" % capture_files
-    for t in threads:
+    for (i, t) in enumerate(threads):
         t.daemon = True
         bounded_semaphore.acquire()
+        print('Downloading recording %-3d/%d (%s)' % (i + 1, len(threads), paths[i]))
         t.start()
 
     for t in threads:
         t.join()
 
     threads = []
+    paths = []
     download_prefix = 'http://%s' % config['prefixAssetURL']
     output_prefix = ASSETS_PATH
 
@@ -503,8 +504,6 @@ def download_assets(config_name="default", max_connections=20, force_download=Fa
     # Create path for assets
     output_staticmax_path = path_join(output_prefix, 'staticmax')
     mkdir(output_staticmax_path)
-
-    total_downloads = 0
 
     asset_files = 0
     for start_frame in xrange(0, NUM_FRAMES, NUM_FRAMES_BLOCK):
@@ -532,9 +531,9 @@ def download_assets(config_name="default", max_connections=20, force_download=Fa
                                 add_downloader(src)
                                 asset_files += 1
 
-    print "Processing asset files: %d" % asset_files
     for t in threads:
         bounded_semaphore.acquire()
+        print('Downloading assets %-3d/%d (%s)' % (i + 1, len(threads), paths[i]))
         t.start()
 
     for t in threads:
@@ -719,14 +718,10 @@ def main():
 
     results_template_name = 'results_template-' + hardware_name_filename
 
-    try:
-        generate_config(config_name=args.config, config_target=args.target, allow_querystring=True, results_template_name=results_template_name)
-        generate_results_template(results_template_name=results_template_name, config_target=args.target, hardware_name=hardware_name)
-        if args.target == 'offline':
-            download_assets(config_name=args.config, force_download=args.force_download)
-    except Exception as ex:
-        error(str(ex))
-        return 1
+    generate_config(config_name=args.config, config_target=args.target, allow_querystring=True, results_template_name=results_template_name)
+    generate_results_template(results_template_name=results_template_name, config_target=args.target, hardware_name=hardware_name)
+    if args.target == 'offline':
+        download_assets(config_name=args.config, force_download=args.force_download)
 
     if args.browser != 'chrome':
         warn("Browser option: %s is untested. For a tested browser, use chrome." % args.browser)
