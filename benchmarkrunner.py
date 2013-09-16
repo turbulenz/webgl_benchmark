@@ -52,9 +52,9 @@ STREAM_MAPPING_PATH = "assets/config/stream_mapping.json"
 CAPTURES_PATH = "capture/"
 ASSETS_PATH = "capture/"
 
-DEFAULT_SEQUENCE_NAME = "Stress"
-DEFAULT_CAPTURE_NAME = "stress_high"
-DEFAULT_TEST_NAME = "stress_zoom_full"
+DEFAULT_SEQUENCE_NAME = "Story"
+DEFAULT_CAPTURE_NAME = "story_high"
+DEFAULT_TEST_NAME = "story_flythrough_full"
 
 BENCHMARK_TIMEOUT = 300
 
