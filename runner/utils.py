@@ -1,6 +1,4 @@
-#
-#
-#
+# Copyright (c) 2010-2013 Turbulenz Limited
 
 import os
 import sys
