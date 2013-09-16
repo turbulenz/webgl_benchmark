@@ -732,8 +732,6 @@ def main():
     server = None
     try:
         if not args.no_run:
-            server = start_server(abspath('.'))
-
             warn("Browser will automatically close if benchmark takes longer than %d seconds to run" % BENCHMARK_TIMEOUT)
             command_line_args = None
 
@@ -741,6 +739,7 @@ def main():
                 command_line_args = "--disable-web-security"
 
             if args.target == 'offline':
+                server = start_server(abspath('.'))
                 BROWSERRUNNER_TESTURL = "file://" + getcwd() + BROWSERRUNNER_TESTMODE
             else:
                 BROWSERRUNNER_TESTURL = "http://" + BROWSERRUNNER_DEVSERVER + BROWSERRUNNER_TESTURLPATH + BROWSERRUNNER_TESTMODE
