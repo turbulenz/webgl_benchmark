@@ -17,13 +17,11 @@ BenchmarkGraph.prototype =
             return false;
         }
 
-        var that = this;
-
         var margin = {top: 10, right: 10, bottom: 100, left: 40};
         var margin2 = {top: 430, right: 10, bottom: 20, left: 40};
         var width = this.width = 960 - margin.left - margin.right;
         var height = this.height = 500 - margin.top - margin.bottom;
-        var height2 = 500 - margin2.top - margin2.bottom;
+        var height2 = this.height2 = 500 - margin2.top - margin2.bottom;
 
         var xRange = [0, width];
         var yRange = [height, 0];
@@ -49,35 +47,6 @@ BenchmarkGraph.prototype =
             x2: d3.svg.axis().scale(scales.x2).orient("bottom"),
             y: d3.svg.axis().scale(scales.y).orient("left")
         };
-
-        var brushed = function brushedFn() {
-            scales.x.domain(brush.empty() ? scales.x2.domain() : brush.extent());
-            var xDomain = scales.x.domain();
-            var data = that._getFrameData(that.graphData[0], "msPerFrame");
-            var dataY = data.map(function (d, i) {
-                if (i < xDomain[0] || i > xDomain[1])
-                {
-                    return 0;
-                }
-                return d;
-            });
-
-            var maxY = d3.max(dataY) * that.yScaleMax;
-            if (maxY !== that.maxValueY)
-            {
-                scales.y.domain([0, maxY]);
-                this.maxValueY = maxY;
-                var t = focus.transition().duration(750);
-                t.select(".y.axis").call(axes.y);
-            }
-
-            focus.select(".x.axis").call(axes.x);
-            that._updateFocusLines();
-        };
-
-        var brush = d3.svg.brush()
-            .x(scales.x2)
-            .on("brush", brushed);
 
         this.hardwareNames = {};
         this.lines = [];
@@ -117,22 +86,16 @@ BenchmarkGraph.prototype =
             .attr("transform", "translate(0," + height2 + ")")
             .call(axes.x2);
 
-        context.append("g")
-            .attr("class", "x brush")
-            .call(brush)
-            .selectAll("rect")
-            .attr("y", -6)
-            .attr("height", height2 + 7);
-
         // Add initial data
+        this.graphData.push(resultData);
         this._updateDomains(frameTime);
         this._updateNames(hardwareName, resultData);
-        this._createLine(lineNames[lineNames - 1], frameTime);
+        this._createLine(lineNames[lineNames.length - 1], frameTime);
+        this.currentLineIndex = 0;
         this._updateFocusLines();
         this._updateContextLines();
         this._updateLegend();
 
-        this.graphData.push(resultData);
         this.initialized = true;
         return true;
     },
@@ -187,7 +150,7 @@ BenchmarkGraph.prototype =
             this._updateDomains(newFrameTime);
         }
         this._updateNames(hardwareName, resultData);
-        this._createLine(lineNames[lineNames - 1], newFrameTime);
+        this._createLine(lineNames[lineNames.length - 1], newFrameTime);
         this._updateFocusLines();
         this._updateContextLines();
         this._updateLegend();
@@ -296,10 +259,36 @@ BenchmarkGraph.prototype =
 
     _updateFocusLines: function updateFocusLinesFn()
     {
+        var that = this;
         var color = this.color;
         var lines = this.lines;
+        var scales = this.scales;
+        var axes = this.axes;
         var lineData;
         var trans;
+
+        if (that.currentLineIndex !== -1)
+        {
+            var xDomain = scales.x.domain();
+            var data = that._getFrameData(that.graphData[that.currentLineIndex], "msPerFrame");
+            var dataY = data.map(function (d, i) {
+                if (i < xDomain[0] || i > xDomain[1])
+                {
+                    return 0;
+                }
+                return d;
+            });
+
+            var maxY = d3.max(dataY) * that.yScaleMax;
+            if (maxY !== that.maxValueY)
+            {
+                scales.y.domain([0, maxY]);
+                scales.y2.domain([0, maxY]);
+                this.maxValueY = maxY;
+                trans = that.focus.transition().duration(750);
+                trans.select(".y.axis").call(axes.y);
+            }
+        }
 
         for (var i = 0; i < lines.length; i += 1)
         {
@@ -308,7 +297,7 @@ BenchmarkGraph.prototype =
             {
                 trans = lineData.focus.transition().duration(750);
                 trans.attr("d", lineData.line(lineData.data));
-                lineData.focus.style("stroke", color(i)/*lineData.lineName*/);
+                //lineData.focus.style("stroke", color(i)/*lineData.lineName*/);
             }
             else
             {
@@ -353,18 +342,69 @@ BenchmarkGraph.prototype =
             lineData = lines[i];
             if (lineData.context)
             {
-                lineData.context.attr("d", lineData.line(lineData.data));
+                lineData.context.attr("d", lineData.line2(lineData.data));
                 lineData.context.style("stroke", color(i)/*lineData.lineName*/);
             }
             else
             {
                 lineData.context = this._createContextLine(lineData, i);
+                this._addBrush();
             }
         }
     },
 
+    _addBrush: function addBrushFn()
+    {
+        var that = this;
+        var context = this.context;
+        var scales = this.scales;
+        var focus = this.focus;
+        var axes = this.axes;
+        this.graph.selectAll(".x brush").remove();
+
+        var brushend = function brushendFn() {
+            if (that.currentLineIndex === -1)
+            {
+                return;
+            }
+            scales.x.domain(brush.empty() ? scales.x2.domain() : brush.extent());
+            focus.select(".x.axis").call(axes.x);
+            that._updateFocusLines();
+            that._updateContextLines();
+        };
+
+        var brush = d3.svg.brush()
+            .x(scales.x2)
+            .on("brushend", brushend);
+
+        context.append("g")
+            .attr("class", "x brush")
+            .call(brush)
+            .selectAll("rect")
+            .attr("y", -6)
+            .attr("height", this.height2 + 7);
+    },
+
+    _selectLine: function selectLineFn(lineName)
+    {
+        var lineNames = this.lineNames;
+        for (var i = 0; i < lineNames.length; i += 1)
+        {
+            if (lineNames[i] === lineName)
+            {
+                this.currentLineIndex = i;
+                this._updateFocusLines();
+                this._updateContextLines();
+                return i;
+            }
+        }
+        this.currentLineIndex = -1;
+        return -1;
+    },
+
     _updateLegend: function updateLegendFn()
     {
+        var that = this;
         var width = this.width;
         var graph = this.graph;
         var lineNames = this.lineNames;
@@ -382,6 +422,9 @@ BenchmarkGraph.prototype =
             .attr("height", 18)
             .style("fill", function (d, i) {
                 return color(i);
+            })
+            .on("click", function (d) {
+                that._selectLine(d);
             });
 
         legend.append("text")
@@ -389,15 +432,20 @@ BenchmarkGraph.prototype =
             .attr("y", 9)
             .attr("dy", ".35em")
             .style("text-anchor", "end")
-            .text(function (d) { return d; });
+            .text(function (d) { return d; })
+            .on("click", function (d) {
+                that._selectLine(d);
+            });
     },
 
     clear: function clearFn()
     {
+        this.currentLineIndex = -1;
         this.maxValueY = 0;
         this.graphElement = null;
         this.width = 0;
         this.height = 0;
+        this.height2 = 0;
         this.graph = null;
         this.color = null;
         this.lineNames = [];
