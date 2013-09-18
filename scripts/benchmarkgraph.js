@@ -73,7 +73,13 @@ BenchmarkGraph.prototype =
         focus.append("g")
             .attr("class", "x axis")
             .attr("transform", "translate(0," + height + ")")
-            .call(axes.x);
+            .call(axes.x)
+            .append("text")
+                .attr("y", 6)
+                .attr("x", width)
+                .attr("dy", "-1em")
+                .style("text-anchor", "end")
+                .text("Frame number");
 
         focus.append("g")
             .attr("class", "y axis")
@@ -98,6 +104,8 @@ BenchmarkGraph.prototype =
         this._updateDomains(frameTime);
         this._updateFocusLines();
         this._updateContextLines();
+
+
         this._updateLegend();
 
         this.initialized = true;
