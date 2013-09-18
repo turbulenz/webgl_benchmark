@@ -17,7 +17,7 @@ BenchmarkGraph.prototype =
             return false;
         }
 
-        var margin = {top: 10, right: 10, bottom: 100, left: 40};
+        var margin = this.margin = {top: 10, right: 10, bottom: 100, left: 40};
         var margin2 = {top: 430, right: 10, bottom: 20, left: 40};
         var width = this.width = 960 - margin.left - margin.right;
         var height = this.height = 500 - margin.top - margin.bottom;
@@ -439,11 +439,12 @@ BenchmarkGraph.prototype =
         var lineNames = this.lineNames;
         var color = this.color;
         graph.selectAll(".legend").remove();
+        var margin = this.margin;
         var legend = graph.selectAll(".legend")
             .data(lineNames)
             .enter().append("g")
             .attr("class", "legend")
-            .attr("transform", function (d, i) { return "translate(0," + i * 20 + ")"; });
+            .attr("transform", function (d, i) { return "translate(0," + ((i * 20) + margin.top) + ")"; });
 
         legend.append("rect")
             .attr("x", width - 18)
