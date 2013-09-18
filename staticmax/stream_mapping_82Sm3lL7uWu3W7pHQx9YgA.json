@@ -17,7 +17,8 @@
         "noshadows_norendertarget2" : "520e4fae",
         "zoom2_shadows_norendertarget" : "520e3905",
         "story_shadows_rendertarget" : "521f13a3",
-        "story_high" : "5230dc14"
+        "story_high" : "5230dc14",
+        "stress_high" : "523203e6"
     },
     "streamsConfig":
     {
@@ -26,6 +27,14 @@
             "shadows": true,
             "postFxBloom": false,
             "postFxFXAA": false,
+            "postFxColorization": true,
+            "postFxTiltShift": false
+        },
+        "523203e6": {
+            "renderTarget": true,
+            "shadows": true,
+            "postFxBloom": false,
+            "postFxFXAA": true,
             "postFxColorization": true,
             "postFxTiltShift": false
         }
