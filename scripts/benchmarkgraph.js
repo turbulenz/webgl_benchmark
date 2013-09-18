@@ -390,6 +390,7 @@ BenchmarkGraph.prototype =
     _selectLine: function selectLineFn(lineName)
     {
         var lineNames = this.lineNames;
+        this._selectLegend(lineName);
         for (var i = 0; i < lineNames.length; i += 1)
         {
             if (lineNames[i] === lineName)
@@ -403,6 +404,31 @@ BenchmarkGraph.prototype =
         }
         this.currentLineIndex = -1;
         return -1;
+    },
+
+    _selectLegend: function selectLegendFn(lineName)
+    {
+        this.graph.selectAll(".legend text")
+            .style("font-weight", function (d) {
+                if (d === lineName)
+                {
+                    return "bold";
+                }
+                return "normal";
+            });
+        this.graph.selectAll(".legend rect")
+            .style("stroke", function (d) {
+                if (d === lineName)
+                {
+                    return "#000";
+                }
+            })
+            .style("stroke-width", function (d) {
+                if (d === lineName)
+                {
+                    return "2px";
+                }
+            });
     },
 
     _updateLegend: function updateLegendFn()
@@ -426,6 +452,7 @@ BenchmarkGraph.prototype =
             .style("fill", function (d, i) {
                 return color(i);
             })
+            .style("cursor", "pointer")
             .on("click", function (d) {
                 that._selectLine(d);
             });
@@ -435,10 +462,13 @@ BenchmarkGraph.prototype =
             .attr("y", 9)
             .attr("dy", ".35em")
             .style("text-anchor", "end")
+            .style("cursor", "pointer")
             .text(function (d) { return d; })
             .on("click", function (d) {
                 that._selectLine(d);
             });
+
+        this._selectLegend(this.lineNames[this.currentLineIndex]);
     },
 
     clear: function clearFn()
