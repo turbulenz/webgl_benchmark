@@ -71,7 +71,10 @@ BaseConfig.prototype =
     streamIDs: {},
 
     // Save the results using the server based save API
-    useSaveAPI: true
+    useSaveAPI: true,
+
+    // Launch the graph on start
+    graphOnStart: false
 };
 
 BaseConfig.create = function baseConfigCreateFn()

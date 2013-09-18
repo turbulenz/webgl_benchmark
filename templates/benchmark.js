@@ -8,6 +8,7 @@
 
 /*{# benchmark files #}*/
 /*{{ javascript("scripts/benchmarkapp.js") }}*/
+/*{{ javascript("scripts/benchmarkgraph.js") }}*/
 /*{{ javascript("scripts/loadingscreen.js") }}*/
 /*{{ javascript("scripts/playbackcontroller.js") }}*/
 /*{{ javascript("scripts/config.js") }}*/

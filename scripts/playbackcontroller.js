@@ -29,6 +29,7 @@ PlaybackController.prototype =
             this.sequenceList = sequenceList;
         }
         this.loadAssets();
+        this.resultsData = {};
     },
 
     _requestData : function playbackcontroller_requestDataFn(groupIndex)

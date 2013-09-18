@@ -6,7 +6,7 @@
 /*global LoadingScreen: false*/
 /*global PlaybackController: false*/
 /*global Config: false*/
-/*global d3: false*/
+/*global BenchmarkGraph: false*/
 
 function BenchmarkApp() {}
 
@@ -176,6 +176,21 @@ BenchmarkApp.prototype =
             var graphicsDevice = that.graphicsDevice;
             var playbackController = that.playbackController;
 
+            if (config.graphOnStart)
+            {
+                if (that.playbackController.gameSession)
+                {
+                    if (!that.playbackController.userDataManager)
+                    {
+                        return;
+                    }
+                }
+
+                that.displayResults();
+                TurbulenzEngine.clearInterval(that.intervalID);
+                return;
+            }
+
             if (playbackController.addingResources || playbackController.loadingResources || playbackController.loadingTemplates)
             {
                 playbackController.update();
@@ -205,6 +220,7 @@ BenchmarkApp.prototype =
             this.graphicsDevice.fullscreen = false;
         }
 
+        var that = this;
         var engineElem = document.getElementById("engine");
         if (!engineElem)
         {
@@ -217,310 +233,46 @@ BenchmarkApp.prototype =
             canvas.style.display = "none";
         }
 
+        var resultsElem = document.getElementById(this.resultsID);
         var resultsData = this.playbackController.processData();
         var userData = resultsData.userData;
         if (!userData)
         {
-            engineElem.innerHTML = "<h1>No data to graph</h1>";
+            if (resultsElem)
+            {
+                resultsElem.innerHTML = "<h1>No data to graph</h1>";
+            }
         }
 
-        var margin = {top: 10, right: 10, bottom: 100, left: 40},
-            margin2 = {top: 430, right: 10, bottom: 20, left: 40},
-            width = 960 - margin.left - margin.right,
-            height = 500 - margin.top - margin.bottom,
-            height2 = 500 - margin2.top - margin2.bottom;
-
-        var xRange = [0, width];
-        var yRange = [height, 0];
-        var yRange2 = [height2, 0];
-
-        var hardwareName = userData.config.hardware.name;
-        var stream0 = userData.data.sequences[0].streams[0];
-        var stats = stream0.stats;
-        var frames = stream0.frames;
-        var frameTime = frames.msPerFrame;
-        var frameCount = stats.frameCount;
-        var maxFrameMs = stats.maxFrameMs;
-
-        var scales = {
-            x: d3.scale.linear().range(xRange),
-            y: d3.scale.linear().range(yRange),
-            x2: d3.scale.linear().range(xRange),
-            y2: d3.scale.linear().range(yRange2)
-        };
-
-        var axes = {
-            x: d3.svg.axis().scale(scales.x).orient("bottom"),
-            x2: d3.svg.axis().scale(scales.x2).orient("bottom"),
-            y: d3.svg.axis().scale(scales.y).orient("left")
-        };
-
-        var brushed = function brushedFn() {
-            scales.x.domain(brush.empty() ? scales.x2.domain() : brush.extent());
-            focus.select(".x.axis").call(axes.x);
-            updateFocusLines();
-        };
-
-        var brush = d3.svg.brush()
-            .x(scales.x2)
-            .on("brush", brushed);
-
-        var hardwareNames = {};
-        var lines = [];
-        var color = d3.scale.category20();
-        var lineNames = [];
-
-        var graph = d3.select("#results").append("svg:svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom);
-
-        graph.append("defs")
-            .append("clipPath")
-            .attr("id", "clip")
-            .append("rect")
-            .attr("width", width)
-            .attr("height", height);
-
-        var focus = graph.append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-        var context = graph.append("g")
-            .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
-
-        focus.append("g")
-            .attr("class", "x axis")
-            .attr("transform", "translate(0," + height + ")")
-            .call(axes.x);
-
-        focus.append("g")
-            .attr("class", "y axis")
-            .call(axes.y);
-
-        context.append("g")
-            .attr("class", "x axis")
-            .attr("transform", "translate(0," + height2 + ")")
-            .call(axes.x2);
-
-        context.append("g")
-            .attr("class", "x brush")
-            .call(brush)
-            .selectAll("rect")
-            .attr("y", -6)
-            .attr("height", height2 + 7);
-
-        var updateDomains = function updateDomainsFn(newFrameTime)
+        if (userData)
         {
-            scales.x.domain(d3.extent(newFrameTime.map(function (d, i) { return i; })));
-            scales.y.domain([0, d3.max(newFrameTime.map(function (d) { return d; }))]);
-            scales.x2.domain(scales.x.domain());
-            scales.y2.domain(scales.y.domain());
-
-            context.select(".x.axis").call(axes.x2);
-            focus.select(".x.axis").call(axes.x);
-            context.select(".y.axis").call(axes.y);
-            focus.select(".y.axis").call(axes.y);
-        };
-
-        var createLine = function createLineFn(lineName, data)
-        {
-            var line = d3.svg.line();
-            line.x(function (d, i) {
-                return scales.x(i);
-            });
-            line.y(function (d) {
-                return scales.y(d);
-            });
-            var line2 = d3.svg.line();
-            line2.x(function (d, i) {
-                return scales.x2(i);
-            });
-            line2.y(function (d) {
-                return scales.y2(d);
-            });
-            var lineData = {
-                lineName: lineName,
-                line: line,
-                line2: line2,
-                data: data,
-                className: 'line'
-            };
-            lines.push(lineData);
-            return lineData;
-        };
-
-        var updateNames = function updateNamesFn(hardwareName, resultData)
-        {
-            var lineName;
-            if (!hardwareNames[hardwareName])
+            if (!this.graph.init(userData))
             {
-                hardwareNames[hardwareName] = [resultData];
-                lineName = hardwareName;
+                if (resultsElem)
+                {
+                    resultsElem.innerHTML = "<h1>Could not initialize graph</h1>";
+                }
+            }
+        }
+        else if (this.playbackController.userDataManager)
+        {
+            if (resultsElem)
+            {
+                resultsElem.innerHTML = "<h1>Loading...</h1>";
+            }
+        }
+
+        this.playbackController.loadResults(function loadResultsCallbackFn(resultData) {
+            if (!that.graph.initialized)
+            {
+                resultsElem.innerHTML = "";
+                that.graph.init(resultData);
             }
             else
             {
-                hardwareNames[hardwareName].push(resultData);
-                lineName = hardwareName + '-' + hardwareNames[hardwareName].length;
+                that.graph.addResult(resultData);
             }
-
-            lineNames.push(lineName);
-            //TODO: Fix color domains
-            //color.domain(lineNames);
-        };
-
-        var clearFocusLines = function clearFocusLinesFn()
-        {
-            var lineData;
-            for (var i = 0; i < lines.length; i += 1)
-            {
-                lineData = lines[i];
-                if (lineData.focus)
-                {
-                    lineData.focus.remove();
-                    delete lineData.focus;
-                }
-            }
-        };
-
-        var createFocusLine = function createFocusLineFn(lineData, index)
-        {
-            return focus.append("svg:path")
-                .attr("d", lineData.line(lineData.data))
-                .attr("class", lineData.className)
-                .style("stroke", color(index)/*lineData.lineName*/)
-                .attr("clip-path", "url(#clip)");
-        };
-
-        var updateFocusLines = function updateFocusLinesFn()
-        {
-            var lineData;
-            for (var i = 0; i < lines.length; i += 1)
-            {
-                lineData = lines[i];
-                if (lineData.focus)
-                {
-                    lineData.focus.attr("d", lineData.line(lineData.data));
-                    lineData.focus.style("stroke", color(i)/*lineData.lineName*/);
-                }
-                else
-                {
-                    lineData.focus = createFocusLine(lineData, i);
-                }
-            }
-        };
-
-        var createContextLine = function createContextLineFn(lineData, index)
-        {
-            return context.append("svg:path")
-                .attr("d", lineData.line2(lineData.data))
-                .attr("class", lineData.className)
-                .style("stroke", color(index)/*lineData.lineName*/)
-                .attr("clip-path", "url(#clip)");
-        };
-
-        var clearContextLines = function clearContextLinesFn()
-        {
-            var lineData;
-            for (var i = 0; i < lines.length; i += 1)
-            {
-                lineData = lines[i];
-                if (lineData.context)
-                {
-                    lineData.context.remove();
-                    delete lineData.context;
-                }
-            }
-        };
-
-        var updateContextLines = function updateContextLinesFn()
-        {
-            var lineData;
-            for (var i = 0; i < lines.length; i += 1)
-            {
-                lineData = lines[i];
-                if (lineData.context)
-                {
-                    lineData.context.attr("d", lineData.line(lineData.data));
-                    lineData.context.style("stroke", color(i)/*lineData.lineName*/);
-                }
-                else
-                {
-                    lineData.context = createContextLine(lineData, i);
-                }
-            }
-        };
-
-        var updateLegend = function updateLegendFn()
-        {
-            graph.selectAll(".legend").remove();
-            var legend = graph.selectAll(".legend")
-                .data(lineNames)
-                .enter().append("g")
-                .attr("class", "legend")
-                .attr("transform", function (d, i) { return "translate(0," + i * 20 + ")"; });
-
-            legend.append("rect")
-                .attr("x", width - 18)
-                .attr("width", 18)
-                .attr("height", 18)
-                .style("fill", function (d, i) {
-                    return color(i);
-                });
-
-            legend.append("text")
-                .attr("x", width - 24)
-                .attr("y", 9)
-                .attr("dy", ".35em")
-                .style("text-anchor", "end")
-                .text(function (d) { return d; });
-        };
-
-        var resultLoadedCallback = function resultLoadedCallbackFn(resultData)
-        {
-            if (resultData.version !== 0)
-            {
-                //TODO: Result data not supported
-                return;
-            }
-
-            var hardwareName = resultData.config.hardware.name;
-            var stream0 = resultData.data.sequences[0].streams[0];
-            var stats = stream0.stats;
-            var frames = stream0.frames;
-            var newFrameTime = frames.msPerFrame;
-            var newFrameCount = stats.frameCount;
-            var newMaxFrameMs = stats.maxFrameMs;
-
-            var domainUpdate = false;
-            if (newMaxFrameMs > maxFrameMs)
-            {
-                domainUpdate = true;
-            }
-
-            if (newFrameCount > frameCount)
-            {
-                domainUpdate = true;
-            }
-
-            if (domainUpdate)
-            {
-                updateDomains(newFrameTime);
-            }
-            updateNames(hardwareName, resultData);
-            createLine(lineNames[lineNames - 1], newFrameTime);
-            updateFocusLines();
-            updateContextLines();
-            updateLegend();
-        };
-
-        // Add initial data
-        updateDomains(frameTime);
-        updateNames(hardwareName, userData);
-        createLine(lineNames[lineNames - 1], frameTime);
-        updateFocusLines();
-        updateContextLines();
-        updateLegend();
-
-        this.playbackController.loadResults(resultLoadedCallback);
+        });
     },
 
     shutdown : function benchmarkappShutdownFn()
@@ -576,6 +328,12 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
     benchmarkApp.playbackController.antialias = antialias;
 
     benchmarkApp.loadingScreen = LoadingScreen.create(graphicsDevice, mathDevice, {progress: 0});
+
+    benchmarkApp.resultsID = "results";
+
+    benchmarkApp.graph = BenchmarkGraph.create({
+        elementSelector: "#" + benchmarkApp.resultsID
+    });
 
     benchmarkApp.intervalID = null;
 
