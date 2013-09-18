@@ -384,13 +384,13 @@ def generate_config(config_name="default", config_target=None, allow_querystring
                                         config_desc, \
                                         config_inherit, \
                                         config_override, \
-                                        config_querystring, \
                                         config_results_template, \
                                         config_prefix_templates_url, \
                                         config_default_sequence_name, \
                                         config_default_test_name, \
                                         config_stream_ids, \
-                                        config_streams_config)
+                                        config_streams_config, \
+                                        config_querystring)
 
     try:
         info("Writing resultsTemplate: %s" % CONFIG_PATH)
