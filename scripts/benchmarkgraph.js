@@ -57,8 +57,6 @@ BenchmarkGraph.prototype =
             .attr("width", width + margin.left + margin.right)
             .attr("height", height + margin.top + margin.bottom);
 
-        //graph.transition();
-
         graph.append("defs")
             .append("clipPath")
             .attr("id", "clip")
@@ -79,7 +77,13 @@ BenchmarkGraph.prototype =
 
         focus.append("g")
             .attr("class", "y axis")
-            .call(axes.y);
+            .call(axes.y)
+            .append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 6)
+                .attr("dy", "1em")
+                .style("text-anchor", "end")
+                .text("Time between frames (ms)");
 
         context.append("g")
             .attr("class", "x axis")
@@ -88,10 +92,10 @@ BenchmarkGraph.prototype =
 
         // Add initial data
         this.graphData.push(resultData);
-        this._updateDomains(frameTime);
         this._updateNames(hardwareName, resultData);
         this._createLine(lineNames[lineNames.length - 1], frameTime);
         this.currentLineIndex = 0;
+        this._updateDomains(frameTime);
         this._updateFocusLines();
         this._updateContextLines();
         this._updateLegend();
@@ -132,27 +136,18 @@ BenchmarkGraph.prototype =
 
         var newFrameTime = this._getFrameData(resultData, "msPerFrame");
         var newFrameCount = this._getStatData(resultData, "frameCount");
-        var newMaxFrameMs = this._getStatData(resultData, "maxFrameMs");
 
-        var domainUpdate = false;
-        if (newMaxFrameMs > this.maxFrameMs)
-        {
-            domainUpdate = true;
-        }
+        this._updateNames(hardwareName, resultData);
+        this._createLine(lineNames[lineNames.length - 1], newFrameTime);
 
         if (newFrameCount > this.frameCount)
         {
-            domainUpdate = true;
-        }
-
-        if (domainUpdate)
-        {
             this._updateDomains(newFrameTime);
         }
-        this._updateNames(hardwareName, resultData);
-        this._createLine(lineNames[lineNames.length - 1], newFrameTime);
+
         this._updateFocusLines();
         this._updateContextLines();
+
         this._updateLegend();
         this.graphData.push(resultData);
     },
@@ -163,24 +158,56 @@ BenchmarkGraph.prototype =
         var context = this.context;
         var focus = this.focus;
         var axes = this.axes;
+        var lines = this.lines;
         var yScaleMax = this.yScaleMax;
+        var focusTrans = focus.transition().duration(750);
+        var contextTrans = context.transition().duration(750);
 
-        scales.x.domain(d3.extent(xData.map(function (d, i) { return i; })));
-        var xDomain = scales.x.domain();
-        scales.y.domain([0, d3.max(xData.map(function (d, i) {
-                if (i < xDomain[0] || i > xDomain[1])
-                {
-                    return 0;
-                }
-                return d;
-            })) * yScaleMax]);
-        scales.x2.domain(scales.x.domain());
-        scales.y2.domain(scales.y.domain());
+        var lineData;
+        var maxY;
+        var dataY;
 
-        context.select(".x.axis").call(axes.x2);
-        focus.select(".x.axis").call(axes.x);
-        context.select(".y.axis").call(axes.y);
-        focus.select(".y.axis").call(axes.y);
+        if (xData)
+        {
+            scales.x.domain(d3.extent(xData.map(function (d, i) { return i; })));
+            scales.x2.domain(scales.x.domain());
+            focusTrans.select(".x.axis").call(axes.x);
+            contextTrans.select(".x.axis").call(axes.x2);
+        }
+
+        var xDomain;
+        function inXDomain(d, i) {
+            if (i < xDomain[0] || i > xDomain[1])
+            {
+                return 0;
+            }
+            return d;
+        }
+
+        if (this.currentLineIndex !== -1)
+        {
+            lineData = lines[this.currentLineIndex].data;
+
+            xDomain = scales.x.domain();
+            dataY = lineData.map(inXDomain);
+
+            maxY = d3.max(dataY) * yScaleMax;
+            if (maxY !== this.maxValueY)
+            {
+                scales.y.domain([0, maxY]);
+                scales.y2.domain(scales.y.domain());
+                focusTrans.select(".y.axis").call(axes.y);
+                contextTrans.select(".y.axis").call(axes.y);
+                this.maxValueY = maxY;
+            }
+        }
+        else
+        {
+            scales.y.domain([0, this.maxValueY]);
+            scales.y2.domain(scales.y.domain());
+            focusTrans.select(".y.axis").call(axes.y);
+            contextTrans.select(".y.axis").call(axes.y);
+        }
     },
 
     _createLine: function createLineFn(lineName, data)
@@ -227,8 +254,6 @@ BenchmarkGraph.prototype =
         }
 
         this.lineNames.push(lineName);
-        //TODO: Fix color domains
-        //color.domain(lineNames);
     },
 
     _clearFocusLines: function clearFocusLinesFn()
@@ -253,51 +278,23 @@ BenchmarkGraph.prototype =
         return focus.append("svg:path")
             .attr("d", lineData.line(lineData.data))
             .attr("class", lineData.className)
-            .style("stroke", color(index)/*lineData.lineName*/)
+            .style("stroke", color(index))
             .attr("clip-path", "url(#clip)");
     },
 
     _updateFocusLines: function updateFocusLinesFn()
     {
-        var that = this;
-        var color = this.color;
         var lines = this.lines;
-        var scales = this.scales;
-        var axes = this.axes;
         var lineData;
-        var trans;
-
-        if (that.currentLineIndex !== -1)
-        {
-            var xDomain = scales.x.domain();
-            var data = that._getFrameData(that.graphData[that.currentLineIndex], "msPerFrame");
-            var dataY = data.map(function (d, i) {
-                if (i < xDomain[0] || i > xDomain[1])
-                {
-                    return 0;
-                }
-                return d;
-            });
-
-            var maxY = d3.max(dataY) * that.yScaleMax;
-            if (maxY !== that.maxValueY)
-            {
-                scales.y.domain([0, maxY]);
-                scales.y2.domain([0, maxY]);
-                this.maxValueY = maxY;
-                trans = that.focus.transition().duration(750);
-                trans.select(".y.axis").call(axes.y);
-            }
-        }
+        var focusTrans;
 
         for (var i = 0; i < lines.length; i += 1)
         {
             lineData = lines[i];
             if (lineData.focus)
             {
-                trans = lineData.focus.transition().duration(750);
-                trans.attr("d", lineData.line(lineData.data));
-                //lineData.focus.style("stroke", color(i)/*lineData.lineName*/);
+                focusTrans = lineData.focus.transition().duration(750);
+                focusTrans.attr("d", lineData.line(lineData.data));
             }
             else
             {
@@ -313,7 +310,7 @@ BenchmarkGraph.prototype =
         return context.append("svg:path")
             .attr("d", lineData.line2(lineData.data))
             .attr("class", lineData.className)
-            .style("stroke", color(index)/*lineData.lineName*/)
+            .style("stroke", color(index))
             .attr("clip-path", "url(#clip)");
     },
 
@@ -335,15 +332,14 @@ BenchmarkGraph.prototype =
     _updateContextLines: function updateContextLinesFn()
     {
         var lines = this.lines;
-        var color = this.color;
         var lineData;
+
         for (var i = 0; i < lines.length; i += 1)
         {
             lineData = lines[i];
             if (lineData.context)
             {
                 lineData.context.attr("d", lineData.line2(lineData.data));
-                lineData.context.style("stroke", color(i)/*lineData.lineName*/);
             }
             else
             {
@@ -363,12 +359,10 @@ BenchmarkGraph.prototype =
         this.graph.selectAll(".x brush").remove();
 
         var brushend = function brushendFn() {
-            if (that.currentLineIndex === -1)
-            {
-                return;
-            }
             scales.x.domain(brush.empty() ? scales.x2.domain() : brush.extent());
-            focus.select(".x.axis").call(axes.x);
+            var trans = focus.transition().duration(750);
+            trans.select(".x.axis").call(axes.x);
+            that._updateDomains();
             that._updateFocusLines();
             that._updateContextLines();
         };
@@ -393,6 +387,7 @@ BenchmarkGraph.prototype =
             if (lineNames[i] === lineName)
             {
                 this.currentLineIndex = i;
+                this._updateDomains();
                 this._updateFocusLines();
                 this._updateContextLines();
                 return i;
