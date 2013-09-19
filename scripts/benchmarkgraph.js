@@ -105,8 +105,8 @@ BenchmarkGraph.prototype =
         this._updateFocusLines();
         this._updateContextLines();
 
-
         this._updateLegend();
+        this._createTooltip();
 
         this.initialized = true;
         return true;
@@ -124,6 +124,45 @@ BenchmarkGraph.prototype =
         var stream0 = resultData.data.sequences[0].streams[0];
         var stats = stream0.stats;
         return stats[frameDataName];
+    },
+
+    _getToolTipText: function getToolTipTextFn(index)
+    {
+        var resultData = this.graphData[index];
+        var textArray = [];
+
+        function addConfig(name, config)
+        {
+            var i, c, keys, indent;
+            textArray.push(name + ":");
+            indent = "- ";
+            keys = [];
+            for (c in config)
+            {
+                if (config.hasOwnProperty(c))
+                {
+                    if (c !== "name")
+                    {
+                        keys.push(c);
+                    }
+                    else
+                    {
+                        textArray.push(indent + "name: " + config[c]);
+                    }
+                }
+            }
+            keys.sort();
+            for (i = 0; i < keys.length; i += 1)
+            {
+                textArray.push(indent + keys[i] + ": " + config[keys[i]]);
+            }
+            textArray.push(" ");
+        }
+
+        addConfig("Hardware Config", resultData.config.hardware);
+        addConfig("Playback Config", resultData.config.playback);
+
+        return textArray;
     },
 
     addResult: function addResultFn(resultData)
@@ -364,6 +403,14 @@ BenchmarkGraph.prototype =
         var scales = this.scales;
         var focus = this.focus;
         var axes = this.axes;
+
+        var brush = this.brush;
+        if (!brush)
+        {
+            this.brush = brush = d3.svg.brush().x(scales.x2);
+        }
+
+        brush.on("brushend", null);
         this.graph.selectAll(".x brush").remove();
 
         var brushend = function brushendFn() {
@@ -375,9 +422,7 @@ BenchmarkGraph.prototype =
             that._updateContextLines();
         };
 
-        var brush = d3.svg.brush()
-            .x(scales.x2)
-            .on("brushend", brushend);
+        brush.on("brushend", brushend);
 
         context.append("g")
             .attr("class", "x brush")
@@ -385,6 +430,72 @@ BenchmarkGraph.prototype =
             .selectAll("rect")
             .attr("y", -6)
             .attr("height", this.height2 + 7);
+    },
+
+    _createTooltip: function createTooltip()
+    {
+        var margin = {top: 10, right: 10, bottom: 100, left: 10};
+        var width = 150 - margin.left - margin.right;
+
+        var tooltip = this.graph.append("g")
+            .attr("class", "tooltip");
+
+        tooltip.append("rect")
+            .attr("transform", "translate(" + (-margin.left - width - margin.right) + "," + margin.top + ")")
+            .attr("width", width + margin.right)
+            .style("opacity", "0.0")
+            .style("fill", "#999");
+
+        tooltip.append("g")
+            .attr("class", "textbox")
+            .attr("transform", "translate(" + (-margin.left - width - margin.right) + "," + margin.top + ")")
+            .style("opacity", "0.0")
+            .style("fill", "#FFF");
+    },
+
+    _tooltipOver: function tooltipOverFn(lineName, index)
+    {
+        var textLines = this._getToolTipText(index);
+        this.graph.selectAll(".tooltip .textbox text").remove();
+        var tooltipText = this.graph.select(".tooltip .textbox");
+        var height = textLines.length * 10;
+
+        for (var i = 0; i < textLines.length; i += 1)
+        {
+            tooltipText.append("text")
+                .attr("transform", "translate(5," + ((i * 10) + 10) + ")")
+                .text(textLines[i]);
+        }
+
+        this.graph.select(".tooltip .textbox").transition().duration(750)
+            .style("opacity", "1.0")
+            .style("visibility", null);
+
+        this.graph.select(".tooltip rect").transition().duration(500)
+            .attr("height", height)
+            .style("opacity", "0.9")
+            .style("visibility", null);
+    },
+
+    _tooltipMove: function tooltipMoveFn(lineName, event)
+    {
+        var margin = this.margin;
+        var pos = d3.mouse(event);
+        this.graph.select(".tooltip")
+            .attr("transform", function (d, i) {
+                return "translate(" + pos[0] + "," + ((i * 20) + margin.top + pos[1]) + ")";
+            });
+    },
+
+    _tooltipOut: function tooltipOutFn()
+    {
+        this.graph.select(".tooltip .textbox").transition().duration(50)
+            .style("opacity", "0.0")
+            .style("visibility", "hidden");
+        this.graph.select(".tooltip rect").transition().duration(50)
+            .attr("height", 0)
+            .style("opacity", "0.0")
+            .style("visibility", "hidden");
     },
 
     _selectLine: function selectLineFn(lineName)
@@ -456,6 +567,17 @@ BenchmarkGraph.prototype =
             .style("cursor", "pointer")
             .on("click", function (d) {
                 that._selectLine(d);
+            })
+            .on("mouseover", function (d, i) {
+                that._tooltipOver(d, i);
+            })
+            .on("mouseout", function (d) {
+                that._tooltipOut(d);
+            });
+
+        this.graph
+            .on("mousemove", function (d) {
+                that._tooltipMove(d, this);
             });
 
         legend.append("text")
@@ -474,6 +596,7 @@ BenchmarkGraph.prototype =
 
     clear: function clearFn()
     {
+        this.brush = null;
         this.currentLineIndex = -1;
         this.maxValueY = 0;
         this.graphElement = null;
