@@ -44,15 +44,11 @@ PlaybackController.prototype =
         };
         this.groups[groupIndex] = group;
 
-        var xhr0 = (window.XMLHttpRequest ? new window.XMLHttpRequest() : new window.ActiveXObject("Microsoft.XMLHTTP"));
-        var xhr1 = (window.XMLHttpRequest ? new window.XMLHttpRequest() : new window.ActiveXObject("Microsoft.XMLHTTP"));
-        var xhr2 = (window.XMLHttpRequest ? new window.XMLHttpRequest() : new window.ActiveXObject("Microsoft.XMLHTTP"));
-
-        var resourcesLoaded = function resourcesLoadedFn()
+        var resourcesLoaded = function resourcesLoadedFn(responseText, status)
         {
-            if (xhr0.readyState === 4)
+            if (status === 200)
             {
-                group.resources = JSON.parse(xhr0.responseText);
+                group.resources = JSON.parse(responseText);
                 that.numCaptureDataLoaded += 1;
 
                 if (group.resources && group.data && group.frames)
@@ -67,18 +63,14 @@ PlaybackController.prototype =
                     that.addingResources = false;
                     that.loadingResources = true;
                 }
-
-                xhr0.onreadystatechange = null;
-                xhr0.responseText = null;
-                xhr0 = null;
             }
         };
 
-        var dataLoaded = function dataLoadedFn()
+        var dataLoaded = function dataLoadedFn(responseAsset, status)
         {
-            if (xhr1.readyState === 4)
+            if (status === 200)
             {
-                group.data = xhr1.response;
+                group.data = responseAsset;
                 that.numCaptureDataLoaded += 1;
 
                 if (group.resources && group.data && group.frames)
@@ -93,18 +85,14 @@ PlaybackController.prototype =
                         that.loadingResources = false;
                     }
                 }
-
-                xhr1.onreadystatechange = null;
-                xhr1.responseText = null;
-                xhr1 = null;
             }
         };
 
-        var framesLoaded = function framesLoadedFn()
+        var framesLoaded = function framesLoadedFn(responseText, status)
         {
-            if (xhr2.readyState === 4)
+            if (status === 200)
             {
-                group.frames = JSON.parse(xhr2.responseText);
+                group.frames = JSON.parse(responseText);
                 that.numCaptureDataLoaded += 1;
 
                 if (group.resources && group.data && group.frames)
@@ -119,28 +107,48 @@ PlaybackController.prototype =
                         that.loadingResources = false;
                     }
                 }
-
-                xhr2.onreadystatechange = null;
-                xhr2.responseText = null;
-                xhr2 = null;
             }
         };
 
         var rangeString = '-' + (groupIndex * this.numFramesPerGroup) +
                           '-' + (((groupIndex + 1) * this.numFramesPerGroup) - 1);
 
-        xhr0.open('GET', this.prefixCaptureURL + 'resources' + rangeString + '.json', true);
-        xhr0.onreadystatechange = resourcesLoaded;
-        xhr0.send();
+        this.requestHandler.request({
+            src: this.prefixCaptureURL + 'resources' + rangeString + '.json',
+            onload: resourcesLoaded
+        });
 
-        xhr1.open('GET', this.prefixCaptureURL + 'data' + rangeString + '.bin', true);
-        xhr1.responseType = "arraybuffer";
-        xhr1.onreadystatechange = dataLoaded;
-        xhr1.send();
+        this.requestHandler.request({
+            src: this.prefixCaptureURL + 'data' + rangeString + '.bin',
+            requestFn: function requestFn(src, onResponse) {
+                var xhr = (window.XMLHttpRequest ? new window.XMLHttpRequest() : new window.ActiveXObject("Microsoft.XMLHTTP"));
 
-        xhr2.open('GET', this.prefixCaptureURL + 'frames' + rangeString + '.json', true);
-        xhr2.onreadystatechange = framesLoaded;
-        xhr2.send();
+                function xhrResponse()
+                {
+                    if (xhr.readyState === 4)
+                    {
+                        var responseAsset = xhr.response;
+                        var status = xhr.status;
+                        xhr.onreadystatechange = null;
+                        xhr.responseText = null;
+                        xhr = null;
+
+                        onResponse(responseAsset, status);
+                    }
+                }
+
+                xhr.open('GET', src, true);
+                xhr.responseType = "arraybuffer";
+                xhr.onreadystatechange = xhrResponse;
+                xhr.send();
+            },
+            onload: dataLoaded
+        });
+
+        this.requestHandler.request({
+            src: this.prefixCaptureURL + 'frames' + rangeString + '.json',
+            onload: framesLoaded
+        });
 
         this.numCaptureData += 3;
     },
@@ -1026,7 +1034,7 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.antialias = false;
 
     var requestHandlerParameters = {};
-    var requestHandler = RequestHandler.create(requestHandlerParameters);
+    var requestHandler = playbackController.requestHandler = RequestHandler.create(requestHandlerParameters);
 
     playbackController.gameSession = null;
     playbackController.userDataManager = null;
