@@ -129,6 +129,10 @@ PlaybackController.prototype =
                     {
                         var responseAsset = xhr.response;
                         var status = xhr.status;
+                        if (!TurbulenzServices.available() && responseAsset)
+                        {
+                            status = 200;
+                        }
                         xhr.onreadystatechange = null;
                         xhr.responseText = null;
                         xhr = null;
@@ -138,7 +142,7 @@ PlaybackController.prototype =
                 }
 
                 xhr.open('GET', src, true);
-                xhr.responseType = "arraybuffer";
+                xhr.responseType = 'arraybuffer';
                 xhr.onreadystatechange = xhrResponse;
                 xhr.send();
             },
