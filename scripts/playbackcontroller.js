@@ -4,7 +4,6 @@
 
 /*global TurbulenzEngine: false*/
 /*global PlaybackGraphicsDevice: false*/
-/*global RequestHandler: false*/
 /*global UserDataManager: false*/
 /*global TurbulenzServices: false*/
 
@@ -13,13 +12,11 @@ function PlaybackController() {}
 PlaybackController.prototype =
 {
 
-    init : function playbackcontrollerInitFn(prefixAssetURL, prefixCaptureURL, prefixTemplatesURL, streamsConfig, testsConfig, sequenceList)
+    init : function playbackcontrollerInitFn(prefixAssetURL, prefixCaptureURL, prefixTemplatesURL, sequenceList)
     {
         this.prefixAssetURL = prefixAssetURL;
         this.prefixCaptureURL = prefixCaptureURL;
         this.prefixTemplatesURL = prefixTemplatesURL;
-        this.streamsConfig = streamsConfig;
-        this.testsConfig = testsConfig;
         if (!sequenceList)
         {
             this.sequenceList = [];
@@ -432,11 +429,8 @@ PlaybackController.prototype =
             this.sequenceList = [];
         }
 
-        userDataResult.config.streams = this.streamsConfig;
-        this.streamsConfig = {};
-
-        userDataResult.config.tests = this.testsConfig;
-        this.testsConfig = {};
+        userDataResult.config.streams = this.streamMeta;
+        this.streamMeta = {};
 
         // Add data
         var framesData = {};
@@ -947,7 +941,7 @@ PlaybackController.prototype =
     }
 };
 
-PlaybackController.create = function playbackControllerCreateFn(config, graphicsDevice)
+PlaybackController.create = function playbackControllerCreateFn(config, graphicsDevice, requestHandler)
 {
     var playbackController = new PlaybackController();
     playbackController.graphicsDevice = graphicsDevice;
@@ -1025,8 +1019,7 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     };
 
     playbackController.playbackConfig = {};
-    playbackController.streamsConfig = {};
-    playbackController.testsConfig = {};
+    playbackController.streamMeta = {};
     playbackController.sequenceList = [];
 
     playbackController.resultsData = null;
@@ -1037,8 +1030,7 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.multisample = -1;
     playbackController.antialias = false;
 
-    var requestHandlerParameters = {};
-    var requestHandler = playbackController.requestHandler = RequestHandler.create(requestHandlerParameters);
+    playbackController.requestHandler = requestHandler;
 
     playbackController.gameSession = null;
     playbackController.userDataManager = null;

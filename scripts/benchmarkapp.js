@@ -7,6 +7,7 @@
 /*global PlaybackController: false*/
 /*global Config: false*/
 /*global BenchmarkGraph: false*/
+/*global RequestHandler: false*/
 
 function BenchmarkApp() {}
 
@@ -18,14 +19,6 @@ BenchmarkApp.prototype =
 
         var streamsConfig = config.streamsConfig || {};
         var streamIDs = config.streamIDs || {};
-
-        //TODO: load tests config from capture data
-        var testsConfig = {
-            "0": {
-                startFrame: 0,
-                endFrame: config.numTotalFrames - 1
-            }
-        };
 
         // Default benchmark behaviour
         // Single sequence, single stream, single test
@@ -52,7 +45,22 @@ BenchmarkApp.prototype =
             streams: [stream]
         }];
 
-        this.playbackController.init(config.prefixAssetURL, config.captureLookUp[config.defaultCapture], config.prefixTemplatesURL, streamsConfig, testsConfig, sequenceList);
+        var metaLoaded = function metaLoadedFn(responseText, status)
+        {
+            if (status === 200)
+            {
+                streamsConfig[config.defaultCapture] = JSON.parse(responseText);
+            }
+        };
+
+        var prefixCaptureURL = config.captureLookUp[config.defaultCapture];
+
+        this.requestHandler.request({
+            src: prefixCaptureURL + 'meta.json',
+            onload: metaLoaded
+        });
+
+        this.playbackController.init(config.prefixAssetURL, prefixCaptureURL, config.prefixTemplatesURL, sequenceList);
 
         // Controls
         var saveElement = document.getElementById("buttonSave");
@@ -323,7 +331,10 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
 
     var mathDevice = benchmarkApp.mathDevice = TurbulenzEngine.createMathDevice({});
 
-    benchmarkApp.playbackController = PlaybackController.create(config, graphicsDevice);
+    var requestHandlerParameters = {};
+    var requestHandler = benchmarkApp.requestHandler = RequestHandler.create(requestHandlerParameters);
+
+    benchmarkApp.playbackController = PlaybackController.create(config, graphicsDevice, requestHandler);
     benchmarkApp.playbackController.multisample = multisample;
     benchmarkApp.playbackController.antialias = antialias;
 
