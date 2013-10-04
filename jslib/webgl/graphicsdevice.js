@@ -2983,7 +2983,7 @@ var TZWebGLShader = (function () {
                 }
                 parameter.numValues = (parameter.columns * parameter.rows);
                 var parameterType = parameter.type;
-                if (parameterType === "float" || parameterType === "int" || parameterType === "boolean") {
+                if (parameterType === "float" || parameterType === "int" || parameterType === "bool") {
                     var parameterValues = parameter.values;
                     if (parameterValues) {
                         if (parameterType === "float") {
