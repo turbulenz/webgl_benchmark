@@ -32,7 +32,7 @@ OnlineConfig.create = function onlineCreateFn()
     captureLookUp['story_high_particles']              = '//tzawsuser-benchmark.s3.amazonaws.com/523b1e28/';
 
     config.prefixAssetURL = '//tzawsuser-benchmark.s3.amazonaws.com/';
-    config.prefixTemplatesURL = "config/templates/online/";
+    config.prefixTemplatesURL = "assets/config/templates/online/";
     config.useSaveAPI = false;
 
     return config;
