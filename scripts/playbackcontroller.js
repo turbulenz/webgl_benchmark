@@ -406,11 +406,7 @@ PlaybackController.prototype =
 
         if (!userDataResult.config.hardware.name)
         {
-            var hardwareName = "";
-            while (!hardwareName)
-            {
-                hardwareName = window.prompt("Please specify a name for this hardware (e.g. Frank's Laptop, Quad-core Desktop)");
-            }
+            var hardwareName = "Benchmark Test Results";
             userDataResult.config.hardware.name = hardwareName;
         }
 
