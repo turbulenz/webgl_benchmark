@@ -63,11 +63,8 @@ BenchmarkApp.prototype =
         this.playbackController.init(config.prefixAssetURL, prefixCaptureURL, config.prefixTemplatesURL, sequenceList);
 
         // Controls
-        var saveElement = document.getElementById("buttonSave");
         var pauseElement = document.getElementById("buttonPause");
         var stepElement = document.getElementById("buttonStep");
-        var abortElement = document.getElementById("buttonAbort");
-        var fixedElement = document.getElementById("checkboxFixed");
         var multisamplingElement = document.getElementById("multisampling");
         var fullscreenElement = document.getElementById("buttonFullscreen");
 
@@ -83,15 +80,6 @@ BenchmarkApp.prototype =
         }
 
         var playbackController = this.playbackController;
-
-        if (saveElement)
-        {
-            saveElement.disabled = true;
-            saveElement.onclick = function ()
-            {
-                playbackController.outputData(config.defaultCapture);
-            };
-        }
 
         var that = this;
         if (fullscreenElement)
@@ -135,24 +123,6 @@ BenchmarkApp.prototype =
             };
         }
 
-        if (abortElement)
-        {
-            abortElement.disabled = true;
-            abortElement.onclick = function ()
-            {
-                playbackController.abort();
-            };
-        }
-
-        if (fixedElement)
-        {
-            fixedElement.checked = playbackController.fixedFrameRate;
-            fixedElement.onclick = function ()
-            {
-                playbackController.fixedFrameRate = fixedElement.checked;
-            };
-        }
-
         var requestAnimationFrame = (window.requestAnimationFrame ||
                                      window.webkitRequestAnimationFrame ||
                                      window.oRequestAnimationFrame ||
@@ -162,17 +132,9 @@ BenchmarkApp.prototype =
         {
             if (!TurbulenzEngine.isUnloading()) {
                 that.playbackController.update();
-                if (abortElement && abortElement.disabled)
-                {
-                    abortElement.disabled = false;
-                }
                 if (that.playbackController.atEnd)
                 {
                     that.displayResults();
-                    if (saveElement && saveElement.disabled)
-                    {
-                        saveElement.disabled = false;
-                    }
                     return;
                 }
                 requestAnimationFrame(update);
