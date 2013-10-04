@@ -51,7 +51,7 @@ CAPTURES_PATH = "capture/"
 ASSETS_PATH = "capture/"
 
 DEFAULT_SEQUENCE_NAME = "Story"
-DEFAULT_CAPTURE_NAME = "story_high"
+DEFAULT_CAPTURE_NAME = "story_high_particles"
 DEFAULT_TEST_NAME = "story_flythrough_full"
 
 BENCHMARK_TIMEOUT = 300

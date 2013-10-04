@@ -32,6 +32,7 @@ BaseConfig.prototype =
         'story_high_fxaa': 'capture/story_high_fxaa/',
         'story_high_nofxaa': 'capture/story_high_nofxaa/',
         'story_high_norendertarget': 'capture/story_high_norendertarget/',
+        'story_high_particles': 'capture/story_high_particles'
     },
 
     // The total number of frames to playback

@@ -16,8 +16,8 @@ BenchmarkApp.prototype =
     init : function benchmarkappInitFn()
     {
         var config = this.config;
+        var that = this;
 
-        var streamsConfig = config.streamsConfig || {};
         var streamIDs = config.streamIDs || {};
 
         // Default benchmark behaviour
@@ -49,7 +49,7 @@ BenchmarkApp.prototype =
         {
             if (status === 200)
             {
-                streamsConfig[config.defaultCapture] = JSON.parse(responseText);
+                that.playbackController.streamMeta[stream.id] = JSON.parse(responseText);
             }
         };
 
