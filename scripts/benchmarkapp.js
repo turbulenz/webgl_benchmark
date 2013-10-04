@@ -63,8 +63,6 @@ BenchmarkApp.prototype =
         this.playbackController.init(config.prefixAssetURL, prefixCaptureURL, config.prefixTemplatesURL, sequenceList);
 
         // Controls
-        var pauseElement = document.getElementById("buttonPause");
-        var stepElement = document.getElementById("buttonStep");
         var multisamplingElement = document.getElementById("multisampling");
         var fullscreenElement = document.getElementById("buttonFullscreen");
 
@@ -90,36 +88,6 @@ BenchmarkApp.prototype =
                 {
                     that.graphicsDevice.fullscreen = true;
                 }
-            };
-        }
-
-        if (pauseElement)
-        {
-            pauseElement.onclick = function ()
-            {
-                if (playbackController.paused)
-                {
-                    pauseElement.value = "Pause";
-                    playbackController.play();
-                }
-                else
-                {
-                    pauseElement.value = "Play";
-                    playbackController.pause();
-                }
-                if (stepElement)
-                {
-                    stepElement.disabled = !playbackController.paused;
-                }
-            };
-        }
-
-        if (stepElement)
-        {
-            stepElement.disabled = true;
-            stepElement.onclick = function ()
-            {
-                playbackController.step = true;
             };
         }
 
