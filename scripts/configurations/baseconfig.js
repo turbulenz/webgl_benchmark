@@ -28,7 +28,10 @@ BaseConfig.prototype =
         'zoom2_shadows_tiltshift': 'capture/zoom2_shadows_tiltshift/',
         'zoom_noshadows_norendertarget': 'capture/zoom_noshadows_norendertarget/',
         'story_shadows_rendertarget': 'capture/story_shadows_rendertarget/',
-        'story_high': 'capture/story_high'
+        'story_high': 'capture/story_high/',
+        'story_high_fxaa': 'capture/story_high_fxaa/',
+        'story_high_nofxaa': 'capture/story_high_nofxaa/',
+        'story_high_norendertarget': 'capture/story_high_norendertarget/',
     },
 
     // The total number of frames to playback
