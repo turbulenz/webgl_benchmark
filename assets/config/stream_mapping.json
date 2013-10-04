@@ -18,6 +18,7 @@
         "zoom2_shadows_norendertarget" : "520e3905",
         "story_shadows_rendertarget" : "521f13a3",
         "story_high" : "5230dc14",
-        "stress_high" : "523203e6"
+        "stress_high" : "523203e6",
+        "story_high_particles" : "523b1e28"
     }
 }

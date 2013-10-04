@@ -30,6 +30,7 @@ OfflineConfig.create = function offlineCreateFn()
     captureLookUp['story_shadows_rendertarget']        = 'capture/story_shadows_rendertarget/';
     captureLookUp['story_high']                        = 'capture/story_high/';
     captureLookUp['stress_high']                       = 'capture/stress_high/';
+    captureLookUp['story_high_particles']              = 'capture/story_high_particles/';
 
     config.prefixAssetURL = "capture/";
     config.prefixTemplatesURL = "assets/config/templates/offline/";
