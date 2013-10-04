@@ -13,6 +13,7 @@ from os import getcwd, makedirs, walk
 from os.path import join as path_join, exists as path_exists, abspath, dirname, normpath
 from json import load as json_load, dumps as json_dumps
 from threading import Thread, BoundedSemaphore
+from shutil import rmtree, copy as shutil_copy
 
 from urllib2 import urlopen, HTTPError, URLError
 from gzip import GzipFile
@@ -49,6 +50,7 @@ CONFIGS_DIR_PATH = "scripts/configurations/"
 STREAM_MAPPING_PATH = "assets/config/stream_mapping.json"
 CAPTURES_PATH = "capture/"
 ASSETS_PATH = "capture/"
+OUTPUT_PATH = "output/"
 
 DEFAULT_SEQUENCE_NAME = "Story"
 DEFAULT_CAPTURE_NAME = "story_high_particles"
@@ -96,6 +98,18 @@ SYSTEM_INFO_MAPPING_WIN = {
     'OS Version': ['osVersion'],
     'Processor(s)': ['processor']
 }
+
+RELEASE_FILES = [   "benchmark.canvas.js",
+                    "benchmark.canvas.release.html",
+                    "mapping_table.json",
+                    "img/favicon.ico",
+                    "img/logo.png",
+                    "img/sidebar-item.png",
+                    "img/titlebar.png",
+                    "css/base_template.css",
+                    "assets/config/stream_mapping.json",
+                    "assets/config/templates/online/results_template-default.json",
+                    "js/d3.v3/d3.v3.js" ]
 
 def mkdir(path, verbose=True):
     if verbose:
@@ -536,6 +550,21 @@ def download_assets(config_name="default", max_connections=20, force_download=Fa
     for t in threads:
         t.join()
 
+def copy_release():
+
+    if path_exists(OUTPUT_PATH):
+        rmtree(OUTPUT_PATH)
+
+    mkdir(OUTPUT_PATH)
+
+    for f in RELEASE_FILES:
+        srcfile = normpath(f)
+        dstfile = normpath(path_join(OUTPUT_PATH, f))
+        dst_dir = dirname(dstfile)
+        if dst_dir != "" and not path_exists(dst_dir):
+            makedirs(dst_dir)
+        shutil_copy(srcfile, dstfile)
+
 def start_server(output_path):
 
     # This is a hack to patch slow socket.getfqdn calls that
@@ -681,6 +710,8 @@ def main():
         help="the path to the browser binary to run. This must be used in conjunction with the --browser option in the case where the user wants to override the default browser path")
     parser.add_argument("--browser-profile", action='store', default=None,
         help="the name of the profile to launch the browser with if supported. On Firefox this is name of the profile. On Chrome this the profile directory.")
+    parser.add_argument("--copy-release", action='store_true',
+        help="copy the release build of the benchmark to the 'output' directory. This flag ignores other flags.")
 
     args = parser.parse_args(argv[1:])
 
@@ -690,6 +721,11 @@ def main():
         basicConfig(level=INFO)
     else:
         basicConfig(level=WARNING)
+
+    if args.copy_release:
+        info("Copying release files to 'output' directory")
+        copy_release()
+        return
 
     if args.server:
         info("Starting server only mode")
