@@ -754,8 +754,13 @@ PlaybackController.prototype =
         if (this.config.promptHardwareName && (hardwareName === this.defaultHardwareName || hardwareName === "Benchmark Test Results"))
         {
             hardwareName = window.prompt("Please specify a name for this hardware (e.g. Frank's Laptop, Quad-core Desktop)");
+            if (!hardwareName)
+            {
+                return;
+            }
+            resultsData.userData.config.hardware.name = hardwareName;
         }
-        if (!hardwareName || (hardwareName === "Benchmark Test Results"))
+        else if (!hardwareName || (hardwareName === "Benchmark Test Results"))
         {
             resultsData.userData.config.hardware.name = hardwareName = this.defaultHardwareName;
         }
