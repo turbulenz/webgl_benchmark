@@ -52,8 +52,22 @@ var debug = {
     log: function debugAssertLogFn(msg) {
         window.console.log(msg);
     },
+    evaluate: function debugEvaluateFn(fn) {
+        fn();
+    },
     isNumber: function debugIsNumber(s) {
         return "number" === typeof s;
+    },
+    isMathType: function isMathTypeFn(v) {
+        if (v instanceof VMathArrayConstructor) {
+            return true;
+        }
+
+        if (TurbulenzEngine.onperformancewarning) {
+            TurbulenzEngine.onperformancewarning("Object is not of type " + VMathArrayConstructor.toString() + ".  If this message appears frequently, performance of your" + " game may be affected.");
+        }
+
+        return true;
     },
     isVec2: function debugIsVec2Fn(v) {
         return (2 === v.length);
