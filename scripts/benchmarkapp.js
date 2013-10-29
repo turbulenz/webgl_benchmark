@@ -350,13 +350,13 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
         "frameNumber": "frameNumber",
         "resolution": "resolution",
         "averageFps": "averageFps",
-        "multisampling": "multisampling",
+        "multisampling": null,
         "fullscreen": "buttonFullscreen",
-        "pause": "buttonPause",
-        "step": "buttonStep",
-        "abort": "buttonAbort",
+        "pause": null,
+        "step": null,
+        "abort": null,
         "save": config.enableSave ? "buttonSave": null,
-        "fixed": "checkboxFixed"
+        "fixed": null
     };
 
     var controlElem;

@@ -81,10 +81,10 @@ BaseConfig.prototype =
     graphOnStart: false,
 
     // Prompt for hardware name (if not specified)
-    promptHardwareName: true,
+    promptHardwareName: false,
 
     // Enable save button
-    enableSave: true
+    enableSave: false
 };
 
 BaseConfig.create = function baseConfigCreateFn()
