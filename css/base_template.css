@@ -234,3 +234,11 @@ body {
     text-align: left;
     padding: 8px 0;
 }
+
+.control-output-pair {
+    display: none;
+}
+
+.control-button-pair {
+    display: none;
+}

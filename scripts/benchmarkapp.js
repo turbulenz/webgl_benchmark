@@ -63,20 +63,22 @@ BenchmarkApp.prototype =
         this.playbackController.init(config.prefixAssetURL, prefixCaptureURL, config.prefixTemplatesURL, sequenceList);
 
         // Controls
-        var saveElement = document.getElementById("buttonSave");
-        var pauseElement = document.getElementById("buttonPause");
-        var stepElement = document.getElementById("buttonStep");
-        var abortElement = document.getElementById("buttonAbort");
-        var fixedElement = document.getElementById("checkboxFixed");
-        var multisamplingElement = document.getElementById("multisampling");
-        var fullscreenElement = document.getElementById("buttonFullscreen");
+        // var saveElement = document.getElementById("buttonSave");
+        // var pauseElement = document.getElementById("buttonPause");
+        // var stepElement = document.getElementById("buttonStep");
+        // var abortElement = document.getElementById("buttonAbort");
+        // var fixedElement = document.getElementById("checkboxFixed");
+        // var multisamplingElement = document.getElementById("multisampling");
+        // var fullscreenElement = document.getElementById("buttonFullscreen");
 
-        var captureNameElement = document.getElementById("captureName");
+        var elements = this.elements;
+        var captureNameElement = elements.captureName;
         if (captureNameElement)
         {
             captureNameElement.textContent = config.defaultCapture;
         }
 
+        var multisamplingElement = elements.multisampling;
         if (multisamplingElement)
         {
             multisamplingElement.textContent = this.playbackController.multisample;
@@ -84,6 +86,7 @@ BenchmarkApp.prototype =
 
         var playbackController = this.playbackController;
 
+        var saveElement = elements.save;
         if (saveElement)
         {
             saveElement.disabled = true;
@@ -93,7 +96,7 @@ BenchmarkApp.prototype =
             };
         }
 
-        var that = this;
+        var fullscreenElement = elements.fullscreen;
         if (fullscreenElement)
         {
             fullscreenElement.onclick = function ()
@@ -105,6 +108,8 @@ BenchmarkApp.prototype =
             };
         }
 
+        var pauseElement = elements.pause;
+        var stepElement = elements.step;
         if (pauseElement)
         {
             pauseElement.onclick = function ()
@@ -135,6 +140,7 @@ BenchmarkApp.prototype =
             };
         }
 
+        var abortElement = elements.abort;
         if (abortElement)
         {
             abortElement.disabled = true;
@@ -144,6 +150,7 @@ BenchmarkApp.prototype =
             };
         }
 
+        var fixedElement = elements.fixed;
         if (fixedElement)
         {
             fixedElement.checked = playbackController.fixedFrameRate;
@@ -334,7 +341,44 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
     var requestHandlerParameters = {};
     var requestHandler = benchmarkApp.requestHandler = RequestHandler.create(requestHandlerParameters);
 
-    benchmarkApp.playbackController = PlaybackController.create(config, graphicsDevice, requestHandler);
+    var elements = benchmarkApp.elements = {};
+    var htmlControls = benchmarkApp.htmlControls = {
+        "captureName": "captureName",
+        "time": "time",
+        "frameTime": "frameTime",
+        "averageFrameTime": "averageFrameTime",
+        "frameNumber": "frameNumber",
+        "resolution": "resolution",
+        "averageFps": "averageFps",
+        "multisampling": "multisampling",
+        "fullscreen": "buttonFullscreen",
+        "pause": "buttonPause",
+        "step": "buttonStep",
+        "abort": "buttonAbort",
+        "save": config.enableSave ? "buttonSave": null,
+        "fixed": "checkboxFixed"
+    };
+
+    var controlElem;
+    for (var c in htmlControls)
+    {
+        if (htmlControls.hasOwnProperty(c))
+        {
+            if (htmlControls[c])
+            {
+                controlElem = document.getElementById(htmlControls[c]);
+                if (controlElem)
+                {
+                    controlElem.parentNode.style.display = "block";
+                    elements[c] = controlElem;
+                    continue;
+                }
+            }
+            elements[c] = null;
+        }
+    }
+
+    benchmarkApp.playbackController = PlaybackController.create(config, graphicsDevice, requestHandler, benchmarkApp.elements);
     benchmarkApp.playbackController.multisample = multisample;
     benchmarkApp.playbackController.antialias = antialias;
 
