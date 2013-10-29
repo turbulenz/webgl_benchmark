@@ -415,12 +415,7 @@ PlaybackController.prototype =
 
         if (!userDataResult.config.hardware.name)
         {
-            var hardwareName = "";
-            while (!hardwareName)
-            {
-                hardwareName = window.prompt("Please specify a name for this hardware (e.g. Frank's Laptop, Quad-core Desktop)");
-            }
-            userDataResult.config.hardware.name = hardwareName;
+            userDataResult.config.hardware.name = this.defaultHardwareName;
         }
 
         // Add config
@@ -756,6 +751,15 @@ PlaybackController.prototype =
         }
 
         var hardwareName = resultsData.userData.config.hardware.name;
+        if (this.config.promptHardwareName && (hardwareName === this.defaultHardwareName))
+        {
+            hardwareName = window.prompt("Please specify a name for this hardware (e.g. Frank's Laptop, Quad-core Desktop)");
+        }
+        if (!hardwareName)
+        {
+            resultsData.userData.config.hardware.name = hardwareName = this.defaultHardwareName;
+        }
+
         var filePath = hardwareName.replace(/[^a-zA-Z0-9 ]/g, '-').toLowerCase().replace(/ /g, '_');
 
         var timestamp = (new Date()).getTime();
@@ -981,7 +985,7 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.loadingTemplates = true;
     playbackController.loadingResults = false;
     playbackController.emptyData = [-1, -1, -1, -1];
-    playbackController.defaultHardwareName = "Unspecified Hardware";
+    playbackController.defaultHardwareName = "Unspecified";
 
     playbackController.step = false;
 
