@@ -78,7 +78,13 @@ BaseConfig.prototype =
     useSaveAPI: true,
 
     // Launch the graph on start
-    graphOnStart: false
+    graphOnStart: false,
+
+    // Prompt for hardware name (if not specified)
+    promptHardwareName: true,
+
+    // Enable save button
+    enableSave: true
 };
 
 BaseConfig.create = function baseConfigCreateFn()

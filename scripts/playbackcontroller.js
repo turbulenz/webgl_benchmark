@@ -260,9 +260,10 @@ PlaybackController.prototype =
                     this.previousFrameTime = timeNow;
                 }
 
-                if (this.frameTimeElement)
+                var frameTimeElement = this.frameTimeElement;
+                if (frameTimeElement)
                 {
-                    this.frameTimeElement.textContent = frameTime.toFixed(1) + ' ms';
+                    frameTimeElement.textContent = frameTime.toFixed(1) + ' ms';
                 }
 
                 if ((!this.paused || this.step) && !this.atEnd)
@@ -278,35 +279,43 @@ PlaybackController.prototype =
                     this.newAverageFrameTime += frameTime / 60.0;
 
                     var recordingTime = (TurbulenzEngine.getTime() - this.playbackStart) / 1000;
-                    if (this.averageFrameTimeElement)
+                    var elements = this.elements;
+
+                    var averageFrameTimeElement = elements.averageFrameTime;
+                    if (averageFrameTimeElement)
                     {
-                        this.averageFrameTimeElement.textContent = this.averageFrameTime.toFixed(1) + ' ms';
+                        averageFrameTimeElement.textContent = this.averageFrameTime.toFixed(1) + ' ms';
                     }
 
-                    if (this.timeElement)
+                    var timeElement = elements.time;
+                    if (timeElement)
                     {
-                        this.timeElement.textContent = recordingTime.toFixed(2) + ' s';
+                        timeElement.textContent = recordingTime.toFixed(2) + ' s';
                     }
 
-                    if (this.framesRenderedElement)
+                    var framesRenderedElement = elements.framesRendered;
+                    if (framesRenderedElement)
                     {
-                        this.framesRenderedElement.textContent = this.framesRendered.toString();
+                        framesRenderedElement.textContent = this.framesRendered.toString();
                     }
 
-                    if (this.averageFpsElement)
+                    var averageFpsElement = elements.averageFps;
+                    if (averageFpsElement)
                     {
-                        this.averageFpsElement.textContent = (this.framesRendered / recordingTime).toFixed(2);
+                        averageFpsElement.textContent = (this.framesRendered / recordingTime).toFixed(2);
                     }
 
-                    if (this.frameNumberElement)
+                    var frameNumberElement = elements.frameNumber;
+                    if (frameNumberElement)
                     {
-                        this.frameNumberElement.textContent =
+                        frameNumberElement.textContent =
                             ((this.currentGroupIndex * this.numFramesPerGroup) + this.relativeFrameIndex).toString();
                     }
 
-                    if (this.resolutionElement)
+                    var resolutionElement = elements.resolution;
+                    if (resolutionElement)
                     {
-                        this.resolutionElement.textContent = this.playbackGraphicsDevice.playWidth.toString() + ' x ' +
+                        resolutionElement.textContent = this.playbackGraphicsDevice.playWidth.toString() + ' x ' +
                             this.playbackGraphicsDevice.playHeight.toString();
                     }
 
@@ -406,8 +415,7 @@ PlaybackController.prototype =
 
         if (!userDataResult.config.hardware.name)
         {
-            var hardwareName = "Benchmark Test Results";
-            userDataResult.config.hardware.name = hardwareName;
+            userDataResult.config.hardware.name = "Benchmark Test Results";
         }
 
         // Add config
@@ -743,6 +751,15 @@ PlaybackController.prototype =
         }
 
         var hardwareName = resultsData.userData.config.hardware.name;
+        if (this.config.promptHardwareName && (hardwareName === this.defaultHardwareName || hardwareName === "Benchmark Test Results"))
+        {
+            hardwareName = window.prompt("Please specify a name for this hardware (e.g. Frank's Laptop, Quad-core Desktop)");
+        }
+        if (!hardwareName || (hardwareName === "Benchmark Test Results"))
+        {
+            resultsData.userData.config.hardware.name = hardwareName = this.defaultHardwareName;
+        }
+
         var filePath = hardwareName.replace(/[^a-zA-Z0-9 ]/g, '-').toLowerCase().replace(/ /g, '_');
 
         var timestamp = (new Date()).getTime();
@@ -937,7 +954,7 @@ PlaybackController.prototype =
     }
 };
 
-PlaybackController.create = function playbackControllerCreateFn(config, graphicsDevice, requestHandler)
+PlaybackController.create = function playbackControllerCreateFn(config, graphicsDevice, requestHandler, elements)
 {
     var playbackController = new PlaybackController();
     playbackController.graphicsDevice = graphicsDevice;
@@ -968,6 +985,7 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.loadingTemplates = true;
     playbackController.loadingResults = false;
     playbackController.emptyData = [-1, -1, -1, -1];
+    playbackController.defaultHardwareName = "Unspecified";
 
     playbackController.step = false;
 
@@ -977,13 +995,14 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.previousFrameTime = 0;
     playbackController.atEnd = false;
 
-    playbackController.framesRenderedElement = document.getElementById("framesRendered");
-    playbackController.timeElement = document.getElementById("time");
-    playbackController.frameTimeElement = document.getElementById("frameTime");
-    playbackController.averageFrameTimeElement = document.getElementById("averageFrameTime");
-    playbackController.frameNumberElement = document.getElementById("frameNumber");
-    playbackController.resolutionElement = document.getElementById("resolution");
-    playbackController.averageFpsElement = document.getElementById("averageFps");
+    playbackController.elements = elements;
+    playbackController.framesRenderedElement = elements.framesRendered;
+    playbackController.timeElement = elements.time;
+    playbackController.frameTimeElement = elements.frameTime;
+    playbackController.averageFrameTimeElement = elements.averageFrameTime;
+    playbackController.frameNumberElement = elements.frameNumber;
+    playbackController.resolutionElement = elements.resolution;
+    playbackController.averageFpsElement = elements.averageFps;
 
     playbackController.paused = false;
     playbackController.pauseStart = null;
