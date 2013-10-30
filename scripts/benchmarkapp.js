@@ -96,6 +96,16 @@ BenchmarkApp.prototype =
             };
         }
 
+        var downloadCSVElement = elements.downloadCSV;
+        if (downloadCSVElement)
+        {
+            downloadCSVElement.disabled = true;
+            downloadCSVElement.onclick = function ()
+            {
+                playbackController.outputData(config.defaultCapture, 'CSV');
+            };
+        }
+
         var fullscreenElement = elements.fullscreen;
         if (fullscreenElement)
         {
@@ -179,6 +189,10 @@ BenchmarkApp.prototype =
                     if (saveElement && saveElement.disabled)
                     {
                         saveElement.disabled = false;
+                    }
+                    if (downloadCSVElement && downloadCSVElement.disabled)
+                    {
+                        downloadCSVElement.disabled = false;
                     }
                     return;
                 }
@@ -356,7 +370,8 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
         "step": null,
         "abort": null,
         "save": config.enableSave ? "buttonSave": null,
-        "fixed": null
+        "downloadCSV": config.enableDownloadCSV ? "buttonDownloadCSV": null,
+        "fixed": "null"
     };
 
     var controlElem;

@@ -741,7 +741,7 @@ PlaybackController.prototype =
         this.loadingResults = false;
     },
 
-    outputData : function playbackcontrollerOutputDataFn(testName)
+    outputData : function playbackcontrollerOutputDataFn(testName, downloadFormat)
     {
         var resultsData = this.processData();
         if (!resultsData.userData)
@@ -820,7 +820,7 @@ PlaybackController.prototype =
 
         var postRequest;
         var requests = {};
-        if (this.config.useSaveAPI)
+        if (!downloadFormat && this.config.useSaveAPI)
         {
             if (resultsData.timing && resultsData.timing.csv)
             {
@@ -898,11 +898,48 @@ PlaybackController.prototype =
         var userDataManager = this.userDataManager;
         if (userDataManager)
         {
-            if (resultsData.userData)
+            if (resultsData.userData && !downloadFormat)
             {
                 userDataManager.getKeys(generateGetKeysCallbackFn(timestamp, resultsData), getKeysErrorFn);
             }
         }
+
+        if (downloadFormat === "CSV")
+        {
+            if (resultsData.timing && resultsData.timing.csv)
+            {
+                this.downloadData(filePath + '-' + timestamp + '-timing.csv', resultsData.timing.csv);
+            }
+            else
+            {
+                window.alert("No timing data to download");
+            }
+        }
+        else if (downloadFormat !== undefined)
+        {
+            window.alert("Download format not recognized");
+        }
+    },
+
+    downloadData : function playbackRecorderDownloadData(filename, data)
+    {
+        window.URL = window.URL || window.webkitURL;
+
+        if (window.URL.createObjectURL)
+        {
+            var a = document.createElement('a');
+            var blob = new Blob([data], {'type': 'application\/octet-stream'});
+            a.href = window.URL.createObjectURL(blob);
+            a.download = filename;
+            a.click();
+        }
+        else
+        {
+            // Fallback to generate the data with no filename
+            document.location = 'data:Application/octet-stream,' +
+                         encodeURIComponent(data);
+        }
+
     },
 
     postData : function playbackRecorderPostData(url, dataString, callbackFn)
