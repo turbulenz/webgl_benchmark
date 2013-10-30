@@ -1,1 +1,1 @@
-{"data": {"sequences": []}, "version": 0, "config": {"hardware": {}, "playback": {}, "benchmark": {"version": "0.0.8", "type": "offline", "name": "webgl_benchmark"}, "sequences": [], "browser": {}}}
+{"data": {"sequences": []}, "version": 0, "config": {"hardware": {}, "playback": {}, "benchmark": {"version": "0.0.12", "type": "offline", "name": "webgl_benchmark"}, "sequences": [], "browser": {}}}
