@@ -84,7 +84,10 @@ BaseConfig.prototype =
     promptHardwareName: true,
 
     // Enable save button
-    enableSave: true
+    enableSave: true,
+
+    // Enable the ability to download as a CSV
+    enableDownloadCSV: true
 };
 
 BaseConfig.create = function baseConfigCreateFn()
