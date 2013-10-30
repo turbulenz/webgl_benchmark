@@ -30,6 +30,9 @@ OnlineConfig.create = function onlineCreateFn()
     captureLookUp['story_high']                        = '//tzawsuser-benchmark.s3.amazonaws.com/5230dc14/';
     captureLookUp['stress_high']                       = '//tzawsuser-benchmark.s3.amazonaws.com/523b443e/';
     captureLookUp['story_high_particles']              = '//tzawsuser-benchmark.s3.amazonaws.com/5252901f/';
+    captureLookUp['stress_zoom']                       = '//tzawsuser-benchmark.s3.amazonaws.com/523203e6/';
+    captureLookUp['stress_seige']                      = '//tzawsuser-benchmark.s3.amazonaws.com/520109eb/';
+
 
     config.prefixAssetURL = '//tzawsuser-benchmark.s3.amazonaws.com/';
     config.prefixTemplatesURL = "config/templates/online/";
