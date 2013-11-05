@@ -768,7 +768,7 @@ def main():
             if args.target == 'offline':
                 server = start_server(abspath('.'))
                 if args.browser == 'chrome':
-                    command_line_args = "--disable-web-security --allow-file-access-from-files"
+                    command_line_args = "--disable-web-security --allow-file-access-from-files --kiosk"
                 BROWSERRUNNER_TESTURL = "file://" + getcwd() + BROWSERRUNNER_TESTMODE
             else:
                 BROWSERRUNNER_TESTURL = "http://" + BROWSERRUNNER_DEVSERVER + BROWSERRUNNER_TESTURLPATH + BROWSERRUNNER_TESTMODE
