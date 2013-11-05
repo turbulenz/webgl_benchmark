@@ -604,7 +604,7 @@ def start_server(output_path):
                 info("Save file request: game_slug=%s, username=%s, filepath=%s" % (game_slug, username, filepath))
 
                 content_type = self.headers.getheader('content-type')
-                if not content_type or not 'application/xml' in content_type:
+                if not content_type or not 'application/x-www-form-urlencoded; charset=UTF-8' in content_type:
                     unsupported_error = 'Unsupported Content-Type: %s' % content_type
                     error(unsupported_error)
                     self.send_error(400, unsupported_error)
