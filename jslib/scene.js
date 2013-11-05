@@ -19,13 +19,18 @@
 
 ;
 
+;
+
 //
 // Scene
 //
 var Scene = (function () {
     // Scene
-    function Scene(mathDevice) {
+    function Scene(mathDevice, staticSpatialMap, dynamicSpatialMap) {
         this.md = mathDevice;
+        this.staticSpatialMap = (staticSpatialMap || AABBTree.create(true));
+        this.dynamicSpatialMap = (dynamicSpatialMap || AABBTree.create());
+
         this.clear();
 
         var scene = this;
@@ -72,6 +77,11 @@ var Scene = (function () {
         debug.assert(!this.rootNodesMap[name], "Root node with the same name exits in the scene");
 
         rootNode.scene = this;
+
+        // Ensure node will be added to spatial map on update
+        // In the event that there are no dirty flags set.
+        rootNode.worldExtentsUpdate = true;
+
         this.rootNodes.push(rootNode);
         this.rootNodesMap[name] = rootNode;
         this.addRootNodeToUpdate(rootNode, name);
@@ -86,18 +96,33 @@ var Scene = (function () {
         debug.assert(rootNode.scene === this, "Root node is not in the scene");
         rootNode.removedFromScene(this);
 
-        var index = this.rootNodes.indexOf(rootNode);
+        var rootNodes = this.rootNodes;
+        var index = rootNodes.indexOf(rootNode);
         if (index !== -1) {
-            this.rootNodes.splice(index, 1);
+            var numRootNodes = (rootNodes.length - 1);
+            if (index < numRootNodes) {
+                rootNodes[index] = rootNodes[numRootNodes];
+            }
+            rootNodes.length = numRootNodes;
         }
         delete this.rootNodesMap[name];
 
         if (this.dirtyRoots[name] === rootNode) {
             delete this.dirtyRoots[name];
 
-            index = this.nodesToUpdate.indexOf(rootNode);
-            if (index !== -1) {
-                this.nodesToUpdate.splice(index, 1);
+            // Can not use indexOf because it will search the whole array instead of just the active range
+            var nodesToUpdate = this.nodesToUpdate;
+            var numNodesToUpdate = this.numNodesToUpdate;
+            for (index = 0; index < numNodesToUpdate; index += 1) {
+                if (nodesToUpdate[index] === rootNode) {
+                    numNodesToUpdate -= 1;
+                    if (index < numNodesToUpdate) {
+                        nodesToUpdate[index] = nodesToUpdate[numNodesToUpdate];
+                    }
+                    nodesToUpdate[numNodesToUpdate] = null;
+                    this.numNodesToUpdate = numNodesToUpdate;
+                    break;
+                }
             }
         }
 
@@ -483,7 +508,7 @@ var Scene = (function () {
     Scene.prototype.findVisibleNodes = function (camera, visibleNodes) {
         var numVisibleNodes = visibleNodes.length;
         var frustumPlanes = this.frustumPlanes;
-        var useAABBTrees = true;
+        var useSpatialMaps = true;
         var areas = this.areas;
         if (areas) {
             var cameraMatrix = camera.matrix;
@@ -592,11 +617,11 @@ var Scene = (function () {
                     }
                 }
 
-                useAABBTrees = false;
+                useSpatialMaps = false;
             }
         }
 
-        if (useAABBTrees) {
+        if (useSpatialMaps) {
             numVisibleNodes += this.staticSpatialMap.getVisibleNodes(frustumPlanes, visibleNodes, numVisibleNodes);
             this.dynamicSpatialMap.getVisibleNodes(frustumPlanes, visibleNodes, numVisibleNodes);
         }
@@ -608,7 +633,7 @@ var Scene = (function () {
     Scene.prototype.findVisibleNodesTree = function (tree, camera, visibleNodes) {
         var numVisibleNodes = visibleNodes.length;
         var frustumPlanes = this.frustumPlanes;
-        var useAABBTree = true;
+        var useSpatialMap = true;
         var areas = this.areas;
         if (areas) {
             // Assume scene.update has been called before this function
@@ -796,11 +821,11 @@ var Scene = (function () {
                     }
                 }
 
-                useAABBTree = false;
+                useSpatialMap = false;
             }
         }
 
-        if (useAABBTree) {
+        if (useSpatialMap) {
             tree.getVisibleNodes(frustumPlanes, visibleNodes, numVisibleNodes);
         }
     };
@@ -962,13 +987,13 @@ var Scene = (function () {
     // findOverlappingNodes
     //
     Scene.prototype.findOverlappingNodes = function (tree, origin, extents, overlappingNodes) {
-        var useAABBTree = true;
+        var useSpatialMap = true;
 
         if (this.areas) {
-            useAABBTree = !this._findOverlappingNodesAreas(tree, origin, extents, overlappingNodes);
+            useSpatialMap = !this._findOverlappingNodesAreas(tree, origin, extents, overlappingNodes);
         }
 
-        if (useAABBTree) {
+        if (useSpatialMap) {
             tree.getOverlappingNodes(extents, overlappingNodes);
         }
     };
@@ -1117,13 +1142,13 @@ var Scene = (function () {
     // findOverlappingRenderables
     //
     Scene.prototype.findOverlappingRenderables = function (tree, origin, extents, overlappingRenderables) {
-        var useAABBTree = true;
+        var useSpatialMap = true;
 
         if (this.areas) {
-            useAABBTree = !this._findOverlappingRenderablesAreas(tree, origin, extents, overlappingRenderables);
+            useSpatialMap = !this._findOverlappingRenderablesAreas(tree, origin, extents, overlappingRenderables);
         }
 
-        if (useAABBTree) {
+        if (useSpatialMap) {
             this._findOverlappingRenderablesNoAreas(tree, extents, overlappingRenderables);
         }
     };
@@ -1448,13 +1473,13 @@ var Scene = (function () {
     // updateVisibleNodes
     //
     Scene.prototype.updateVisibleNodes = function (camera) {
-        var useAABBTree = true;
+        var useSpatialMap = true;
 
         if (this.areas) {
-            useAABBTree = !this._updateVisibleNodesAreas(camera);
+            useSpatialMap = !this._updateVisibleNodesAreas(camera);
         }
 
-        if (useAABBTree) {
+        if (useSpatialMap) {
             this._updateVisibleNodesNoAreas(camera);
         }
 
@@ -1976,7 +2001,9 @@ var Scene = (function () {
         var dirtyRoots = this.dirtyRoots;
         if (dirtyRoots[name] !== rootNode) {
             dirtyRoots[name] = rootNode;
-            this.nodesToUpdate.push(rootNode);
+            var numNodesToUpdate = this.numNodesToUpdate;
+            this.nodesToUpdate[numNodesToUpdate] = rootNode;
+            this.numNodesToUpdate = (numNodesToUpdate + 1);
         }
     };
 
@@ -1984,18 +2011,18 @@ var Scene = (function () {
     // updateNodes
     //
     Scene.prototype.updateNodes = function () {
-        var nodesToUpdate = this.nodesToUpdate;
-        var numNodesToUpdate = nodesToUpdate.length;
+        var numNodesToUpdate = this.numNodesToUpdate;
         if (0 < numNodesToUpdate) {
+            var nodesToUpdate = this.nodesToUpdate;
             var dirtyRoots = this.dirtyRoots;
             var n;
             for (n = 0; n < numNodesToUpdate; n += 1) {
                 dirtyRoots[nodesToUpdate[n].name] = null;
             }
 
-            SceneNode.prototype.updateHelper(this.md, this, nodesToUpdate);
+            SceneNode.updateNodes(this.md, this, nodesToUpdate, numNodesToUpdate);
 
-            nodesToUpdate.length = 0;
+            this.numNodesToUpdate = 0;
         }
     };
 
@@ -2018,32 +2045,28 @@ var Scene = (function () {
     // updateExtents
     //
     Scene.prototype.updateExtents = function () {
-        var rootStaticNode = this.staticSpatialMap.getRootNode();
-        var rootDynamicNode = this.dynamicSpatialMap.getRootNode();
+        var rootStaticExtents = this.staticSpatialMap.getExtents();
+        var rootDynamicExtents = this.dynamicSpatialMap.getExtents();
         var sceneExtents = this.extents;
 
-        var extents;
-        if (rootStaticNode) {
-            extents = rootStaticNode.extents;
-
-            if (rootDynamicNode) {
+        if (rootStaticExtents) {
+            if (rootDynamicExtents) {
                 var minStaticX, minStaticY, minStaticZ, maxStaticX, maxStaticY, maxStaticZ;
                 var minDynamicX, minDynamicY, minDynamicZ, maxDynamicX, maxDynamicY, maxDynamicZ;
 
-                minStaticX = extents[0];
-                minStaticY = extents[1];
-                minStaticZ = extents[2];
-                maxStaticX = extents[3];
-                maxStaticY = extents[4];
-                maxStaticZ = extents[5];
+                minStaticX = rootStaticExtents[0];
+                minStaticY = rootStaticExtents[1];
+                minStaticZ = rootStaticExtents[2];
+                maxStaticX = rootStaticExtents[3];
+                maxStaticY = rootStaticExtents[4];
+                maxStaticZ = rootStaticExtents[5];
 
-                extents = rootDynamicNode.extents;
-                minDynamicX = extents[0];
-                minDynamicY = extents[1];
-                minDynamicZ = extents[2];
-                maxDynamicX = extents[3];
-                maxDynamicY = extents[4];
-                maxDynamicZ = extents[5];
+                minDynamicX = rootDynamicExtents[0];
+                minDynamicY = rootDynamicExtents[1];
+                minDynamicZ = rootDynamicExtents[2];
+                maxDynamicX = rootDynamicExtents[3];
+                maxDynamicY = rootDynamicExtents[4];
+                maxDynamicZ = rootDynamicExtents[5];
 
                 sceneExtents[0] = (minStaticX < minDynamicX ? minStaticX : minDynamicX);
                 sceneExtents[1] = (minStaticY < minDynamicY ? minStaticY : minDynamicY);
@@ -2052,23 +2075,21 @@ var Scene = (function () {
                 sceneExtents[4] = (maxStaticY > maxDynamicY ? maxStaticY : maxDynamicY);
                 sceneExtents[5] = (maxStaticZ > maxDynamicZ ? maxStaticZ : maxDynamicZ);
             } else {
-                sceneExtents[0] = extents[0];
-                sceneExtents[1] = extents[1];
-                sceneExtents[2] = extents[2];
-                sceneExtents[3] = extents[3];
-                sceneExtents[4] = extents[4];
-                sceneExtents[5] = extents[5];
+                sceneExtents[0] = rootStaticExtents[0];
+                sceneExtents[1] = rootStaticExtents[1];
+                sceneExtents[2] = rootStaticExtents[2];
+                sceneExtents[3] = rootStaticExtents[3];
+                sceneExtents[4] = rootStaticExtents[4];
+                sceneExtents[5] = rootStaticExtents[5];
             }
         } else {
-            if (rootDynamicNode) {
-                extents = rootDynamicNode.extents;
-
-                sceneExtents[0] = extents[0];
-                sceneExtents[1] = extents[1];
-                sceneExtents[2] = extents[2];
-                sceneExtents[3] = extents[3];
-                sceneExtents[4] = extents[4];
-                sceneExtents[5] = extents[5];
+            if (rootDynamicExtents) {
+                sceneExtents[0] = rootDynamicExtents[0];
+                sceneExtents[1] = rootDynamicExtents[1];
+                sceneExtents[2] = rootDynamicExtents[2];
+                sceneExtents[3] = rootDynamicExtents[3];
+                sceneExtents[4] = rootDynamicExtents[4];
+                sceneExtents[5] = rootDynamicExtents[5];
             } else {
                 sceneExtents[0] = 0;
                 sceneExtents[1] = 0;
@@ -2084,7 +2105,7 @@ var Scene = (function () {
     //  getExtents
     //
     Scene.prototype.getExtents = function () {
-        if (0 < this.nodesToUpdate.length) {
+        if (0 < this.numNodesToUpdate) {
             this.updateNodes();
             this.staticSpatialMap.finalize();
             this.dynamicSpatialMap.finalize();
@@ -2278,6 +2299,7 @@ var Scene = (function () {
         this.rootNodesMap = {};
         this.dirtyRoots = {};
         this.nodesToUpdate = [];
+        this.numNodesToUpdate = 0;
     };
 
     //
@@ -2292,22 +2314,22 @@ var Scene = (function () {
         this.clearRootNodes();
         this.clearMaterials();
         this.clearShapes();
-        this.staticSpatialMap = AABBTree.create(true);
-        this.dynamicSpatialMap = AABBTree.create();
+        this.staticSpatialMap.clear();
+        this.dynamicSpatialMap.clear();
         this.frustumPlanes = [];
         this.animations = {};
         this.skeletons = {};
-        this.extents = (this.float32ArrayConstructor ? new this.float32ArrayConstructor(6) : new Array(6));
+        this.extents = this.md.aabbBuildEmpty();
         this.visibleNodes = [];
         this.visibleRenderables = [];
         this.visibleLights = [];
         this.cameraAreaIndex = -1;
-        this.cameraExtents = (this.float32ArrayConstructor ? new this.float32ArrayConstructor(6) : new Array(6));
+        this.cameraExtents = this.md.aabbBuildEmpty();
         this.visiblePortals = [];
         this.frameIndex = 0;
         this.queryCounter = 0;
         this.staticNodesChangeCounter = 0;
-        this.testExtents = (this.float32ArrayConstructor ? new this.float32ArrayConstructor(6) : new Array(6));
+        this.testExtents = this.md.aabbBuildEmpty();
         this.externalNodesStack = [];
     };
 
@@ -2774,6 +2796,11 @@ var Scene = (function () {
                     invLTMs[b] = m43Build.apply(md, invLTM);
                     bindPoses[b] = m43Build.apply(md, bindPose);
                 }
+
+                if (loadParams.skeletonNamePrefix) {
+                    s = loadParams.skeletonNamePrefix + s;
+                }
+
                 this.skeletons[s] = skeleton;
             }
         }
@@ -2795,7 +2822,7 @@ var Scene = (function () {
             var fileShape = fileShapes[fileShapeName];
             var sources = fileShape.sources;
             var inputs = fileShape.inputs;
-            var skeletonName = fileShape.skeleton;
+            var skeletonName = loadParams.skeletonNamePrefix ? loadParams.skeletonNamePrefix + fileShape.skeleton : fileShape.skeleton;
 
             shape = Geometry.create();
 
@@ -3518,8 +3545,8 @@ var Scene = (function () {
 
         if (!loadParams.append) {
             this.clearRootNodes();
-            this.staticSpatialMap = AABBTree.create(true);
-            this.dynamicSpatialMap = AABBTree.create();
+            this.staticSpatialMap.clear();
+            this.dynamicSpatialMap.clear();
         }
 
         var loadCustomGeometryInstanceFn = loadParams.loadCustomGeometryInstanceFn;
@@ -4376,8 +4403,8 @@ var Scene = (function () {
     };
 
     Scene.create = // Constructor function
-    function (mathDevice) {
-        return new Scene(mathDevice);
+    function (mathDevice, staticSpatialMap, dynamicSpatialMap) {
+        return new Scene(mathDevice, staticSpatialMap, dynamicSpatialMap);
     };
     Scene.version = 1;
     return Scene;

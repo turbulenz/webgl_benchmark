@@ -2197,31 +2197,37 @@ Scene.prototype.drawVisibleRenderablesExtents = function sceneDrawVisibleRendera
     var renderables = this.visibleRenderables;
     var numRenderables = renderables.length;
     if (numRenderables) {
-        var n, renderable, meta, numVertices = 0;
+        var n, renderable, meta;
+        var renderablesExtents = [];
+        var extents;
         for (n = 0; n < numRenderables; n += 1) {
             renderable = renderables[n];
-            meta = renderable.sharedMaterial.meta;
-            if (meta.decal) {
-                if (drawDecals) {
-                    numVertices += 24;
-                }
-            } else if (meta.transparent) {
-                if (drawTransparents) {
-                    numVertices += 24;
-                }
-            } else {
-                if (!drawDecals && !drawTransparents) {
-                    numVertices += 24;
+            extents = renderable.getWorldExtents();
+            if (extents) {
+                meta = renderable.sharedMaterial.meta;
+                if (meta.decal) {
+                    if (drawDecals) {
+                        renderablesExtents.push(extents);
+                    }
+                } else if (meta.transparent) {
+                    if (drawTransparents) {
+                        renderablesExtents.push(extents);
+                    }
+                } else {
+                    if (!drawDecals && !drawTransparents) {
+                        renderablesExtents.push(extents);
+                    }
                 }
             }
         }
 
-        if (!numVertices) {
+        var numExtents = renderablesExtents.length;
+        if (!numExtents) {
             return;
         }
 
         var shader = sm.load("shaders/debug.cgfx");
-        var technique = shader.getTechnique("debug_lines");
+        var technique = shader.getTechnique("debug_lines_constant");
         if (!technique) {
             return;
         }
@@ -2243,43 +2249,68 @@ Scene.prototype.drawVisibleRenderablesExtents = function sceneDrawVisibleRendera
 
         gd.setTechnique(technique);
 
-        var techniqueParameters = this.debugLinesTechniqueParameters;
+        var md = this.md;
+        var techniqueParameters = this.debugLinesConstantTechniqueParameters;
         if (!techniqueParameters) {
             techniqueParameters = gd.createTechniqueParameters({
-                worldViewProjection: camera.viewProjectionMatrix
+                worldViewProjection: camera.viewProjectionMatrix,
+                constantColor: md.v4Build(r, g, b, 1.0)
             });
-            this.debugLinesTechniqueParameters = techniqueParameters;
+            this.debugLinesConstantTechniqueParameters = techniqueParameters;
         } else {
             techniqueParameters.worldViewProjection = camera.viewProjectionMatrix;
+            techniqueParameters.constantColor = md.v4Build(r, g, b, 1.0, techniqueParameters.constantColor);
         }
 
         gd.setTechniqueParameters(techniqueParameters);
 
-        var sem = this.getDebugSemanticsPosCol();
-        var writer = gd.beginDraw(gd.PRIMITIVE_LINES, numVertices, [gd.VERTEXFORMAT_FLOAT3, gd.VERTEXFORMAT_FLOAT3], sem);
+        var sem = this.getDebugSemanticsPos();
+        var writer = gd.beginDraw(gd.PRIMITIVE_LINES, (24 * numExtents), [gd.VERTEXFORMAT_FLOAT3], sem);
         if (writer) {
-            var writeBox = this.writeBox;
-            for (n = 0; n < numRenderables; n += 1) {
-                renderable = renderables[n];
-                meta = renderable.sharedMaterial.meta;
-                if (meta.decal) {
-                    if (!drawDecals) {
-                        continue;
-                    }
-                } else if (meta.transparent) {
-                    if (!drawTransparents) {
-                        continue;
-                    }
-                } else {
-                    if (drawDecals || drawTransparents) {
-                        continue;
-                    }
-                }
+            for (n = 0; n < numExtents; n += 1) {
+                extents = renderablesExtents[n];
+                var p0 = extents[0];
+                var p1 = extents[1];
+                var p2 = extents[2];
+                var n0 = extents[3];
+                var n1 = extents[4];
+                var n2 = extents[5];
 
-                var extents = renderable.getWorldExtents();
-                if (extents) {
-                    writeBox(writer, extents, r, g, b);
-                }
+                writer(p0, p1, p2);
+                writer(p0, p1, n2);
+
+                writer(p0, p1, p2);
+                writer(p0, n1, p2);
+
+                writer(p0, p1, p2);
+                writer(n0, p1, p2);
+
+                writer(n0, n1, n2);
+                writer(n0, n1, p2);
+
+                writer(n0, n1, n2);
+                writer(n0, p1, n2);
+
+                writer(n0, n1, n2);
+                writer(p0, n1, n2);
+
+                writer(p0, n1, n2);
+                writer(p0, n1, p2);
+
+                writer(p0, n1, n2);
+                writer(p0, p1, n2);
+
+                writer(n0, n1, p2);
+                writer(p0, n1, p2);
+
+                writer(n0, n1, p2);
+                writer(n0, p1, p2);
+
+                writer(n0, p1, n2);
+                writer(p0, p1, n2);
+
+                writer(n0, p1, n2);
+                writer(n0, p1, p2);
             }
 
             gd.endDraw(writer);
@@ -2314,14 +2345,22 @@ Scene.prototype.drawTransparentNodesExtents = function drawTransparentNodesExten
 // drawStaticNodesTree
 //
 Scene.prototype.drawStaticNodesTree = function sceneDrawStaticNodesTreeFn(gd, sm, camera, drawLevel) {
-    this.drawNodesTree(this.staticSpatialMap, gd, sm, camera, drawLevel);
+    if (this.staticSpatialMap.getNodes) {
+        this.drawNodesTree(this.staticSpatialMap, gd, sm, camera, drawLevel);
+    } else if (this.staticSpatialMap.getCells) {
+        this.drawCellsGrid(this.staticSpatialMap, gd, sm, camera);
+    }
 };
 
 //
 // drawDynamicNodesTree
 //
 Scene.prototype.drawDynamicNodesTree = function sceneDrawDynamicNodesTreeFn(gd, sm, camera, drawLevel) {
-    this.drawNodesTree(this.dynamicSpatialMap, gd, sm, camera, drawLevel);
+    if (this.dynamicSpatialMap.getNodes) {
+        this.drawNodesTree(this.dynamicSpatialMap, gd, sm, camera, drawLevel);
+    } else if (this.dynamicSpatialMap.getCells) {
+        this.drawCellsGrid(this.dynamicSpatialMap, gd, sm, camera);
+    }
 };
 
 //
@@ -2424,6 +2463,100 @@ Scene.prototype.drawNodesTree = function sceneDrawNodesTreeFn(tree, gd, sm, came
         var writer = gd.beginDraw(gd.PRIMITIVE_LINES, numVertices, [gd.VERTEXFORMAT_FLOAT3], sem);
         if (writer) {
             drawNodeFn(writer, nodes, 0, drawLevel);
+
+            gd.endDraw(writer);
+
+            writer = null;
+        }
+    }
+};
+
+//
+// drawCellsGrid
+//
+Scene.prototype.drawCellsGrid = function sceneDrawCellsGridFn(grid, gd, sm, camera) {
+    var shader = sm.load("shaders/debug.cgfx");
+    var technique = shader.getTechnique("debug_lines");
+    if (!technique) {
+        return;
+    }
+
+    var cells = grid.getCells();
+    var numCells = cells.length;
+
+    var maxNodesPerCell = 0;
+    var numUsedCells = 0;
+    var n, cell, numNodes;
+    for (n = 0; n < numCells; n += 1) {
+        cell = cells[n];
+        if (cell) {
+            numNodes = cell.length;
+            if (maxNodesPerCell < numNodes) {
+                maxNodesPerCell = numNodes;
+            }
+            numUsedCells += 1;
+        }
+    }
+
+    if (numUsedCells) {
+        gd.setTechnique(technique);
+
+        var techniqueParameters = this.debugLinesTechniqueParameters;
+        if (!techniqueParameters) {
+            techniqueParameters = gd.createTechniqueParameters({
+                worldViewProjection: camera.viewProjectionMatrix
+            });
+            this.debugLinesTechniqueParameters = techniqueParameters;
+        } else {
+            techniqueParameters.worldViewProjection = camera.viewProjectionMatrix;
+        }
+
+        gd.setTechniqueParameters(techniqueParameters);
+
+        var sem = this.getDebugSemanticsPosCol();
+        var vformatFloat3 = gd.VERTEXFORMAT_FLOAT3;
+        var writer = gd.beginDraw(gd.PRIMITIVE_LINES, 24 * numUsedCells, [vformatFloat3, vformatFloat3], sem);
+        if (writer) {
+            var cellSize = grid.getCellSize();
+            var gridExtents = grid.getExtents();
+            var minGridX = gridExtents[0];
+            var minGridY = gridExtents[1];
+            var minGridZ = gridExtents[2];
+            var maxGridX = gridExtents[3];
+            var maxGridY = gridExtents[4];
+            var maxGridZ = gridExtents[5];
+
+            var numCellsX = Math.ceil((maxGridX - minGridX) / cellSize);
+            var numCellsZ = Math.ceil((maxGridZ - minGridZ) / cellSize);
+            var cellExtents = gridExtents.slice(0);
+
+            var writeBox = this.writeBox;
+            var colorScale = (1.0 / maxNodesPerCell);
+
+            var j, i, gb;
+            cellExtents[2] = minGridZ;
+            cellExtents[5] = (minGridZ + cellSize);
+            n = 0;
+            for (j = 0; j < numCellsZ; j += 1) {
+                cellExtents[0] = minGridX;
+                cellExtents[3] = (minGridX + cellSize);
+                for (i = 0; i < numCellsX; i += 1) {
+                    cell = cells[n];
+                    n += 1;
+
+                    if (cell) {
+                        numNodes = cell.length;
+                        gb = (1 === numNodes ? 0 : (numNodes * colorScale));
+                        writeBox(writer, cellExtents, 1.0, gb, gb);
+                    }
+
+                    cellExtents[0] = cellExtents[3];
+                    cellExtents[3] += cellSize;
+                }
+
+                cellExtents[2] = cellExtents[5];
+                cellExtents[5] += cellSize;
+            }
 
             gd.endDraw(writer);
 

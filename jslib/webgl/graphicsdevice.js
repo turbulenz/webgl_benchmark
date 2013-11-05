@@ -4442,6 +4442,29 @@ var WebGLGraphicsDevice = (function () {
             return gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
         } else if ("VERTEX_TEXTURE_UNITS" === name) {
             return gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS);
+        } else if ("VERTEX_SHADER_PRECISION" === name || "FRAGMENT_SHADER_PRECISION" === name) {
+            var shaderType;
+            if ("VERTEX_SHADER_PRECISION" === name) {
+                shaderType = gl.VERTEX_SHADER;
+            } else {
+                shaderType = gl.FRAGMENT_SHADER;
+            }
+
+            if (!gl.getShaderPrecisionFormat) {
+                return 0;
+            }
+
+            var sp = gl.getShaderPrecisionFormat(shaderType, gl.HIGH_FLOAT);
+            if (!sp || !sp.precision) {
+                sp = gl.getShaderPrecisionFormat(shaderType, gl.MEDIUM_FLOAT);
+                if (!sp || !sp.precision) {
+                    sp = gl.getShaderPrecisionFormat(shaderType, gl.LOW_FLOAT);
+                    if (!sp || !sp.precision) {
+                        return 0;
+                    }
+                }
+            }
+            return sp.precision;
         }
         return 0;
     };
@@ -4909,6 +4932,10 @@ var WebGLGraphicsDevice = (function () {
         }
 
         delete this.gl;
+
+        if (typeof DDSLoader !== 'undefined') {
+            DDSLoader.destroy();
+        }
     };
 
     WebGLGraphicsDevice.create = function (canvas, params) {

@@ -45,7 +45,6 @@ var Geometry = (function () {
 //
 var GeometryInstance = (function () {
     function GeometryInstance() {
-        this.maxUpdateValue = Number.MAX_VALUE;
     }
     //
     // clone
@@ -179,16 +178,18 @@ var GeometryInstance = (function () {
     // addCustomWorldExtents
     //
     GeometryInstance.prototype.addCustomWorldExtents = function (customWorldExtents) {
+        var alreadyHadCustomExtents = (this.worldExtentsUpdate === GeometryInstance.maxUpdateValue);
         var worldExtents = this.worldExtents;
-        worldExtents[0] = customWorldExtents[0];
-        worldExtents[1] = customWorldExtents[1];
-        worldExtents[2] = customWorldExtents[2];
-        worldExtents[3] = customWorldExtents[3];
-        worldExtents[4] = customWorldExtents[4];
-        worldExtents[5] = customWorldExtents[5];
-        var alreadyHadCustomExtents = (this.worldExtentsUpdate === this.maxUpdateValue);
-        this.worldExtentsUpdate = this.maxUpdateValue;
-        this.node.renderableWorldExtentsUpdated(alreadyHadCustomExtents);
+        if (!alreadyHadCustomExtents || customWorldExtents[0] !== worldExtents[0] || customWorldExtents[1] !== worldExtents[1] || customWorldExtents[2] !== worldExtents[2] || customWorldExtents[3] !== worldExtents[3] || customWorldExtents[4] !== worldExtents[4] || customWorldExtents[5] !== worldExtents[5]) {
+            this.worldExtentsUpdate = GeometryInstance.maxUpdateValue;
+            worldExtents[0] = customWorldExtents[0];
+            worldExtents[1] = customWorldExtents[1];
+            worldExtents[2] = customWorldExtents[2];
+            worldExtents[3] = customWorldExtents[3];
+            worldExtents[4] = customWorldExtents[4];
+            worldExtents[5] = customWorldExtents[5];
+            this.node.renderableWorldExtentsUpdated(alreadyHadCustomExtents);
+        }
     };
 
     //
@@ -203,7 +204,7 @@ var GeometryInstance = (function () {
     // getCustomWorldExtents
     //
     GeometryInstance.prototype.getCustomWorldExtents = function () {
-        if (this.worldExtentsUpdate === this.maxUpdateValue) {
+        if (this.worldExtentsUpdate === GeometryInstance.maxUpdateValue) {
             return this.worldExtents;
         }
         return undefined;
@@ -213,7 +214,7 @@ var GeometryInstance = (function () {
     // hasCustomWorldExtents
     //
     GeometryInstance.prototype.hasCustomWorldExtents = function () {
-        return this.worldExtentsUpdate === this.maxUpdateValue;
+        return this.worldExtentsUpdate === GeometryInstance.maxUpdateValue;
     };
 
     //
@@ -294,6 +295,7 @@ var GeometryInstance = (function () {
         return instance;
     };
     GeometryInstance.version = 1;
+    GeometryInstance.maxUpdateValue = Number.MAX_VALUE;
     return GeometryInstance;
 })();
 

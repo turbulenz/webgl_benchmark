@@ -8865,6 +8865,7 @@ var WebGLPrivatePhysicsWorld = (function () {
 //
 var WebGLPhysicsDevice = (function () {
     function WebGLPhysicsDevice() {
+        this.vendor = "Turbulenz";
         this.genObjectId = 0;
     }
     WebGLPhysicsDevice.create = function (/* params */ ) {
@@ -8947,7 +8948,6 @@ var WebGLPhysicsDevice = (function () {
         return WebGLPhysicsCharacter.create(params);
     };
     WebGLPhysicsDevice.version = 1;
-    WebGLPhysicsDevice.vendor = "Turbulenz";
     return WebGLPhysicsDevice;
 })();
 

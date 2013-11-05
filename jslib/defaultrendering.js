@@ -427,6 +427,8 @@ var DefaultRendering = (function () {
 
         dr.defaultPrepareFn = defaultPrepare;
         dr.defaultUpdateFn = defaultUpdate;
+        dr.defaultSkinnedUpdateFn = defaultSkinnedUpdate;
+        dr.loadTechniquesFn = loadTechniques;
 
         var effect;
         var effectTypeData;

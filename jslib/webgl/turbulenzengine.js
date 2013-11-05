@@ -114,11 +114,11 @@ var WebGLTurbulenzEngine = (function () {
         } catch (e) {
         }
 
-        return VMath;
+        return WebGLMathDevice;
     };
 
     WebGLTurbulenzEngine.prototype.createNativeMathDevice = function (params) {
-        return VMath;
+        return WebGLMathDevice;
     };
 
     WebGLTurbulenzEngine.prototype.getGraphicsDevice = function () {
@@ -146,11 +146,11 @@ var WebGLTurbulenzEngine = (function () {
     };
 
     WebGLTurbulenzEngine.prototype.getMathDevice = function () {
-        return VMath;
+        return WebGLMathDevice;
     };
 
     WebGLTurbulenzEngine.prototype.getNativeMathDevice = function () {
-        return VMath;
+        return WebGLMathDevice;
     };
 
     WebGLTurbulenzEngine.prototype.getObjectStats = function () {
@@ -185,6 +185,9 @@ var WebGLTurbulenzEngine = (function () {
 
     WebGLTurbulenzEngine.prototype.onwarning = function (msg) {
         console.warn(msg);
+    };
+
+    WebGLTurbulenzEngine.prototype.onperformancewarning = function (msg) {
     };
 
     WebGLTurbulenzEngine.prototype.getSystemInfo = function () {

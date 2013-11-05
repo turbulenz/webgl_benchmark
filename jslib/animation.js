@@ -399,8 +399,12 @@ var InterpolatorController = (function () {
             return;
         }
 
+        this.dirtyBounds = false;
+
         var currentTime = this.currentTime;
         var anim = this.currentAnim;
+        var mathDevice = this.mathDevice;
+        var ibounds = this.bounds;
 
         // work out the offset in the frame list and the delta between frame pairs
         var bounds = anim.bounds;
@@ -408,16 +412,16 @@ var InterpolatorController = (function () {
         if (currentTime > bounds[numFrames - 1].time) {
             // copy the end bounds
             var endBounds = bounds[numFrames - 1];
-            this.bounds.center = endBounds.center;
-            this.bounds.halfExtent = endBounds.halfExtent;
+            ibounds.center = mathDevice.v3Copy(endBounds.center, ibounds.center);
+            ibounds.halfExtent = mathDevice.v3Copy(endBounds.halfExtent, ibounds.halfExtent);
             return;
         }
 
         if (currentTime < bounds[0].time) {
             // copy the start bounds
             var startBounds = bounds[0];
-            this.bounds.center = startBounds.center;
-            this.bounds.halfExtent = startBounds.halfExtent;
+            ibounds.center = mathDevice.v3Copy(startBounds.center, ibounds.center);
+            ibounds.halfExtent = mathDevice.v3Copy(startBounds.halfExtent, ibounds.halfExtent);
             return;
         }
 
@@ -432,9 +436,6 @@ var InterpolatorController = (function () {
         var startTime = boundsStart.time;
         var endTime = boundsEnd.time;
         var delta = (currentTime - startTime) / (endTime - startTime);
-
-        var mathDevice = this.mathDevice;
-        var ibounds = this.bounds;
 
         // If delta is close to the limits we just copy the bounds
         var minKeyframeDelta = Animation.minKeyframeDelta;
@@ -458,7 +459,9 @@ var InterpolatorController = (function () {
             centerOffset = mathDevice.v3Abs(centerOffset, centerOffset);
             ibounds.halfExtent = mathDevice.v3Add(newExtent, centerOffset, newExtent);
         }
+    };
 
+    InterpolatorController.prototype._updateBoundsNoop = function () {
         this.dirtyBounds = false;
     };
 
@@ -588,6 +591,32 @@ var InterpolatorController = (function () {
         }
 
         this.outputChannels = AnimationChannels.copy(animation.channels);
+
+        // Check if we need to update bounds
+        var bounds = animation.bounds;
+        var numFrames = bounds.length;
+        debug.assert(0 < numFrames);
+        var centerStart = bounds[0].center;
+        var halfExtentStart = bounds[0].halfExtent;
+        var n;
+        for (n = 1; n < numFrames; n += 1) {
+            var frame = bounds[n];
+            var center = frame.center;
+            var halfExtent = frame.halfExtent;
+            if (centerStart[0] !== center[0] || centerStart[1] !== center[1] || centerStart[2] !== center[2] || halfExtentStart[0] !== halfExtent[0] || halfExtentStart[1] !== halfExtent[1] || halfExtentStart[2] !== halfExtent[2]) {
+                break;
+            }
+        }
+        if (n < numFrames) {
+            this.updateBounds = InterpolatorController.prototype.updateBounds;
+        } else {
+            this.updateBounds = InterpolatorController.prototype._updateBoundsNoop;
+
+            var ibounds = this.bounds;
+            var mathDevice = this.mathDevice;
+            ibounds.center = mathDevice.v3Copy(centerStart, ibounds.center);
+            ibounds.halfExtent = mathDevice.v3Copy(halfExtentStart, ibounds.halfExtent);
+        }
     };
 
     InterpolatorController.prototype.setTime = function (time) {
@@ -1599,6 +1628,9 @@ var NodeTransformController = (function () {
 
                 if (rootNode) {
                     j = matchJointHierarchy(j, rootNode, this.nodesMap, numJoints, jointNames, jointParents);
+
+                    // matchJointHierarchy returns the next joint to process but the loop will step to the node after
+                    j -= 1;
                 }
             }
         }

@@ -441,6 +441,7 @@ var SimpleRendering = (function () {
 
         dr.simplePrepare = simplePrepare;
         dr.simpleUpdate = simpleUpdate;
+        dr.simpleSkinnedUpdate = simpleSkinnedUpdate;
 
         var effect;
         var effectTypeData;

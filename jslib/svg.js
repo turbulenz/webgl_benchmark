@@ -143,8 +143,8 @@ var SVGBaseNode = (function () {
                 }
             } else if (lastType === SVGNodeTransform.Matrix) {
                 if (type === SVGNodeTransform.Translate) {
-                    lastValues[4] += values[0];
-                    lastValues[5] += values[1];
+                    lastValues[4] += (lastValues[0] * values[0] + lastValues[2] * values[1]);
+                    lastValues[5] += (lastValues[1] * values[0] + lastValues[3] * values[1]);
                 } else if (type === SVGNodeTransform.Scale) {
                     lastValues[0] *= values[0];
                     lastValues[1] *= values[0];
@@ -157,9 +157,96 @@ var SVGBaseNode = (function () {
 
             if (doAdd) {
                 transforms.push(type, values);
+                if (7 < transforms.length) {
+                    this._combineTransforms();
+                }
             }
         }
         this._checkState();
+    };
+
+    SVGBaseNode.prototype._combineTransforms = function () {
+        var transforms = this._transforms;
+        var numTransforms = transforms.length;
+        var matrix = [1, 0, 0, 1, 0, 0];
+        var ax, ay;
+        var m0, m1, m2, m3, m4, m5;
+        for (var t = 0; t < numTransforms; t += 2) {
+            var type = transforms[t];
+            var arg = transforms[t + 1];
+            switch (type) {
+                case SVGNodeTransform.Translate:
+                    ax = arg[0];
+                    ay = arg[1];
+                    matrix[4] += (matrix[0] * ax + matrix[2] * ay);
+                    matrix[5] += (matrix[1] * ax + matrix[3] * ay);
+                    break;
+
+                case SVGNodeTransform.Scale:
+                    ax = arg[0];
+                    ay = arg[1];
+                    matrix[0] *= ax;
+                    matrix[1] *= ax;
+                    matrix[2] *= ay;
+                    matrix[3] *= ay;
+                    break;
+
+                case SVGNodeTransform.Rotate:
+                    var angle = arg[0];
+                    if (angle !== 0) {
+                        var s = Math.sin(angle);
+                        var c = Math.cos(angle);
+                        if (s < -0.005 || 0.005 < s || c < 0.995 || 1.005 < c) {
+                            var ax = arg[1];
+                            var ay = arg[2];
+
+                            m0 = matrix[0];
+                            m1 = matrix[1];
+                            m2 = matrix[2];
+                            m3 = matrix[3];
+
+                            if (ax !== 0 || ay !== 0) {
+                                matrix[4] += (m0 * ax + m2 * ay);
+                                matrix[5] += (m1 * ax + m3 * ay);
+
+                                matrix[0] = (m0 * c + m2 * s);
+                                matrix[1] = (m1 * c + m3 * s);
+                                matrix[2] = (m0 * -s + m2 * c);
+                                matrix[3] = (m1 * -s + m3 * c);
+
+                                matrix[4] -= (matrix[0] * ax + matrix[2] * ay);
+                                matrix[5] -= (matrix[1] * ax + matrix[3] * ay);
+                            } else {
+                                matrix[0] = (m0 * c + m2 * s);
+                                matrix[1] = (m1 * c + m3 * s);
+                                matrix[2] = (m0 * -s + m2 * c);
+                                matrix[3] = (m1 * -s + m3 * c);
+                            }
+                        }
+                    }
+                    break;
+
+                case SVGNodeTransform.Matrix:
+                    m0 = matrix[0];
+                    m1 = matrix[1];
+                    m2 = matrix[2];
+                    m3 = matrix[3];
+                    matrix[0] = (m0 * arg[0] + m2 * arg[1]);
+                    matrix[1] = (m1 * arg[0] + m3 * arg[1]);
+                    matrix[2] = (m0 * arg[2] + m2 * arg[3]);
+                    matrix[3] = (m1 * arg[2] + m3 * arg[3]);
+
+                    matrix[4] += (m0 * arg[4] + m2 * arg[5]);
+                    matrix[5] += (m1 * arg[4] + m3 * arg[5]);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+        transforms.length = 2;
+        transforms[0] = SVGNodeTransform.Matrix;
+        transforms[1] = matrix;
     };
 
     SVGBaseNode.prototype.removeTransforms = function () {
@@ -171,8 +258,7 @@ var SVGBaseNode = (function () {
         if (!this._fill && !this._stroke && !this._lineWidth && !this._transforms) {
             if (this.draw === this._drawState) {
                 this.draw = this._drawShape;
-            } else if ((this.draw === this._drawStateChildren)) {
-                debug.assert;
+            } else if (this.draw === this._drawStateChildren) {
                 this.draw = this._drawChildren;
             } else {
                 debug.assert(this.draw === this._drawShape || this.draw === this._drawChildren);
@@ -590,5 +676,26 @@ var SVGLineNode = (function (_super) {
         }
     };
     return SVGLineNode;
+})(SVGBaseNode);
+;
+
+//
+// SVGTextNode
+//
+var SVGTextNode = (function (_super) {
+    __extends(SVGTextNode, _super);
+    function SVGTextNode(font, text, x, y) {
+        _super.call(this);
+
+        this.font = font;
+        this.text = text;
+        this.x = x;
+        this.y = y;
+    }
+    SVGTextNode.prototype._drawShape = function (ctx) {
+        ctx.font = this.font;
+        ctx.fillText(this.text, this.x, this.y);
+    };
+    return SVGTextNode;
 })(SVGBaseNode);
 ;

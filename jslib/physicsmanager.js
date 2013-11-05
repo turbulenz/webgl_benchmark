@@ -8,6 +8,53 @@ var PhysicsManager = (function () {
     function PhysicsManager() {
     }
     //
+    // addNode
+    //
+    PhysicsManager.prototype.addNode = function (sceneNode, physicsObject, origin, triangleArray) {
+        var physicsNode = {
+            body: physicsObject,
+            target: sceneNode
+        };
+
+        physicsObject.userData = sceneNode;
+
+        if (origin) {
+            physicsNode.origin = origin;
+        }
+
+        if (triangleArray) {
+            physicsNode.triangleArray = triangleArray;
+        }
+
+        if (physicsObject.kinematic) {
+            physicsNode.kinematic = true;
+
+            sceneNode.setDynamic();
+            sceneNode.kinematic = true;
+
+            this.kinematicPhysicsNodes.push(physicsNode);
+        } else if ("mass" in physicsObject) {
+            physicsNode.dynamic = true;
+
+            sceneNode.setDynamic();
+
+            this.dynamicPhysicsNodes.push(physicsNode);
+        }
+
+        var targetPhysicsNodes = sceneNode.physicsNodes;
+        if (targetPhysicsNodes) {
+            targetPhysicsNodes.push(physicsNode);
+        } else {
+            sceneNode.physicsNodes = [physicsNode];
+            this.subscribeSceneNode(sceneNode);
+        }
+
+        this.physicsNodes.push(physicsNode);
+
+        this.enableHierarchy(sceneNode, true);
+    };
+
+    //
     // update
     //
     PhysicsManager.prototype.update = function () {
@@ -399,9 +446,10 @@ var PhysicsManager = (function () {
                             var inputPosition = inputs.POSITION;
                             var positions = geometry.sources[inputPosition.source];
                             var positionsData = positions.data;
+                            var numPositionsValues = positionsData.length;
                             var posMin = positions.min;
                             var posMax = positions.max;
-                            var numPositionsValues, np, pos0, pos1, pos2;
+                            var np, pos0, pos1, pos2;
                             var min0, min1, min2, max0, max1, max2;
                             if (posMin && posMax) {
                                 var centerPos0 = ((posMax[0] + posMin[0]) * 0.5);
@@ -417,7 +465,6 @@ var PhysicsManager = (function () {
                                     max0 = halfPos0;
                                     max1 = halfPos1;
                                     max2 = halfPos2;
-                                    numPositionsValues = positionsData.length;
                                     var newPositionsData = [];
                                     newPositionsData.length = numPositionsValues;
                                     for (np = 0; np < numPositionsValues; np += 3) {

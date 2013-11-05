@@ -102,7 +102,7 @@ var BoxTree = (function () {
                 this.clear();
             }
 
-            delete externalNode.boxTreeIndex;
+            externalNode.boxTreeIndex = undefined;
         }
     };
 

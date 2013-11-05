@@ -14,8 +14,11 @@ var SceneNode = (function () {
     function SceneNode(params) {
         this.name = params.name;
 
-        var md = TurbulenzEngine.getMathDevice();
-        this.mathDevice = md;
+        var md = this.mathDevice;
+        if (!md) {
+            md = TurbulenzEngine.getMathDevice();
+            SceneNode.prototype.mathDevice = md;
+        }
 
         this.dynamic = params.dynamic || false;
         this.disabled = params.disabled || false;
@@ -222,7 +225,7 @@ var SceneNode = (function () {
     //removedFromScene
     //
     SceneNode.prototype.removedFromScene = function (scene) {
-        if (this.aabbTreeIndex !== undefined) {
+        if (this.spatialIndex !== undefined) {
             if (this.dynamic) {
                 scene.dynamicSpatialMap.remove(this);
             } else {
@@ -282,8 +285,9 @@ var SceneNode = (function () {
         }
 
         //Notify children
-        var nodes = [this];
-        var numRemainingNodes = nodes.length;
+        var nodes = SceneNode._tempDirtyNodes;
+        nodes[0] = this;
+        var numRemainingNodes = 1;
         var node, index, child;
         do {
             numRemainingNodes -= 1;
@@ -366,11 +370,11 @@ var SceneNode = (function () {
     //
     SceneNode.prototype.setDynamic = function () {
         if (!this.dynamic) {
-            if (this.aabbTreeIndex !== undefined) {
+            if (this.spatialIndex !== undefined) {
                 var scene = this.getRoot().scene;
                 scene.staticSpatialMap.remove(this);
                 scene.staticNodesChangeCounter += 1;
-                delete this.aabbTreeIndex;
+                delete this.spatialIndex;
             }
             delete this.setLocalTransform;
 
@@ -395,9 +399,9 @@ var SceneNode = (function () {
     //
     SceneNode.prototype.setStatic = function () {
         if (this.dynamic) {
-            if (this.aabbTreeIndex !== undefined) {
+            if (this.spatialIndex !== undefined) {
                 this.getRoot().scene.dynamicSpatialMap.remove(this);
-                delete this.aabbTreeIndex;
+                delete this.spatialIndex;
             }
 
             this.setLocalTransform = SceneNode.invalidSetLocalTransform;
@@ -520,14 +524,13 @@ var SceneNode = (function () {
     //update
     //
     SceneNode.prototype.update = function (scene) {
-        this.updateHelper(this.mathDevice, (scene || this.scene), [this]);
+        var nodes = SceneNode._tempDirtyNodes;
+        nodes[0] = this;
+        SceneNode.updateNodes(this.mathDevice, (scene || this.scene), nodes, 1);
     };
 
-    // TODO: Marked as private, but Scene accesses it
-    // PRIVATE
-    /* private */ SceneNode.prototype.updateHelper = function (mathDevice, scene, nodes) {
+    SceneNode.updateNodes = function (mathDevice, scene, nodes, numNodes) {
         var node, parent, index, worldExtents;
-        var numNodes = nodes.length;
         do {
             numNodes -= 1;
             node = nodes[numNodes];
@@ -589,7 +592,7 @@ var SceneNode = (function () {
                         delete node.dirtyWorld;
                         delete node.notifiedParent;
                     }
-                } else if (node.aabbTreeIndex !== undefined) {
+                } else if (node.spatialIndex !== undefined) {
                     if (node.dynamic) {
                         scene.dynamicSpatialMap.remove(node);
                     } else {
@@ -615,9 +618,7 @@ var SceneNode = (function () {
                 }
             }
 
-            if (node.notifiedParent) {
-                node.notifiedParent = false;
-            }
+            node.notifiedParent = false;
         } while(0 < numNodes);
     };
 
@@ -929,20 +930,31 @@ var SceneNode = (function () {
     //addCustomLocalExtents
     //
     SceneNode.prototype.addCustomLocalExtents = function (localExtents) {
-        var customWorldExtents = this.customWorldExtents;
-        if (!customWorldExtents) {
-            this.customWorldExtents = localExtents.slice();
+        var customLocalExtents = this.customLocalExtents;
+        if (!customLocalExtents) {
+            this.customLocalExtents = customLocalExtents = new this.arrayConstructor(6);
+            customLocalExtents[0] = localExtents[0];
+            customLocalExtents[1] = localExtents[1];
+            customLocalExtents[2] = localExtents[2];
+            customLocalExtents[3] = localExtents[3];
+            customLocalExtents[4] = localExtents[4];
+            customLocalExtents[5] = localExtents[5];
+            this.dirtyLocalExtents = true;
         } else {
-            customWorldExtents[0] = localExtents[0];
-            customWorldExtents[1] = localExtents[1];
-            customWorldExtents[2] = localExtents[2];
-            customWorldExtents[3] = localExtents[3];
-            customWorldExtents[4] = localExtents[4];
-            customWorldExtents[5] = localExtents[5];
+            if (customLocalExtents[0] !== localExtents[0] || customLocalExtents[1] !== localExtents[1] || customLocalExtents[2] !== localExtents[2] || customLocalExtents[3] !== localExtents[3] || customLocalExtents[4] !== localExtents[4] || customLocalExtents[5] !== localExtents[5]) {
+                customLocalExtents[0] = localExtents[0];
+                customLocalExtents[1] = localExtents[1];
+                customLocalExtents[2] = localExtents[2];
+                customLocalExtents[3] = localExtents[3];
+                customLocalExtents[4] = localExtents[4];
+                customLocalExtents[5] = localExtents[5];
+                this.dirtyLocalExtents = true;
+            }
         }
-        this.dirtyWorldExtents = true;
-        this.dirtyLocalExtents = true;
-        this.updateRequired();
+        if (this.dirtyLocalExtents) {
+            this.dirtyWorldExtents = true;
+            this.updateRequired();
+        }
     };
 
     //
@@ -968,17 +980,28 @@ var SceneNode = (function () {
     SceneNode.prototype.addCustomWorldExtents = function (worldExtents) {
         var customWorldExtents = this.customWorldExtents;
         if (!customWorldExtents) {
-            this.customWorldExtents = worldExtents.slice();
-        } else {
+            this.customWorldExtents = customWorldExtents = new this.arrayConstructor(6);
             customWorldExtents[0] = worldExtents[0];
             customWorldExtents[1] = worldExtents[1];
             customWorldExtents[2] = worldExtents[2];
             customWorldExtents[3] = worldExtents[3];
             customWorldExtents[4] = worldExtents[4];
             customWorldExtents[5] = worldExtents[5];
+            this.dirtyWorldExtents = true;
+        } else {
+            if (customWorldExtents[0] !== worldExtents[0] || customWorldExtents[1] !== worldExtents[1] || customWorldExtents[2] !== worldExtents[2] || customWorldExtents[3] !== worldExtents[3] || customWorldExtents[4] !== worldExtents[4] || customWorldExtents[5] !== worldExtents[5]) {
+                customWorldExtents[0] = worldExtents[0];
+                customWorldExtents[1] = worldExtents[1];
+                customWorldExtents[2] = worldExtents[2];
+                customWorldExtents[3] = worldExtents[3];
+                customWorldExtents[4] = worldExtents[4];
+                customWorldExtents[5] = worldExtents[5];
+                this.dirtyWorldExtents = true;
+            }
         }
-        this.dirtyWorldExtents = true;
-        this.updateRequired();
+        if (this.dirtyWorldExtents) {
+            this.updateRequired();
+        }
     };
 
     //
@@ -1225,6 +1248,14 @@ var SceneNode = (function () {
         }
 
         delete this.scene;
+
+        // Make sure there are no references to any nodes
+        var nodes = SceneNode._tempDirtyNodes;
+        var numNodes = nodes.length;
+        var n;
+        for (n = 0; n < numNodes; n += 1) {
+            nodes[n] = null;
+        }
     };
 
     //
@@ -1268,8 +1299,12 @@ var SceneNode = (function () {
         return new SceneNode(params);
     };
     SceneNode.version = 1;
+
+    SceneNode._tempDirtyNodes = [];
     return SceneNode;
 })();
+
+SceneNode.prototype.mathDevice = null;
 
 // Detect correct typed arrays
 ((function () {

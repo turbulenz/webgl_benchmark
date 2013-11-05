@@ -201,10 +201,12 @@ var Font = (function () {
 
     Font.prototype.drawTextRect = function (text, params) {
         var vertices = this.generateTextVertices(text, params);
-        if (!vertices) {
-            return;
+        if (vertices) {
+            this.drawTextVertices(vertices, true);
         }
+    };
 
+    Font.prototype.drawTextVertices = function (vertices, reuseVertices) {
         /*jshint bitwise: false*/
         var numGlyphs = (vertices.length >> 4);
 
@@ -212,7 +214,9 @@ var Font = (function () {
         var gd = this.gd;
         var fm = this.fm;
 
-        fm.reusableArrays[numGlyphs] = vertices;
+        if (reuseVertices) {
+            fm.reusableArrays[numGlyphs] = vertices;
+        }
 
         var numVertices = (numGlyphs * 4);
         var sharedVertexBuffer = fm.sharedVertexBuffer;
@@ -235,9 +239,9 @@ var Font = (function () {
         gd.setTechniqueParameters(techniqueParameters);
 
         if (4 < numVertices) {
-            var numIndicies = (numGlyphs * 6);
+            var numIndices = (numGlyphs * 6);
             var sharedIndexBuffer = fm.sharedIndexBuffer;
-            if (!sharedIndexBuffer || numIndicies > sharedIndexBuffer.numIndices) {
+            if (!sharedIndexBuffer || numIndices > sharedIndexBuffer.numIndices) {
                 if (sharedIndexBuffer) {
                     sharedIndexBuffer.destroy();
                 }
@@ -246,7 +250,7 @@ var Font = (function () {
             }
 
             gd.setIndexBuffer(sharedIndexBuffer);
-            gd.drawIndexed(fm.primitive, numIndicies, 0);
+            gd.drawIndexed(fm.primitive, numIndices, 0);
         } else {
             gd.draw(fm.primitiveFan, 4, 0);
         }
@@ -1578,6 +1582,9 @@ var FontManager = (function () {
                             delete loadingPages[path];
                             delete loadingFont[path];
                             numLoadingFonts -= 1;
+                            if (status === 404) {
+                                fonts[path] = defaultFont;
+                            }
                             return;
                         }
 

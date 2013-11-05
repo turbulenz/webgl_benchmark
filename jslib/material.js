@@ -38,6 +38,72 @@ var Material = (function () {
         this.name = name;
     };
 
+    Material.prototype.clone = function (graphicsDevice) {
+        var newMaterial = Material.create(graphicsDevice);
+
+        if (this.effect) {
+            newMaterial.effect = this.effect;
+        }
+
+        if (this.effectName) {
+            newMaterial.effectName = this.effectName;
+        }
+
+        // Copy meta
+        var oldMeta = this.meta;
+        var newMeta = newMaterial.meta;
+        var p;
+        for (p in oldMeta) {
+            if (oldMeta.hasOwnProperty(p)) {
+                newMeta[p] = oldMeta[p];
+            }
+        }
+
+        // Copy technique parameters
+        var oldTechniqueParameters = this.techniqueParameters;
+        var newTechniqueParameters = newMaterial.techniqueParameters;
+        for (p in oldTechniqueParameters) {
+            if (oldTechniqueParameters.hasOwnProperty(p)) {
+                newTechniqueParameters[p] = oldTechniqueParameters[p];
+            }
+        }
+
+        // Copy texture names
+        var oldTextureNames = this.texturesNames;
+        if (oldTextureNames) {
+            var newTextureNames = newMaterial.texturesNames;
+            if (!newTextureNames) {
+                newMaterial.texturesNames = newTextureNames = {};
+            }
+
+            for (p in oldTextureNames) {
+                if (oldTextureNames.hasOwnProperty(p)) {
+                    newTextureNames[p] = oldTextureNames[p];
+                }
+            }
+        }
+
+        // Copy texture instances
+        var oldTextureInstances = this.textureInstances;
+        if (oldTextureInstances) {
+            var newTextureInstances = newMaterial.textureInstances;
+            if (!newTextureInstances) {
+                newMaterial.textureInstances = newTextureInstances = {};
+            }
+
+            for (p in oldTextureInstances) {
+                if (oldTextureInstances.hasOwnProperty(p)) {
+                    var textureInstance = oldTextureInstances[p];
+                    newTextureInstances[p] = textureInstance;
+                    textureInstance.subscribeTextureChanged(newMaterial.onTextureChanged);
+                    textureInstance.reference.add();
+                }
+            }
+        }
+
+        return newMaterial;
+    };
+
     Material.prototype.loadTextures = function (textureManager) {
         var materialTextureNames = this.texturesNames;
         for (var p in materialTextureNames) {
