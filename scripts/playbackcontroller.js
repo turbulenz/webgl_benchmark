@@ -6,6 +6,7 @@
 /*global PlaybackGraphicsDevice: false*/
 /*global UserDataManager: false*/
 /*global TurbulenzServices: false*/
+/*global Utilities: false*/
 
 function PlaybackController() {}
 
@@ -944,44 +945,21 @@ PlaybackController.prototype =
 
     postData : function playbackRecorderPostData(url, dataString, callbackFn)
     {
-        var that = this;
-        var xhr;
-        if (this.xhrPool.length === 0)
+        var onLoad = function onLoadFn(response, status /*, callContext*/)
         {
-            xhr = (window.XMLHttpRequest ? new window.XMLHttpRequest() : new window.ActiveXObject("Microsoft.XMLHTTP"));
-        }
-        else
-        {
-            xhr = this.xhrPool.pop();
-        }
-
-        function generateCallbackFn(result, callback)
-        {
-            var callbackFn = callback;
-            var resultArg = result;
-            return function ()
-            {
-                callbackFn(resultArg);
-            };
-        }
-
-        xhr.open('POST', url, true);
-        xhr.onreadystatechange = function ()
-        {
-            if (xhr.readyState === 4)
-            {
-                var xhrStatus = xhr.status;
-                xhr.onreadystatechange = null;
-                that.xhrPool.push(xhr);
-
-                if (callbackFn)
-                {
-                    TurbulenzEngine.setTimeout(generateCallbackFn(xhrStatus === 200, callbackFn), 0);
-                }
-            }
+            callbackFn(status === 200);
         };
-        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
-        xhr.send(dataString);
+
+        var params =
+        {
+            url: url,
+            requestHandler: this.requestHandler,
+            method:  'POST',
+            callback: onLoad,
+            data: { content : dataString }
+        };
+
+        Utilities.ajax(params);
     },
 
     destroy : function playbackcontrollerDestroyFn()

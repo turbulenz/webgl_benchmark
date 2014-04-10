@@ -616,7 +616,13 @@ def start_server(output_path):
                     return
 
                 length = int(self.headers.getheader('content-length'))
-                content = self.rfile.read(length)
+                post_data = urlparse.parse_qs(self.rfile.read(length).decode('utf-8'))
+                content = post_data['content'][0]
+                if not content:
+                    content_error = 'Missing argument: content'
+                    error(content_error)
+                    self.send_error(400, content_error)
+                    return
 
                 file_path = normpath(path_join(output_path, 'data', username, normpath(filepath)))
 
@@ -628,16 +634,8 @@ def start_server(output_path):
 
                 ok()
 
-            qs = {}
             path = self.path
-            if '?' in path:
-                path, tmp = path.split('?', 1)
-                qs = urlparse.parse_qs(tmp)
-
             info('POST request: %s' % path)
-
-            def get_param(key):
-                return qs[key][0]
 
             try:
                 match = self.local_save_regex.match(path)
