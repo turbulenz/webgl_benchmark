@@ -20,14 +20,66 @@ PlaybackController.prototype =
         this.prefixTemplatesURL = prefixTemplatesURL;
         if (!sequenceList)
         {
-            this.sequenceList = [];
+            Utilities.log("Sequence information is required to playback");
+            return false;
         }
-        else
+        if (!this._processSequenceList(sequenceList))
         {
-            this.sequenceList = sequenceList;
+            Utilities.log("Sequence information could not be processed");
+            return false;
         }
         this.loadAssets();
         this.resultsData = {};
+        return true;
+    },
+
+    _processSequenceList: function playbackcontrollerProcessSequenceList(sequenceList)
+    {
+        var sequence, stream, test, streamMeta, testMeta;
+        var numTotalFrames, numFramesPerGroup, numGroups;
+        var i, iLen, j, jLen, k, kLen;
+        iLen = sequenceList.length;
+        for (i = 0; i < iLen; i += 1)
+        {
+            sequence = sequenceList[i];
+            jLen = sequence.streams.length;
+            for (j = 0; j < jLen; j += 1)
+            {
+                stream = sequence.streams[j];
+                streamMeta = stream.meta;
+                if (stream.meta && stream.id)
+                {
+                    this.streamMeta[stream.id] = stream.meta;
+                }
+
+                if (streamMeta)
+                {
+                    numTotalFrames = this.numTotalFrames = streamMeta.totalLength;
+                    numFramesPerGroup = this.numFramesPerGroup = streamMeta.groupLength;
+                    // Total groups for all stream data
+                    numGroups = this.numGroups = Math.ceil(numTotalFrames / numFramesPerGroup);
+                }
+
+                kLen = stream.tests.length;
+                for (k = 0; k < kLen; k += 1)
+                {
+                    test = stream.tests[k];
+
+                    if (streamMeta && streamMeta.tests)
+                    {
+                        testMeta = streamMeta.tests[test.name];
+                    }
+
+                    if (testMeta)
+                    {
+                        var testEndFrame = testMeta.endFrame ? testMeta.endFrame: testMeta.lastFrame;
+                        numGroups = this.numGroups = Math.ceil(testEndFrame / numFramesPerGroup);
+                    }
+                }
+            }
+        }
+        this.sequenceList = sequenceList;
+        return true;
     },
 
     _requestData : function playbackcontroller_requestDataFn(groupIndex)
@@ -202,7 +254,7 @@ PlaybackController.prototype =
         var playbackGraphicsDevice = this.playbackGraphicsDevice;
 
         var group = this.groups[this.currentGroupIndex];
-        if (group.ready)
+        if (group && group.ready)
         {
             if (this.addingResources)
             {

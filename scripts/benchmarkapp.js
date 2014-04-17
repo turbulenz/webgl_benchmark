@@ -8,6 +8,8 @@
 /*global Config: false*/
 /*global BenchmarkGraph: false*/
 /*global RequestHandler: false*/
+/*global Utilities: false*/
+/*global debug: false*/
 
 function BenchmarkApp() {}
 
@@ -18,39 +20,58 @@ BenchmarkApp.prototype =
         var config = this.config;
         var that = this;
 
-        var streamIDs = config.streamIDs || {};
-
-        // Default benchmark behaviour
-        // Single sequence, single stream, single test
-
-        var test = {
-            name: config.defaultTestName || "default",
-            id: "0"
-        };
-
-        var stream = {
-            name: config.defaultCapture,
-            tests: [test]
-        };
-
-        //TODO: Enforce a streamID is present
-        var streamID = streamIDs[config.defaultCapture];
-        if (streamID)
-        {
-            stream.id = streamID;
-        }
-
-        var sequenceList = [{
-            name: config.defaultSequenceName || "Default Sequence",
-            streams: [stream]
-        }];
-
+        var metaResponse = false;
         var metaLoaded = function metaLoadedFn(responseText, status)
         {
+            var streamMeta = null;
             if (status === 200)
             {
-                that.playbackController.streamMeta[stream.id] = JSON.parse(responseText);
+                try
+                {
+                    streamMeta = JSON.parse(responseText);
+                }
+                catch (e)
+                {
+                    Utilities.error("Could not parse meta information");
+                }
             }
+
+            var streamIDs = config.streamIDs || {};
+
+            // Default benchmark behaviour
+            // Single sequence, single stream, single test
+
+            var test = {
+                name: config.defaultTestName || "default",
+                id: "0"
+            };
+
+            if (streamMeta)
+            {
+                var streamMetaVersion = streamMeta.version;
+                debug.assert(streamMetaVersion === 0, "Stream meta is an unrecognized version");
+                var streamTests = streamMeta.tests;
+                if (!streamTests[test.name])
+                {
+                    Utilities.error("Test cannot be found in the stream: " + test.name);
+                }
+            }
+
+            var stream = {
+                name: config.defaultCapture,
+                meta: streamMeta,
+                tests: [test],
+                id: streamIDs[config.defaultCapture] //TODO: Enforce a streamID is present
+            };
+
+
+            var sequenceList = [{
+                name: config.defaultSequenceName || "Default Sequence",
+                streams: [stream]
+            }];
+
+            that.playbackController.init(config.prefixAssetURL, prefixCaptureURL, config.prefixTemplatesURL, sequenceList);
+            metaResponse = true;
         };
 
         var prefixCaptureURL = config.captureLookUp[config.defaultCapture];
@@ -59,8 +80,6 @@ BenchmarkApp.prototype =
             src: prefixCaptureURL + 'meta.json',
             onload: metaLoaded
         });
-
-        this.playbackController.init(config.prefixAssetURL, prefixCaptureURL, config.prefixTemplatesURL, sequenceList);
 
         // Controls
         // var saveElement = document.getElementById("buttonSave");
@@ -226,7 +245,7 @@ BenchmarkApp.prototype =
                 var progress = playbackController.getLoadingProgress();
                 that.loadingScreen.setProgress(progress);
             }
-            else
+            else if (metaResponse)
             {
                 TurbulenzEngine.clearInterval(that.intervalID);
                 requestAnimationFrame(update);
