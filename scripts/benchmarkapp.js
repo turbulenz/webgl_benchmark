@@ -239,7 +239,7 @@ BenchmarkApp.prototype =
                 return;
             }
 
-            if (playbackController.addingResources || playbackController.loadingResources || playbackController.loadingTemplates)
+            if (playbackController.addingResources || playbackController.loadingResources || playbackController.loadingTemplates || playbackController.loadingAppResources)
             {
                 playbackController.update();
                 var progress = playbackController.getLoadingProgress();
@@ -412,7 +412,12 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
         }
     }
 
-    benchmarkApp.playbackController = PlaybackController.create(config, graphicsDevice, requestHandler, benchmarkApp.elements);
+    benchmarkApp.playbackController = PlaybackController.create(config, {
+        graphicsDevice: graphicsDevice,
+        mathDevice: mathDevice,
+        requestHandler: requestHandler,
+        elements: benchmarkApp.elements
+    });
     benchmarkApp.playbackController.multisample = multisample;
     benchmarkApp.playbackController.antialias = antialias;
 

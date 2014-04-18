@@ -20,6 +20,8 @@
 /*{{ javascript("jslib/services/turbulenzbridge.js") }}*/
 /*{{ javascript("jslib/services/userdatamanager.js") }}*/
 /*{{ javascript("jslib/services/gamesession.js") }}*/
+/*{{ javascript("jslib/shadermanager.js") }}*/
+/*{{ javascript("jslib/fontmanager.js") }}*/
 /*{{ javascript("jslib/requesthandler.js") }}*/
 
 /*{# updated jslib files #}*/

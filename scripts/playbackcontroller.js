@@ -7,6 +7,8 @@
 /*global UserDataManager: false*/
 /*global TurbulenzServices: false*/
 /*global Utilities: false*/
+/*global FontManager: false*/
+/*global ShaderManager: false*/
 
 function PlaybackController() {}
 
@@ -18,6 +20,7 @@ PlaybackController.prototype =
         this.prefixAssetURL = prefixAssetURL;
         this.prefixCaptureURL = prefixCaptureURL;
         this.prefixTemplatesURL = prefixTemplatesURL;
+        this.testRanges = {};
         if (!sequenceList)
         {
             Utilities.log("Sequence information is required to playback");
@@ -33,12 +36,80 @@ PlaybackController.prototype =
         return true;
     },
 
+    _processSubTests: function playbackcontrollerProcessSubTestsFn(subTests, tests)
+    {
+        var length = subTests.length;
+        var subTest;
+        for (var i = 0; i < length; i += 1)
+        {
+            subTest = tests[subTests[i]];
+            if (subTest)
+            {
+                this.testRanges[subTest.name] = [
+                    subTest.startFrame,
+                    subTest.endFrame ? subTest.endFrame: subTest.lastFrame
+                ];
+            }
+        }
+    },
+
+    _postFrame: function postFrameFn(frameIndex)
+    {
+        var testRange;
+        var testRanges = this.testRanges;
+        var testsActive = this.testsActive;
+        testsActive.length = 0;
+        for (var t in testRanges)
+        {
+            if (testRanges.hasOwnProperty(t))
+            {
+                testRange = this.testRanges[t];
+                if (frameIndex >= testRange[0] && frameIndex <= testRange[1])
+                {
+                    testsActive[testsActive.length] = t;
+                }
+            }
+        }
+
+        var textParameters = this.textParameters;
+        var font = this.font;
+        var rect = textParameters.rect;
+        if (!font)
+        {
+            font = this.font = this.fontManager.get(this.fontName);
+        }
+
+        var textTechniqueParameters = this.textTechniqueParameters;
+        var graphicsDevice = this.graphicsDevice;
+        graphicsDevice.setScissor(0, 0, graphicsDevice.width, graphicsDevice.height);
+        graphicsDevice.setViewport(0, 0, graphicsDevice.width, graphicsDevice.height);
+        graphicsDevice.setTechnique(this.textTechnique);
+        this.mathDevice.v4Build(2 / graphicsDevice.width, -2 / graphicsDevice.height,
+                                -1, 1,
+                                textTechniqueParameters.clipSpace);
+        graphicsDevice.setTechniqueParameters(textTechniqueParameters);
+
+        var length = testsActive.length;
+        var text, textDimensions;
+        for (var i = 0; i < length; i += 1)
+        {
+            text = testsActive[i];
+            textDimensions = this.textDimensions = font.calculateTextDimensions(text, 1, 0, 0, this.textDimensions);
+            rect[0] = 10;
+            rect[1] = graphicsDevice.height - ((i + 1) * textDimensions.height) - 10;
+            rect[2] = textDimensions.width;
+            rect[3] = textDimensions.height;
+            font.drawTextRect(text, textParameters);
+        }
+    },
+
     _processSequenceList: function playbackcontrollerProcessSequenceList(sequenceList)
     {
         var sequence, stream, test, streamMeta, testMeta;
         var numTotalFrames, numFramesPerGroup, numGroups;
         var i, iLen, j, jLen, k, kLen;
         iLen = sequenceList.length;
+
         for (i = 0; i < iLen; i += 1)
         {
             sequence = sequenceList[i];
@@ -68,6 +139,16 @@ PlaybackController.prototype =
                     if (streamMeta && streamMeta.tests)
                     {
                         testMeta = streamMeta.tests[test.name];
+
+                        this.testRanges[testMeta.name] = [
+                            testMeta.startFrame,
+                            testMeta.endFrame ? testMeta.endFrame: testMeta.lastFrame
+                        ];
+
+                        if (testMeta.subTests)
+                        {
+                            this._processSubTests(testMeta.subTests, streamMeta.tests);
+                        }
                     }
 
                     if (testMeta)
@@ -224,7 +305,7 @@ PlaybackController.prototype =
 
     getLoadingProgress : function playbackcontrollerGetLoadingProgressFn()
     {
-        return (this.numCaptureDataLoaded) / (this.numCaptureData);
+        return (this.numCaptureDataLoaded + this.numAppResourcesLoaded) / (this.numCaptureData + this.numAppResources);
     },
 
     pause : function playbackcontrollerPauseFn()
@@ -298,6 +379,11 @@ PlaybackController.prototype =
                 var frameStart = TurbulenzEngine.getTime();
                 playbackGraphicsDevice.play(this.relativeFrameIndex);
                 var dispatchTime = TurbulenzEngine.getTime() - frameStart;
+
+                if (this._postFrame)
+                {
+                    this._postFrame(((this.currentGroupIndex * this.numFramesPerGroup) + this.relativeFrameIndex));
+                }
 
                 var frameTime;
                 if (this.config.blockForRendering)
@@ -1027,10 +1113,15 @@ PlaybackController.prototype =
     }
 };
 
-PlaybackController.create = function playbackControllerCreateFn(config, graphicsDevice, requestHandler, elements)
+PlaybackController.create = function playbackControllerCreateFn(config, params)
 {
     var playbackController = new PlaybackController();
-    playbackController.graphicsDevice = graphicsDevice;
+    var mathDevice = playbackController.mathDevice = params.mathDevice;
+    var graphicsDevice = playbackController.graphicsDevice = params.graphicsDevice;
+    var requestHandler = playbackController.requestHandler = params.requestHandler;
+    var shaderManager = playbackController.shaderManager = params.shaderManager || ShaderManager.create(graphicsDevice, requestHandler);
+    var fontManager = playbackController.fontManager = params.fontManager || FontManager.create(graphicsDevice, requestHandler);
+    var elements = params.elements;
     playbackController.config = config;
 
     playbackController.playbackGraphicsDevice = PlaybackGraphicsDevice.create(graphicsDevice);
@@ -1065,6 +1156,10 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.numCaptureData = 0;
     playbackController.numCaptureDataLoaded = 0;
 
+    playbackController.numAppResources = 0;
+    playbackController.numAppResourcesLoaded = 0;
+    playbackController.loadingAppResources = true;
+
     playbackController.previousFrameTime = 0;
     playbackController.atEnd = false;
 
@@ -1084,6 +1179,8 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.xhrPool = [];
     playbackController.msPerFrame = [];
     playbackController.msDispatchPerFrame = [];
+    playbackController.testRanges = {};
+    playbackController.testsActive = [];
 
     if (config.outputMetrics)
     {
@@ -1109,6 +1206,19 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.playbackConfig = {};
     playbackController.streamMeta = {};
     playbackController.sequenceList = [];
+    playbackController.fontName = "fonts/opensans-32.fnt";
+    playbackController.fontShaderName = "shaders/font.cgfx";
+    playbackController.textTechnique = null;
+    playbackController.textTechniqueParameters = null;
+    playbackController.textTechniqueName = "font";
+    playbackController.textTechniqueParameters = graphicsDevice.createTechniqueParameters({
+        clipSpace : mathDevice.v4BuildZero(),
+        alphaRef : 0.01,
+        color : mathDevice.v4BuildOne()
+    });
+    playbackController.textParameters = {
+        rect: [0, 0, 10, 10]
+    };
 
     playbackController.resultsData = null;
     playbackController.dataProcessed = false;
@@ -1117,8 +1227,6 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
     playbackController.aborted = false;
     playbackController.multisample = -1;
     playbackController.antialias = false;
-
-    playbackController.requestHandler = requestHandler;
 
     playbackController.gameSession = null;
     playbackController.userDataManager = null;
@@ -1165,6 +1273,33 @@ PlaybackController.create = function playbackControllerCreateFn(config, graphics
                 return;
             }
         }
+
+        fontManager.setPathRemapping(mappingTable.urlMapping, mappingTable.assetPrefix);
+        fontManager.load(playbackController.fontName, function onloadFn(/*font*/) {
+            playbackController.numAppResourcesLoaded += 1;
+
+            if (playbackController.numAppResourcesLoaded - playbackController.numAppResources === 0)
+            {
+                playbackController.loadingAppResources = false;
+            }
+        });
+        playbackController.numAppResources += fontManager.getNumPendingFonts();
+
+        shaderManager.setPathRemapping(mappingTable.urlMapping, mappingTable.assetPrefix);
+        shaderManager.load(playbackController.fontShaderName, function onLoadFn(shader) {
+            playbackController.numAppResourcesLoaded += 1;
+
+            if (shader)
+            {
+                playbackController.textTechnique = shader.getTechnique(playbackController.textTechniqueName);
+            }
+
+            if (playbackController.numAppResourcesLoaded - playbackController.numAppResources === 0)
+            {
+                playbackController.loadingAppResources = false;
+            }
+        });
+        playbackController.numAppResources += 1;
 
         var templateRequest = playbackController.prefixTemplatesURL + playbackController.config.resultsTemplate + '.json';
 
