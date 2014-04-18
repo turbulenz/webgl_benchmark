@@ -22,7 +22,7 @@
 //
 var WebGLTurbulenzEngine = (function () {
     function WebGLTurbulenzEngine() {
-        this.version = '0.27.0.0';
+        this.version = '0.28.0.0';
     }
     WebGLTurbulenzEngine.prototype.setInterval = function (f, t) {
         var that = this;
@@ -114,6 +114,7 @@ var WebGLTurbulenzEngine = (function () {
         } catch (e) {
         }
 
+        /* tslint:enable:no-empty */
         return WebGLMathDevice;
     };
 
@@ -157,12 +158,14 @@ var WebGLTurbulenzEngine = (function () {
         return null;
     };
 
+    /* tslint:disable:no-empty */
     WebGLTurbulenzEngine.prototype.flush = function () {
     };
 
     WebGLTurbulenzEngine.prototype.run = function () {
     };
 
+    /* tslint:enable:no-empty */
     WebGLTurbulenzEngine.prototype.encrypt = function (msg) {
         return msg;
     };
@@ -188,6 +191,9 @@ var WebGLTurbulenzEngine = (function () {
     };
 
     WebGLTurbulenzEngine.prototype.onperformancewarning = function (msg) {
+        if (debug) {
+            console.warn(msg);
+        }
     };
 
     WebGLTurbulenzEngine.prototype.getSystemInfo = function () {
@@ -286,6 +292,11 @@ var WebGLTurbulenzEngine = (function () {
         }
         if (this.resizeCanvas) {
             window.removeEventListener('resize', this.resizeCanvas, false);
+            delete this.resizeCanvas;
+        }
+        if (this.handleZeroTimeoutMessages) {
+            window.removeEventListener("message", this.handleZeroTimeoutMessages, true);
+            delete this.handleZeroTimeoutMessages;
         }
     };
 
@@ -312,9 +323,11 @@ var WebGLTurbulenzEngine = (function () {
         return this.unloading;
     };
 
+    /* tslint:disable:no-empty */
     WebGLTurbulenzEngine.prototype.enableProfiling = function () {
     };
 
+    /* tslint:enable:no-empty */
     WebGLTurbulenzEngine.prototype.startProfiling = function () {
         if (console && console.profile && console.profileEnd) {
             console.profile("turbulenz");
@@ -400,8 +413,10 @@ var WebGLTurbulenzEngine = (function () {
                 configurable: false
             });
 
+            /* tslint:disable:no-empty */
             tz.updateTime = function () {
             };
+            /* tslint:enable:no-empty */
         } else {
             tz.updateTime = function () {
                 this.time = ((getTime() - baseTime) * 0.001);
@@ -425,7 +440,7 @@ var WebGLTurbulenzEngine = (function () {
             };
 
             var clearZeroTimeout = function clearZeroTimeoutFn(timeout) {
-                var id = timeout;
+                var id = timeout.id;
                 var numTimeouts = timeouts.length;
                 for (var n = 0; n < numTimeouts; n += 1) {
                     if (timeouts[n].id === id) {
@@ -446,6 +461,9 @@ var WebGLTurbulenzEngine = (function () {
                     }
                 }
             };
+
+            tz.handleZeroTimeoutMessages = handleZeroTimeoutMessages;
+
             window.addEventListener("message", handleZeroTimeoutMessages, true);
 
             tz.setTimeout = function (f, t) {
@@ -544,7 +562,7 @@ var WebGLTurbulenzEngine = (function () {
         if (fillParent) {
             // Resize canvas to fill parent
             tz.resizeCanvas = function () {
-                if (document.fullscreenElement === canvas || document.mozFullScreenElement === canvas || document.webkitFullscreenElement === canvas) {
+                if (document.fullscreenElement === canvas || document.mozFullScreenElement === canvas || document.webkitFullscreenElement === canvas || document.msFullscreenElement === canvas) {
                     canvas.width = window.innerWidth;
                     canvas.height = window.innerHeight;
                 } else {
@@ -592,10 +610,10 @@ var WebGLTurbulenzEngine = (function () {
             userLocale: (navigator.language || navigator.userLanguage).replace('-', '_')
         };
 
-        var looksLikeNetbook = function looksLikeNetbookFn() {
+        function looksLikeNetbook() {
             var minScreenDim = Math.min(window.screen.height, window.screen.width);
             return minScreenDim < 900;
-        };
+        }
 
         var userAgent = navigator.userAgent;
         var osIndex = userAgent.indexOf('Windows');
@@ -630,43 +648,56 @@ var WebGLTurbulenzEngine = (function () {
                 systemInfo.osVersionMinor = parseInt(userAgent.slice((osIndex + 3), (osIndex + 4)), 10);
                 systemInfo.osVersionBuild = (parseInt(userAgent.slice((osIndex + 5), (osIndex + 6)), 10) || 0);
             } else {
-                osIndex = userAgent.indexOf('Linux');
+                osIndex = userAgent.indexOf('Tizen');
                 if (osIndex !== -1) {
-                    systemInfo.osName = 'Linux';
-                    if (navigator.platform.indexOf('64') !== -1) {
-                        systemInfo.architecture = 'x86_64';
-                    } else if (navigator.platform.indexOf('x86') !== -1) {
-                        systemInfo.architecture = 'x86';
+                    systemInfo.osName = 'Tizen';
+                    if (navigator.platform.indexOf('arm')) {
+                        systemInfo.architecture = 'arm';
                     }
-                    if (looksLikeNetbook()) {
+                    if (-1 !== userAgent.indexOf('Mobile')) {
+                        systemInfo.platformProfile = "smartphone";
+                    } else {
                         systemInfo.platformProfile = "tablet";
-                        if (debug) {
-                            debug.log("Setting platformProfile to 'tablet'");
-                        }
                     }
                 } else {
-                    osIndex = userAgent.indexOf('Android');
-                    if (-1 !== osIndex) {
-                        systemInfo.osName = 'Android';
-                        if (navigator.platform.indexOf('arm')) {
-                            systemInfo.architecture = 'arm';
-                        } else if (navigator.platform.indexOf('x86')) {
+                    osIndex = userAgent.indexOf('Linux');
+                    if (osIndex !== -1) {
+                        systemInfo.osName = 'Linux';
+                        if (navigator.platform.indexOf('64') !== -1) {
+                            systemInfo.architecture = 'x86_64';
+                        } else if (navigator.platform.indexOf('x86') !== -1) {
                             systemInfo.architecture = 'x86';
                         }
-                        if (-1 !== userAgent.indexOf('Mobile')) {
-                            systemInfo.platformProfile = "smartphone";
-                        } else {
+                        if (looksLikeNetbook()) {
                             systemInfo.platformProfile = "tablet";
+                            if (debug) {
+                                debug.log("Setting platformProfile to 'tablet'");
+                            }
                         }
                     } else {
-                        if (-1 !== userAgent.indexOf("iPhone") || -1 !== userAgent.indexOf("iPod")) {
-                            systemInfo.osName = 'iOS';
-                            systemInfo.architecture = 'arm';
-                            systemInfo.platformProfile = 'smartphone';
-                        } else if (-1 !== userAgent.indexOf("iPad")) {
-                            systemInfo.osName = 'iOS';
-                            systemInfo.architecture = 'arm';
-                            systemInfo.platformProfile = 'tablet';
+                        osIndex = userAgent.indexOf('Android');
+                        if (-1 !== osIndex) {
+                            systemInfo.osName = 'Android';
+                            if (navigator.platform.indexOf('arm')) {
+                                systemInfo.architecture = 'arm';
+                            } else if (navigator.platform.indexOf('x86')) {
+                                systemInfo.architecture = 'x86';
+                            }
+                            if (-1 !== userAgent.indexOf('Mobile')) {
+                                systemInfo.platformProfile = "smartphone";
+                            } else {
+                                systemInfo.platformProfile = "tablet";
+                            }
+                        } else {
+                            if (-1 !== userAgent.indexOf("iPhone") || -1 !== userAgent.indexOf("iPod")) {
+                                systemInfo.osName = 'iOS';
+                                systemInfo.architecture = 'arm';
+                                systemInfo.platformProfile = 'smartphone';
+                            } else if (-1 !== userAgent.indexOf("iPad")) {
+                                systemInfo.osName = 'iOS';
+                                systemInfo.architecture = 'arm';
+                                systemInfo.platformProfile = 'tablet';
+                            }
                         }
                     }
                 }
@@ -682,7 +713,7 @@ var WebGLTurbulenzEngine = (function () {
             var valueToChar = b64ConversionTable;
             var n, chr1, chr2, chr3, enc1, enc2, enc3, enc4;
 
-            /*jshint bitwise: false*/
+            /* tslint:disable:no-bitwise */
             n = 0;
             while (n < numBytes) {
                 chr1 = bytes[n];
@@ -718,7 +749,7 @@ var WebGLTurbulenzEngine = (function () {
                 output += valueToChar[enc4];
             }
 
-            /*jshint bitwise: true*/
+            /* tslint:enable:no-bitwise */
             return output;
         };
 

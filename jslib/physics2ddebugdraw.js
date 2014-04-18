@@ -1,4 +1,4 @@
-// Copyright (c) 2012 Turbulenz Limited
+// Copyright (c) 2012-2014 Turbulenz Limited
 /*global
 
 Physics2DDevice: false
@@ -357,10 +357,10 @@ var Physics2DDebugDraw = (function () {
         }
         verts.push(x2, y2);
 
-        /*jshint bitwise: false*/
+        /* tslint:disable:no-bitwise */
         var vCount = (verts.length >> 1);
 
-        /*jshint bitwise: true*/
+        /* tslint:enable:no-bitwise */
         var numVertices = this._numVertices;
         var vindex = (numVertices * 6);
         var iindex = (this._numLines * 2);
@@ -591,7 +591,7 @@ var Physics2DDebugDraw = (function () {
             return;
         }
 
-        /*jshint bitwise: false*/
+        /* tslint:disable:no-bitwise */
         var color = this._colors[shape.body._type | (body.sleeping ? 4 : 0) | (shape.sensor ? 8 : 0) | (body._bullet ? 16 : 0)];
 
         if (shape._type === (0)) {
@@ -925,6 +925,8 @@ var Physics2DDebugDraw = (function () {
         colors[(1) + 12] = sleepingKinematicSensorColor;
 
         // Load embedded default shader and techniques
+        /* tslint:disable:whitespace */
+        /* tslint:disable:max-line-length */
         var shader = gd.createShader({
             "version": 1,
             "name": "lines.cgfx",
@@ -962,6 +964,8 @@ var Physics2DDebugDraw = (function () {
             }
         });
 
+        /* tslint:enable:max-line-length */
+        /* tslint:enable:whitespace */
         o._techniqueParams = gd.createTechniqueParameters({
             clipSpace: new Physics2DDevice.prototype.floatArray(4)
         });
@@ -1064,14 +1068,18 @@ Physics2DPulleyConstraint.prototype._drawLink = function _drawLinkFn(debug, x1, 
         var minY1 = (midY - (ny * (jointMin * 0.5)));
         var minX2 = (midX + (nx * (jointMin * 0.5)));
         var minY2 = (midY + (ny * (jointMin * 0.5)));
-        var maxX1 = (midX - (nx * (jointMax * 0.5)));
-        var maxY1 = (midY - (ny * (jointMax * 0.5)));
-        var maxX2 = (midX + (nx * (jointMax * 0.5)));
-        var maxY2 = (midY + (ny * (jointMax * 0.5)));
 
         debug.drawLine(minX1, minY1, minX2, minY2, colSA);
-        debug.drawLine(maxX1, maxY1, minX1, minY1, colSB);
-        debug.drawLine(maxX2, maxY2, minX2, minY2, colSB);
+
+        if (isFinite(jointMax)) {
+            var maxX1 = (midX - (nx * (jointMax * 0.5)));
+            var maxY1 = (midY - (ny * (jointMax * 0.5)));
+            var maxX2 = (midX + (nx * (jointMax * 0.5)));
+            var maxY2 = (midY + (ny * (jointMax * 0.5)));
+
+            debug.drawLine(maxX1, maxY1, minX1, minY1, colSB);
+            debug.drawLine(maxX2, maxY2, minX2, minY2, colSB);
+        }
 
         if (!this._stiff) {
             var numCoils = debug.constraintSpringNumCoils;
@@ -1184,14 +1192,18 @@ Physics2DDistanceConstraint.prototype._draw = function distanceDrawFn(debug) {
         var minY1 = (midY - (ny * (jointMin * 0.5)));
         var minX2 = (midX + (nx * (jointMin * 0.5)));
         var minY2 = (midY + (ny * (jointMin * 0.5)));
-        var maxX1 = (midX - (nx * (jointMax * 0.5)));
-        var maxY1 = (midY - (ny * (jointMax * 0.5)));
-        var maxX2 = (midX + (nx * (jointMax * 0.5)));
-        var maxY2 = (midY + (ny * (jointMax * 0.5)));
 
         debug.drawLine(minX1, minY1, minX2, minY2, colSA);
-        debug.drawLine(maxX1, maxY1, minX1, minY1, colSB);
-        debug.drawLine(maxX2, maxY2, minX2, minY2, colSB);
+
+        if (isFinite(jointMax)) {
+            var maxX1 = (midX - (nx * (jointMax * 0.5)));
+            var maxY1 = (midY - (ny * (jointMax * 0.5)));
+            var maxX2 = (midX + (nx * (jointMax * 0.5)));
+            var maxY2 = (midY + (ny * (jointMax * 0.5)));
+
+            debug.drawLine(maxX1, maxY1, minX1, minY1, colSB);
+            debug.drawLine(maxX2, maxY2, minX2, minY2, colSB);
+        }
 
         if (!this._stiff) {
             var numCoils = debug.constraintSpringNumCoils;

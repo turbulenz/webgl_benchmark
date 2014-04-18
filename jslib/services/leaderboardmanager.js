@@ -7,6 +7,7 @@
 //
 var LeaderboardManager = (function () {
     function LeaderboardManager() {
+        /* tslint:enable:no-unused-variable */
         this.getTypes = {
             top: 'top',
             near: 'near',
@@ -50,7 +51,7 @@ var LeaderboardManager = (function () {
             data: dataSpec,
             callback: getOverviewCallback,
             requestHandler: this.requestHandler
-        });
+        }, 'leaderboard.read');
     };
 
     LeaderboardManager.prototype.getAggregates = function (spec, callbackFn, errorCallbackFn) {
@@ -78,7 +79,7 @@ var LeaderboardManager = (function () {
             data: dataSpec,
             callback: getAggregatesCallback,
             requestHandler: this.requestHandler
-        });
+        }, 'leaderboard.aggregates');
     };
 
     LeaderboardManager.prototype.getRaw = function (key, spec, callbackFn, errorCallbackFn) {
@@ -99,7 +100,7 @@ var LeaderboardManager = (function () {
             data: spec,
             callback: getCallback,
             requestHandler: this.requestHandler
-        });
+        }, 'leaderboard.read');
         return true;
     };
 
@@ -228,22 +229,14 @@ var LeaderboardManager = (function () {
         };
         var url = '/api/v1/leaderboards/scores/set/' + key;
 
-        if (TurbulenzServices.bridgeServices) {
-            TurbulenzServices.addSignature(dataSpec, url);
-            dataSpec.key = key;
-            TurbulenzServices.callOnBridge('leaderboard.set', dataSpec, function unpackResponse(response) {
-                setCallback(response, response.status);
-            });
-        } else {
-            this.service.request({
-                url: url,
-                method: 'POST',
-                data: dataSpec,
-                callback: setCallback,
-                requestHandler: this.requestHandler,
-                encrypt: true
-            });
-        }
+        this.service.request({
+            url: url,
+            method: 'POST',
+            data: dataSpec,
+            callback: setCallback,
+            requestHandler: this.requestHandler,
+            encrypt: true
+        }, 'leaderboard.set');
     };
 
     // ONLY available on Local and Hub
@@ -278,7 +271,7 @@ var LeaderboardManager = (function () {
             method: 'POST',
             callback: resetCallback,
             requestHandler: this.requestHandler
-        });
+        }, 'leaderboard.removeall');
     };
 
     LeaderboardManager.create = function (requestHandler, gameSession, leaderboardMetaReceived, errorCallbackFn) {
@@ -321,12 +314,12 @@ var LeaderboardManager = (function () {
                         leaderboardMetaReceived(leaderboardManager);
                     }
                 } else {
-                    leaderboardManager.errorCallbackFn("TurbulenzServices.createLeaderboardManager error with HTTP status " + status + ": " + jsonResponse.msg, status);
+                    leaderboardManager.errorCallbackFn("TurbulenzServices.createLeaderboardManager " + "error with HTTP status " + status + ": " + jsonResponse.msg, status);
                 }
             },
             requestHandler: requestHandler,
             neverDiscard: true
-        });
+        }, 'leaderboard.meta');
 
         return leaderboardManager;
     };
@@ -613,7 +606,7 @@ var LeaderboardResult = (function () {
         leaderboardResult.key = key;
 
         // patch up friendsOnly for frontend
-        spec.friendsOnly = (0 != spec.friendsonly);
+        spec.friendsOnly = (0 !== spec.friendsonly);
         delete spec.friendsonly;
 
         // store the original spec used to create the results

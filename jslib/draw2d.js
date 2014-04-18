@@ -40,9 +40,10 @@ var Draw2DSprite = (function () {
     function Draw2DSprite() {
     }
     //
-    // Assumption is that user will not be performing these actions frequently.
-    // To that end, we provide a function which performs the ssary side effects
-    // on call, to prevent an overhead for lazy evaluation.
+    // Assumption is that user will not be performing these actions
+    // frequently.  To that end, we provide a function which performs
+    // the necessary side effects on call, to prevent an overhead for
+    // lazy evaluation.
     //
     Draw2DSprite.prototype.getTextureRectangle = function (dst) {
         if (dst === undefined) {
@@ -102,6 +103,21 @@ var Draw2DSprite = (function () {
         data[11] = color[3];
     };
 
+    Draw2DSprite.prototype.setColorRGB = function (r, g, b) {
+        var data = this.data;
+        data[8] = r;
+        data[9] = g;
+        data[10] = b;
+    };
+
+    Draw2DSprite.prototype.getAlpha = function () {
+        return this.data[11];
+    };
+
+    Draw2DSprite.prototype.setAlpha = function (alpha) {
+        this.data[11] = alpha;
+    };
+
     Draw2DSprite.prototype.getTexture = function () {
         return this._texture;
     };
@@ -129,6 +145,10 @@ var Draw2DSprite = (function () {
         width *= 0.5;
         var data = this.data;
         if (data[17] !== width) {
+            // Move the origin so that the sprite gets scaled around
+            // it, rather than scaled around the top left corner.
+            // originX = originX * (newwidth/2) / (oldwidth/2)
+            data[23] = data[23] * width / data[17];
             data[17] = width;
             this._invalidate();
         }
@@ -142,6 +162,8 @@ var Draw2DSprite = (function () {
         height *= 0.5;
         var data = this.data;
         if (data[18] !== height) {
+            // originY = originY * (newheight/2) / (oldheight/2)
+            data[24] = data[24] * height / data[18];
             data[18] = height;
             this._invalidate();
         }
@@ -436,6 +458,7 @@ var Draw2DSprite = (function () {
 //function Draw2DSpriteData() {}
 var Draw2DSpriteData = {
     setFromRotatedRectangle: function setFromRotatedRectangleFn(sprite, texture, rect, uvrect, color, rotation, origin) {
+        debug.assert(rect.length === 4);
         var x1 = rect[0];
         var y1 = rect[1];
         var x2 = rect[2];
@@ -453,6 +476,7 @@ var Draw2DSpriteData = {
         } else {
             var cx, cy;
             if (origin) {
+                debug.assert(origin.length === 2);
                 cx = x1 + origin[0];
                 cy = y1 + origin[1];
             } else {
@@ -479,6 +503,7 @@ var Draw2DSpriteData = {
         }
 
         if (color) {
+            debug.assert(color.length === 4);
             sprite[8] = color[0];
             sprite[9] = color[1];
             sprite[10] = color[2];
@@ -488,6 +513,7 @@ var Draw2DSpriteData = {
         }
 
         if (uvrect && texture) {
+            debug.assert(uvrect.length === 4);
             var iwidth = 1 / texture.width;
             var iheight = 1 / texture.height;
             sprite[12] = uvrect[0] * iwidth;
@@ -523,11 +549,17 @@ var Draw2D = (function () {
             scale: 'scale',
             none: 'none'
         };
-        // supported blend modes
+        // Supported blend modes.
         this.blend = {
             additive: 'additive',
             alpha: 'alpha',
             opaque: 'opaque'
+        };
+        // Map from mode name to the "nomip" equivalent.
+        this.nomipModes = {
+            additive: 'additivenomip',
+            alpha: 'alphanomip',
+            opaque: 'opaquenomip'
         };
         this.drawStates = {
             uninit: 0,
@@ -570,10 +602,10 @@ var Draw2D = (function () {
     Draw2D.prototype.bufferSprite = function (buffer, sprite, index) {
         sprite._update(0);
 
-        /*jshint bitwise: false*/
+        /* tslint:disable:no-bitwise */
         index <<= 4;
 
-        /*jshint bitwise: true*/
+        /* tslint:enable:no-bitwise */
         var data = sprite.data;
         buffer[index] = data[0];
         buffer[index + 1] = data[1];
@@ -888,14 +920,12 @@ var Draw2D = (function () {
         }
     };
 
-    Draw2D.prototype.begin = function (blendMode, sortMode) {
-        if (sortMode && !(sortMode in this.sort)) {
-            return false;
-        }
+    Draw2D.prototype.begin = function (blendMode, sortMode, nomipmaps) {
+        // Check sort mode is well defined (or undefined signifying default)
+        debug.assert(("undefined" === typeof sortMode) || (sortMode in this.sort), "Bad sort mode");
 
-        if (blendMode && !(blendMode in this.blend)) {
-            return false;
-        }
+        // Check blend mode is well defined (or undefined signifying default)
+        debug.assert(("undefined" === typeof blendMode) || (blendMode in this.blend), "Bad blend mode");
 
         //if there are render states left in the stack
         //and begin has been called without an end
@@ -923,12 +953,25 @@ var Draw2D = (function () {
         sortMode = (sortMode) ? sortMode : (firstTime ? 'deferred' : this.sortMode);
         blendMode = (blendMode) ? blendMode : (firstTime ? 'opaque' : this.blendMode);
 
+        if (nomipmaps) {
+            var nomipModes = this.nomipModes;
+            if (nomipModes.hasOwnProperty(blendMode)) {
+                blendMode = nomipModes[blendMode];
+            }
+        }
+
         if (!firstTime) {
             this.sortModeStack.push(this.sortMode);
             this.blendModeStack.push(this.blendMode);
+            if (debug) {
+                this.nomipmapsStack.push(this.nomipmaps);
+            }
         }
         this.sortMode = sortMode;
         this.blendMode = blendMode;
+        if (debug) {
+            this.nomipmaps = !!nomipmaps;
+        }
 
         this.prepareSortMode(sortMode);
         this.graphicsDevice.setTechnique(this.blendModeTechniques[blendMode]);
@@ -1166,6 +1209,14 @@ var Draw2D = (function () {
     };
 
     Draw2D.prototype.drawSpriteImmediate = function (sprite) {
+        if (debug) {
+            var _texture = sprite.getTexture();
+            if (_texture) {
+                debug.assert(this.nomipmaps || (0 === (_texture.width & (_texture.width - 1)) && 0 === (_texture.height & (_texture.height - 1))), "Cannot use mipmaps with NPOT textures");
+            }
+        }
+
+        /* tslint:enable:no-bitwise */
         var group = this.drawGroups[0];
         group.textures[0] = sprite._texture || this.defaultTexture;
         group.indices[0] = 0;
@@ -1219,6 +1270,14 @@ var Draw2D = (function () {
     };
 
     Draw2D.prototype.drawSpriteDeferred = function (sprite) {
+        if (debug) {
+            var _texture = sprite.getTexture();
+            if (_texture) {
+                debug.assert(this.nomipmaps || (0 === (_texture.width & (_texture.width - 1)) && 0 === (_texture.height & (_texture.height - 1))), "Cannot use mipmaps with NPOT textures");
+            }
+        }
+
+        /* tslint:enable:no-bitwise */
         var texture = sprite._texture || this.defaultTexture;
 
         var group = this.drawGroups[0];
@@ -1294,6 +1353,14 @@ var Draw2D = (function () {
     };
 
     Draw2D.prototype.drawSpriteTextured = function (sprite) {
+        if (debug) {
+            var _texture = sprite.getTexture();
+            if (_texture) {
+                debug.assert(this.nomipmaps || (0 === (_texture.width & (_texture.width - 1)) && 0 === (_texture.height & (_texture.height - 1))), "Cannot use mipmaps with NPOT textures");
+            }
+        }
+
+        /* tslint:enable:no-bitwise */
         var texture = sprite._texture || this.defaultTexture;
 
         var group;
@@ -1422,6 +1489,7 @@ var Draw2D = (function () {
 
         var performanceData = this.performanceData;
 
+        var texture;
         var i;
         for (i = 0; i < numGroups; i += 1) {
             var group = drawGroups[i];
@@ -1448,7 +1516,9 @@ var Draw2D = (function () {
                 var ilimit = vcount * 1.5;
                 var iindex = 0;
                 while (iindex < ilimit) {
-                    techniqueParameters['texture'] = textures[setIndex];
+                    texture = textures[setIndex];
+                    techniqueParameters['texture'] = texture;
+                    techniqueParameters['npottexture'] = texture;
 
                     // number of indices remaining to render.
                     var icount = ilimit - iindex;
@@ -1481,8 +1551,14 @@ var Draw2D = (function () {
                     }
 
                     graphicsDevice.setTechniqueParameters(techniqueParameters);
-                    graphicsDevice.drawIndexed(graphicsDevice.PRIMITIVE_TRIANGLES, icount, iindex);
 
+                    if (icount === 6) {
+                        graphicsDevice.draw(graphicsDevice.PRIMITIVE_TRIANGLE_STRIP, 4, ((iindex / 6) << 2));
+                    } else {
+                        graphicsDevice.drawIndexed(graphicsDevice.PRIMITIVE_TRIANGLES, icount, iindex);
+                    }
+
+                    /* tslint:enable:no-bitwise */
                     iindex += icount;
                 }
 
@@ -1556,13 +1632,13 @@ var Draw2D = (function () {
     };
 
     Draw2D.makePow2 = // always overallocate.
-    /*jshint bitwise: false*/
+    /* tslint:disable:no-bitwise */
     function (dim) {
         var index = Math.log(dim) / Math.log(2);
         return (1 << Math.ceil(index));
     };
 
-    /*jshint bitwise: true*/
+    /* tslint:enable:no-bitwise */
     Draw2D.prototype.createRenderTarget = function (params) {
         var gd = this.graphicsDevice;
         var renderTargets = this.renderTargetStructs;
@@ -1747,6 +1823,11 @@ var Draw2D = (function () {
         o.sortModeStack = [];
         o.blendModeStack = [];
 
+        if (debug) {
+            o.nomipmaps = false;
+            o.nomipmapsStack = [];
+        }
+
         // Set of render groups to be dispatched.
         o.drawGroups = [Draw2DGroup.create()];
         o.numGroups = 0;
@@ -1783,12 +1864,20 @@ var Draw2D = (function () {
         o.drawRaw = undefined;
 
         // Load embedded default shader and techniques
+        /* tslint:disable:whitespace */
+        /* tslint:disable:max-line-length */
         var shader = gd.createShader({
             "version": 1,
             "name": "draw2D.cgfx",
             "samplers": {
                 "texture": {
-                    "MinFilter": 9985,
+                    "MinFilter": 9985/* LINEAR_MIPMAP_NEAREST */ ,
+                    "MagFilter": 9729/* LINEAR */ ,
+                    "WrapS": 33071,
+                    "WrapT": 33071
+                },
+                "npottexture": {
+                    "MinFilter": 9728,
                     "MagFilter": 9729,
                     "WrapS": 33071,
                     "WrapT": 33071
@@ -1815,6 +1904,9 @@ var Draw2D = (function () {
                 "texture": {
                     "type": "sampler2D"
                 },
+                "npottexture": {
+                    "type": "sampler2D"
+                },
                 "inputTexture0": {
                     "type": "sampler2D"
                 }
@@ -1833,6 +1925,19 @@ var Draw2D = (function () {
                         "programs": ["vp_draw2D", "fp_draw2D"]
                     }
                 ],
+                "opaquenomip": [
+                    {
+                        "parameters": ["clipSpace", "npottexture"],
+                        "semantics": ["POSITION", "COLOR", "TEXCOORD0"],
+                        "states": {
+                            "DepthTestEnable": false,
+                            "DepthMask": false,
+                            "CullFaceEnable": false,
+                            "BlendEnable": false
+                        },
+                        "programs": ["vp_draw2D", "fp_draw2D_nomips"]
+                    }
+                ],
                 "alpha": [
                     {
                         "parameters": ["clipSpace", "texture"],
@@ -1847,6 +1952,20 @@ var Draw2D = (function () {
                         "programs": ["vp_draw2D", "fp_draw2D"]
                     }
                 ],
+                "alphanomip": [
+                    {
+                        "parameters": ["clipSpace", "npottexture"],
+                        "semantics": ["POSITION", "COLOR", "TEXCOORD0"],
+                        "states": {
+                            "DepthTestEnable": false,
+                            "DepthMask": false,
+                            "CullFaceEnable": false,
+                            "BlendEnable": true,
+                            "BlendFunc": [770, 771]
+                        },
+                        "programs": ["vp_draw2D", "fp_draw2D_nomips"]
+                    }
+                ],
                 "additive": [
                     {
                         "parameters": ["clipSpace", "texture"],
@@ -1859,6 +1978,20 @@ var Draw2D = (function () {
                             "BlendFunc": [770, 1]
                         },
                         "programs": ["vp_draw2D", "fp_draw2D"]
+                    }
+                ],
+                "additivenomip": [
+                    {
+                        "parameters": ["clipSpace", "npottexture"],
+                        "semantics": ["POSITION", "COLOR", "TEXCOORD0"],
+                        "states": {
+                            "DepthTestEnable": false,
+                            "DepthMask": false,
+                            "CullFaceEnable": false,
+                            "BlendEnable": true,
+                            "BlendFunc": [770, 1]
+                        },
+                        "programs": ["vp_draw2D", "fp_draw2D_nomips"]
                     }
                 ],
                 "copy": [
@@ -1888,6 +2021,10 @@ var Draw2D = (function () {
                     "type": "fragment",
                     "code": "#ifdef GL_ES\n#define TZ_LOWP lowp\nprecision mediump float;\nprecision mediump int;\n#else\n#define TZ_LOWP\n#endif\nvarying TZ_LOWP vec4 tz_Color;varying vec4 tz_TexCoord[1];\nvec4 _ret_0;vec4 _TMP0;uniform sampler2D texture;void main()\n{_TMP0=texture2D(texture,tz_TexCoord[0].xy);_ret_0=tz_Color*_TMP0;gl_FragColor=_ret_0;}"
                 },
+                "fp_draw2D_nomips": {
+                    "type": "fragment",
+                    "code": "#ifdef GL_ES\n#define TZ_LOWP lowp\nprecision mediump float;\nprecision mediump int;\n#else\n#define TZ_LOWP\n#endif\nvarying TZ_LOWP vec4 tz_Color;varying vec4 tz_TexCoord[1];\nvec4 _ret_0;vec4 _TMP0;uniform sampler2D npottexture;void main()\n{_TMP0=texture2D(npottexture,tz_TexCoord[0].xy);_ret_0=tz_Color*_TMP0;gl_FragColor=_ret_0;}"
+                },
                 "vp_draw2D": {
                     "type": "vertex",
                     "code": "#ifdef GL_ES\n#define TZ_LOWP lowp\nprecision mediump float;\nprecision mediump int;\n#else\n#define TZ_LOWP\n#endif\nvarying TZ_LOWP vec4 tz_Color;varying vec4 tz_TexCoord[1];attribute vec4 ATTR0;attribute vec4 ATTR3;attribute vec4 ATTR8;\nvec4 _OUTPosition1;vec4 _OUTColor1;vec2 _OUTTexCoord01;uniform vec4 clipSpace;void main()\n{vec2 _position;_position=ATTR0.xy*clipSpace.xy+clipSpace.zw;_OUTPosition1.x=_position.x;_OUTPosition1.y=_position.y;_OUTPosition1.z=0.0;_OUTPosition1.w=1.0;_OUTColor1=ATTR3;_OUTTexCoord01=ATTR8.xy;tz_TexCoord[0].xy=ATTR8.xy;tz_Color=ATTR3;gl_Position=_OUTPosition1;}"
@@ -1895,12 +2032,24 @@ var Draw2D = (function () {
             }
         });
 
+        /* tslint:enable:max-line-length */
+        /* tslint:enable:whitespace */
         // Mapping from blend mode name to Technique object.
         o.blendModeTechniques = {
             additive: shader.getTechnique("additive"),
+            additivenomip: shader.getTechnique("additivenomip"),
             alpha: shader.getTechnique("alpha"),
-            opaque: shader.getTechnique("opaque")
+            alphanomip: shader.getTechnique("alphanomip"),
+            opaque: shader.getTechnique("opaque"),
+            opaquenomip: shader.getTechnique("opaquenomip")
         };
+
+        debug.assert(o.blendModeTechniques.additive);
+        debug.assert(o.blendModeTechniques.additivenomip);
+        debug.assert(o.blendModeTechniques.alpha);
+        debug.assert(o.blendModeTechniques.alphanomip);
+        debug.assert(o.blendModeTechniques.opaque);
+        debug.assert(o.blendModeTechniques.opaquenomip);
 
         if (params.blendModes) {
             for (var name in params.blendModes) {
@@ -1914,7 +2063,8 @@ var Draw2D = (function () {
         // Blending techniques.
         o.techniqueParameters = gd.createTechniqueParameters({
             clipSpace: new Draw2D.floatArray(4),
-            texture: null
+            texture: null,
+            npottexture: null
         });
 
         // Current render target

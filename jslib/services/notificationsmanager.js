@@ -273,7 +273,7 @@ var NotificationsManager = (function () {
                 }
             },
             requestHandler: this.requestHandler
-        });
+        }, 'notifications.usersettings');
     };
 
     NotificationsManager.prototype.requestGameNotificationKeys = function (successCallback, errorCallback) {
@@ -292,7 +292,7 @@ var NotificationsManager = (function () {
                 }
             },
             requestHandler: this.requestHandler
-        });
+        }, 'notifications.keys');
     };
 
     NotificationsManager.prototype.onInit = function () {
@@ -304,8 +304,10 @@ var NotificationsManager = (function () {
 
     NotificationsManager.create = function (requestHandler, gameSession, successCallbackFn, errorCallbackFn) {
         if (!errorCallbackFn) {
+            /* tslint:disable:no-empty */
             errorCallbackFn = function () {
             };
+            /* tslint:enable:no-empty */
         }
 
         if (!TurbulenzServices.available()) {

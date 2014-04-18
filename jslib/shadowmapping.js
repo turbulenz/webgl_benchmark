@@ -3,6 +3,7 @@
 
 var ShadowMapping = (function () {
     function ShadowMapping() {
+        /* tslint:enable:no-unused-variable */
         this.defaultSizeLow = 512;
         this.defaultSizeHigh = 1024;
         this.blurEnabled = true;
@@ -19,16 +20,24 @@ var ShadowMapping = (function () {
     };
 
     ShadowMapping.prototype.update = function () {
+        /* tslint:disable:no-string-literal */
         this.shadowTechniqueParameters['world'] = this.node.world;
+        /* tslint:enable:no-string-literal */
     };
 
     ShadowMapping.prototype.skinnedUpdate = function () {
         var techniqueParameters = this.shadowTechniqueParameters;
+
+        /* tslint:disable:no-string-literal */
         techniqueParameters['world'] = this.node.world;
 
+        /* tslint:enable:no-string-literal */
         var skinController = this.skinController;
         if (skinController) {
+            /* tslint:disable:no-string-literal */
             techniqueParameters['skinBones'] = skinController.output;
+
+            /* tslint:enable:no-string-literal */
             skinController.update();
         }
     };
@@ -132,6 +141,7 @@ var ShadowMapping = (function () {
         });
 
         this.blurTextureLow = gd.createTexture({
+            name: "blur-low",
             width: sizeLow,
             height: sizeLow,
             format: "R5G6B5",
@@ -140,6 +150,7 @@ var ShadowMapping = (function () {
         });
 
         this.blurTextureHigh = gd.createTexture({
+            name: "blur-high",
             width: sizeHigh,
             height: sizeHigh,
             format: "R5G6B5",
@@ -175,9 +186,8 @@ var ShadowMapping = (function () {
         var light = lightInstance.light;
         var node = lightInstance.node;
         var matrix = node.world;
-        var occludersDrawArray = lightInstance.occludersDrawArray;
         var origin = lightInstance.lightOrigin;
-        var target, up, frustumWorld;
+        var target, up, frustumWorld, p0, p1, p2;
         var halfExtents = light.halfExtents;
 
         var shadowMapInfo = lightInstance.shadowMapInfo;
@@ -216,9 +226,9 @@ var ShadowMapping = (function () {
                 var d1 = direction[1];
                 var d2 = direction[2];
 
-                var p0 = halfExtents[0];
-                var p1 = halfExtents[1];
-                var p2 = halfExtents[2];
+                p0 = halfExtents[0];
+                p1 = halfExtents[1];
+                p2 = halfExtents[2];
 
                 var n0 = -p0;
                 var n1 = -p1;
@@ -248,7 +258,7 @@ var ShadowMapping = (function () {
         var viewMatrix = camera.viewMatrix;
 
         if (!lightInstance.lightDepth || light.dynamic) {
-            var halfExtents = light.halfExtents;
+            halfExtents = light.halfExtents;
             var halfExtents0 = halfExtents[0];
             var halfExtents1 = halfExtents[1];
             var halfExtents2 = halfExtents[2];
@@ -256,11 +266,11 @@ var ShadowMapping = (function () {
             if (light.spot) {
                 var tan = Math.tan;
                 var acos = Math.acos;
-                var frustumWorld = shadowMapInfo.frustumWorld;
+                frustumWorld = shadowMapInfo.frustumWorld;
 
-                var p0 = md.m43TransformPoint(frustumWorld, md.v3Build(-1, -1, 1));
-                var p1 = md.m43TransformPoint(frustumWorld, md.v3Build(1, -1, 1));
-                var p2 = md.m43TransformPoint(frustumWorld, md.v3Build(-1, 1, 1));
+                p0 = md.m43TransformPoint(frustumWorld, md.v3Build(-1, -1, 1));
+                p1 = md.m43TransformPoint(frustumWorld, md.v3Build(1, -1, 1));
+                p2 = md.m43TransformPoint(frustumWorld, md.v3Build(-1, 1, 1));
                 var p3 = md.m43TransformPoint(frustumWorld, md.v3Build(1, 1, 1));
                 var farLightCenter = md.v3Sub(md.v3ScalarMul(md.v3Add4(p0, p1, p2, p3), 0.25), origin);
                 lightDepth = md.v3Length(farLightCenter);
@@ -311,6 +321,24 @@ var ShadowMapping = (function () {
             lightInstance.lightDepth = lightDepth;
         }
 
+        var distanceScale = (1.0 / 65536);
+        camera.aspectRatio = 1;
+        camera.nearPlane = (lightInstance.lightDepth * distanceScale);
+        camera.farPlane = (lightInstance.lightDepth + distanceScale);
+        camera.recipViewWindowX = 1.0 / lightInstance.lightViewWindowX;
+        camera.recipViewWindowY = 1.0 / lightInstance.lightViewWindowY;
+        camera.viewOffsetX = 0.0;
+        camera.viewOffsetY = 0.0;
+        camera.updateProjectionMatrix();
+        camera.updateViewProjectionMatrix();
+        camera.updateFrustumPlanes();
+
+        var numStaticOverlappingRenderables = lightInstance.numStaticOverlappingRenderables;
+        var overlappingRenderables = lightInstance.overlappingRenderables;
+        var numOverlappingRenderables = overlappingRenderables.length;
+        var staticNodesChangeCounter = lightInstance.staticNodesChangeCounter;
+
+        var occludersDrawArray = lightInstance.occludersDrawArray;
         if (!occludersDrawArray) {
             occludersDrawArray = new Array(numOverlappingRenderables);
             lightInstance.occludersDrawArray = occludersDrawArray;
@@ -327,20 +355,23 @@ var ShadowMapping = (function () {
             lightInstance.shadows = false;
         }
 
-        var numStaticOverlappingRenderables = lightInstance.numStaticOverlappingRenderables;
-        var overlappingRenderables = lightInstance.overlappingRenderables;
-        var numOverlappingRenderables = overlappingRenderables.length;
-        var staticNodesChangeCounter = lightInstance.staticNodesChangeCounter;
-
         if (node.dynamic || numStaticOverlappingRenderables !== numOverlappingRenderables || shadowMapInfo.staticNodesChangeCounter !== staticNodesChangeCounter) {
             var occludersExtents = this.occludersExtents;
             var numOccluders = this._filterOccluders(overlappingRenderables, numStaticOverlappingRenderables, occludersDrawArray, occludersExtents);
-            numOccluders = this._updateOccludersLimits(lightInstance, viewMatrix, occludersDrawArray, occludersExtents, numOccluders);
+            numOccluders = this._updateOccludersLimits(lightInstance, viewMatrix, camera.frustumPlanes, occludersDrawArray, occludersExtents, numOccluders);
             occludersDrawArray.length = numOccluders;
             shadowMapInfo.staticNodesChangeCounter = staticNodesChangeCounter;
+
+            if (1 < numOccluders) {
+                occludersDrawArray.sort(this._sortNegative);
+            }
         }
 
         return (0 < occludersDrawArray.length);
+    };
+
+    ShadowMapping.prototype._sortNegative = function (a, b) {
+        return (a.sortKey - b.sortKey);
     };
 
     ShadowMapping.prototype.drawShadowMap = function (cameraMatrix, minExtentsHigh, lightInstance) {
@@ -387,6 +418,7 @@ var ShadowMapping = (function () {
                 shadowMapRenderTarget = shadowMap.renderTarget;
             } else {
                 shadowMapTexture = gd.createTexture({
+                    name: "shadowmap-high",
                     width: shadowMapSize,
                     height: shadowMapSize,
                     format: "R5G6B5",
@@ -424,6 +456,7 @@ var ShadowMapping = (function () {
                 shadowMapRenderTarget = shadowMap.renderTarget;
             } else {
                 shadowMapTexture = gd.createTexture({
+                    name: "shadowmap-low",
                     width: shadowMapSize,
                     height: shadowMapSize,
                     format: "R5G6B5",
@@ -458,7 +491,11 @@ var ShadowMapping = (function () {
         lightInstance.shadows = true;
 
         var distanceScale = (1.0 / 65536);
+
+        // Need padding to avoid culling near objects
         var minLightDistance = (lightInstance.minLightDistance - distanceScale);
+
+        // Need padding to avoid encoding singularity at far plane
         var maxLightDistance = (lightInstance.maxLightDistance + distanceScale);
 
         var lightViewWindowX = lightInstance.lightViewWindowX;
@@ -602,12 +639,14 @@ var ShadowMapping = (function () {
 
         gd.clear(this.clearColor, 1.0, 0);
 
+        /* tslint:disable:no-string-literal */
         var shadowMapTechniqueParameters = this.techniqueParameters;
         shadowMapTechniqueParameters['viewTranspose'] = md.m43Transpose(viewMatrix, shadowMapTechniqueParameters['viewTranspose']);
         shadowMapTechniqueParameters['shadowProjectionTranspose'] = md.m44Transpose(camera.projectionMatrix, shadowMapTechniqueParameters['shadowProjectionTranspose']);
         shadowMapTechniqueParameters['shadowDepth'] = md.v4Build(0, 0, -maxDepthReciprocal, -minLightDistance * maxDepthReciprocal, shadowMapTechniqueParameters['shadowDepth']);
 
-        gd.drawArray(occludersDrawArray, [shadowMapTechniqueParameters], 1);
+        /* tslint:enable:no-string-literal */
+        gd.drawArray(occludersDrawArray, [shadowMapTechniqueParameters], 0);
 
         gd.endRenderTarget();
     };
@@ -648,7 +687,7 @@ var ShadowMapping = (function () {
         return numOccluders;
     };
 
-    ShadowMapping.prototype._updateOccludersLimits = function (lightInstance, viewMatrix, occludersDrawArray, occludersExtents, numOccluders) {
+    ShadowMapping.prototype._updateOccludersLimits = function (lightInstance, viewMatrix, frustumPlanes, occludersDrawArray, occludersExtents, numOccluders) {
         var r0 = -viewMatrix[0];
         var r1 = -viewMatrix[3];
         var r2 = -viewMatrix[6];
@@ -664,6 +703,8 @@ var ShadowMapping = (function () {
         var d2 = -viewMatrix[8];
         var offset = viewMatrix[11];
 
+        var numPlanes = frustumPlanes.length;
+
         var minLightDistance = Number.MAX_VALUE;
         var maxLightDistance = -minLightDistance;
         var minLightDistanceX = minLightDistance;
@@ -671,7 +712,8 @@ var ShadowMapping = (function () {
         var minLightDistanceY = minLightDistance;
         var maxLightDistanceY = -minLightDistance;
 
-        var n, extents, n0, n1, n2, p0, p1, p2, lightDistance;
+        var abs = Math.abs;
+        var n, extents, n0, n1, n2, p0, p1, p2, p, lightDistance;
 
         for (n = 0; n < numOccluders;) {
             extents = occludersExtents[n];
@@ -681,9 +723,45 @@ var ShadowMapping = (function () {
             p0 = extents[3];
             p1 = extents[4];
             p2 = extents[5];
-            lightDistance = ((d0 * (d0 > 0 ? p0 : n0)) + (d1 * (d1 > 0 ? p1 : n1)) + (d2 * (d2 > 0 ? p2 : n2)));
-            if (lightDistance > offset) {
-                lightDistance = (lightDistance - offset);
+
+            p = 0;
+            do {
+                var plane = frustumPlanes[p];
+                var f0 = plane[0];
+                var f1 = plane[1];
+                var f2 = plane[2];
+                var maxDistance = (f0 * (f0 < 0 ? n0 : p0) + f1 * (f1 < 0 ? n1 : p1) + f2 * (f2 < 0 ? n2 : p2) - plane[3]);
+                if (maxDistance < 0.0) {
+                    break;
+                } else {
+                    if (maxDistance < abs(f0) * (p0 - n0)) {
+                        if (f0 < 0) {
+                            p0 = n0 - (maxDistance / f0);
+                        } else {
+                            n0 = p0 - (maxDistance / f0);
+                        }
+                    }
+                    if (maxDistance < abs(f1) * (p1 - n1)) {
+                        if (f1 < 0) {
+                            p1 = n1 - (maxDistance / f1);
+                        } else {
+                            n1 = p1 - (maxDistance / f1);
+                        }
+                    }
+                    if (maxDistance < abs(f2) * (p2 - n2)) {
+                        if (f2 < 0) {
+                            p2 = n2 - (maxDistance / f2);
+                        } else {
+                            n2 = p2 - (maxDistance / f2);
+                        }
+                    }
+                }
+
+                p += 1;
+            } while(p < numPlanes);
+
+            if (p >= numPlanes) {
+                lightDistance = ((d0 * (d0 > 0 ? p0 : n0)) + (d1 * (d1 > 0 ? p1 : n1)) + (d2 * (d2 > 0 ? p2 : n2)) - offset);
                 if (maxLightDistance < lightDistance) {
                     maxLightDistance = lightDistance;
                 }
@@ -692,7 +770,8 @@ var ShadowMapping = (function () {
                     lightDistance = ((d0 * (d0 > 0 ? n0 : p0)) + (d1 * (d1 > 0 ? n1 : p1)) + (d2 * (d2 > 0 ? n2 : p2)) - offset);
                     if (lightDistance < minLightDistance) {
                         minLightDistance = lightDistance;
-                        if (0 >= minLightDistance) {
+                        if (0 >= lightDistance) {
+                            n += 1;
                             continue;
                         }
                     }
@@ -775,8 +854,11 @@ var ShadowMapping = (function () {
                         break;
                     }
 
+                    /* tslint:disable:no-string-literal */
                     shadowMappingBlurTechnique['shadowMap'] = shadowMap.texture;
                     shadowMappingBlurTechnique['pixelOffset'] = pixelOffsetH;
+
+                    /* tslint:enable:no-string-literal */
                     gd.draw(quadPrimitive, 4);
 
                     gd.endRenderTarget();
@@ -785,8 +867,11 @@ var ShadowMapping = (function () {
                         break;
                     }
 
+                    /* tslint:disable:no-string-literal */
                     shadowMappingBlurTechnique['shadowMap'] = shadowMapBlurTexture;
                     shadowMappingBlurTechnique['pixelOffset'] = pixelOffsetV;
+
+                    /* tslint:enable:no-string-literal */
                     gd.draw(quadPrimitive, 4);
 
                     gd.endRenderTarget();
@@ -807,8 +892,11 @@ var ShadowMapping = (function () {
                         break;
                     }
 
+                    /* tslint:disable:no-string-literal */
                     shadowMappingBlurTechnique['shadowMap'] = shadowMap.texture;
                     shadowMappingBlurTechnique['pixelOffset'] = pixelOffsetH;
+
+                    /* tslint:enable:no-string-literal */
                     gd.draw(quadPrimitive, 4);
 
                     gd.endRenderTarget();
@@ -817,8 +905,11 @@ var ShadowMapping = (function () {
                         break;
                     }
 
+                    /* tslint:disable:no-string-literal */
                     shadowMappingBlurTechnique['shadowMap'] = shadowMapBlurTexture;
                     shadowMappingBlurTechnique['pixelOffset'] = pixelOffsetV;
+
+                    /* tslint:enable:no-string-literal */
                     gd.draw(quadPrimitive, 4);
 
                     gd.endRenderTarget();

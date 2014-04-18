@@ -164,11 +164,11 @@ var MultiPlayerSession = (function () {
                 var secondSplitIndex = message.indexOf(':', (firstSplitIndex + 1));
                 var senderID = message.slice(0, firstSplitIndex);
 
-                /*jshint bitwise:false*/
+                /* tslint:disable:no-bitwise */
                 // The |0 ensures 'messageType' is an integer
                 var messageType = (message.slice((firstSplitIndex + 1), secondSplitIndex) | 0);
 
-                /*jshint bitwise:true*/
+                /* tslint:enable:no-bitwise */
                 var messageData = message.slice(secondSplitIndex + 1);
 
                 onmessage(senderID, messageType, messageData);

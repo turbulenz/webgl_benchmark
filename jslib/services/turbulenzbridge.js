@@ -18,7 +18,14 @@ var TurbulenzBridge = (function () {
     * Try to find an 'EventEmitter' object on the page and cache it.
     */
     function () {
-        var Turbulenz = window.top.Turbulenz;
+        var Turbulenz = window.Turbulenz;
+        if (!Turbulenz) {
+            try  {
+                Turbulenz = window.top.Turbulenz;
+            } catch (e) {
+            }
+            /* tslint:enable:no-empty */
+        }
 
         if (Turbulenz && Turbulenz.Services) {
             var bridge = Turbulenz.Services.bridge;
@@ -52,9 +59,11 @@ var TurbulenzBridge = (function () {
     };
 
     TurbulenzBridge.emit = function (serviceName, request, arg) {
+        return "";
     };
 
-    TurbulenzBridge.on = function (serviceName, cb) {
+    TurbulenzBridge.on = /* tslint:disable:no-empty */
+    function (serviceName, cb) {
     };
 
     TurbulenzBridge.addListener = //off: function offFn() {},
@@ -64,7 +73,8 @@ var TurbulenzBridge = (function () {
     TurbulenzBridge.setListener = function (eventName, listener) {
     };
 
-    TurbulenzBridge.setOnReceiveConfig = /**
+    TurbulenzBridge.setOnReceiveConfig = /* tslint:enable:no-empty */
+    /**
     * Message that passes game configuration information from the hosting site
     */
     function (callback) {

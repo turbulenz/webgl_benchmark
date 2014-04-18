@@ -183,7 +183,7 @@ var WebGLInputDevice = (function () {
         var magnitude;
         var normalizedMagnitude;
 
-        var gamepads = (navigator.gamepads || navigator.webkitGamepads || (navigator.webkitGetGamepads && navigator.webkitGetGamepads()));
+        var gamepads = (navigator.gamepads || navigator.webkitGamepads || (navigator.getGamepads && navigator.getGamepads()) || (navigator.webkitGetGamepads && navigator.webkitGetGamepads()));
 
         if (gamepads) {
             var deadZone = this.padAxisDeadZone;
@@ -210,6 +210,9 @@ var WebGLInputDevice = (function () {
                         var numButtons = buttons.length;
                         for (var n = 0; n < numButtons; n += 1) {
                             var value = buttons[n];
+                            if (typeof value === "object") {
+                                value = value.value;
+                            }
                             if (padButtons[n] !== value) {
                                 padButtons[n] = value;
 
@@ -502,15 +505,25 @@ var WebGLInputDevice = (function () {
         var pressedKeys = this.pressedKeys;
         var keyCodes = this.keyCodes;
 
-        event.stopPropagation();
-        event.preventDefault();
-
         var keyCode = event.keyCode;
         keyCode = this.keyMap[keyCode];
 
-        var keyLocation = event.keyLocation || event.location;
+        if (undefined === keyCode) {
+            return;
+        }
 
-        if (undefined !== keyCode && (keyCodes.ESCAPE !== keyCode)) {
+        event.stopPropagation();
+        event.preventDefault();
+
+        if (keyCodes.ESCAPE !== keyCode) {
+            // Handle left / right key locations
+            //   DOM_KEY_LOCATION_STANDARD = 0x00;
+            //   DOM_KEY_LOCATION_LEFT     = 0x01;
+            //   DOM_KEY_LOCATION_RIGHT    = 0x02;
+            //   DOM_KEY_LOCATION_NUMPAD   = 0x03;
+            //   DOM_KEY_LOCATION_MOBILE   = 0x04;
+            //   DOM_KEY_LOCATION_JOYSTICK = 0x05;
+            var keyLocation = (typeof event.location === "number" ? event.location : event.keyLocation);
             if (2 === keyLocation) {
                 // The Turbulenz KeyCodes are such that CTRL, SHIFT
                 // and ALT have their RIGHT versions exactly one above
@@ -529,27 +542,36 @@ var WebGLInputDevice = (function () {
         var pressedKeys = this.pressedKeys;
         var keyCodes = this.keyCodes;
 
-        event.stopPropagation();
-        event.preventDefault();
-
         var keyCode = event.keyCode;
         keyCode = this.keyMap[keyCode];
 
-        var keyLocation = event.keyLocation || event.location;
+        if (undefined === keyCode) {
+            return;
+        }
+
+        event.stopPropagation();
+        event.preventDefault();
 
         if (keyCode === keyCodes.ESCAPE) {
             this.unlockMouse();
 
-            if (document.fullscreenEnabled || document.mozFullScreen || document.webkitIsFullScreen) {
+            if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
                 if (document.webkitCancelFullScreen) {
                     document.webkitCancelFullScreen();
                 } else if (document.cancelFullScreen) {
                     document.cancelFullScreen();
+                } else if (document['mozCancelFullScreen']) {
+                    document['mozCancelFullScreen']();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
                 } else if (document.exitFullscreen) {
                     document.exitFullscreen();
                 }
             }
-        } else if (undefined !== keyCode) {
+            /* tslint:enable:no-string-literal */
+        } else {
+            // Handle LEFT / RIGHT.  (See OnKeyDown)
+            var keyLocation = (typeof event.location === "number" ? event.location : event.keyLocation);
             if (2 === keyLocation) {
                 keyCode = keyCode + 1;
             }
@@ -565,6 +587,90 @@ var WebGLInputDevice = (function () {
     };
 
     // Private touch event methods
+    WebGLInputDevice.prototype.onPointerDown = function (event) {
+        if (event.preventManipulation) {
+            event.preventManipulation();
+        }
+        if (event.preventDefault) {
+            event.preventDefault();
+        }
+
+        var touch = this.convertPointerToTurbulenzTouch(event);
+
+        // console.log("onPointerDown: id: " + touch.identifier +
+        //             " (" + event.pointerId + ")" +
+        //             ", type: " + event.type +
+        //             ", pointerType: " + event.pointerType);
+        var e = this.createTurbulenzTouchEvent(touch);
+
+        var eventHandlers = this.handlers.touchstart;
+        this.sendEventToHandlers(eventHandlers, e);
+    };
+
+    WebGLInputDevice.prototype.onPointerMove = function (event) {
+        if (event.preventManipulation) {
+            event.preventManipulation();
+        }
+        if (event.preventDefault) {
+            event.preventDefault();
+        }
+
+        var touch = this.convertPointerToTurbulenzTouch(event);
+
+        // console.log("onPointerMove: id: " + touch.identifier +
+        //             " (" + event.pointerId + ")" +
+        //             ", type: " + event.type +
+        //             ", pointerType: " + event.pointerType);
+        var e = this.createTurbulenzTouchEvent(touch);
+
+        var eventHandlers = this.handlers.touchmove;
+        this.sendEventToHandlers(eventHandlers, e);
+    };
+
+    WebGLInputDevice.prototype.onPointerUp = function (event) {
+        if (event.preventManipulation) {
+            event.preventManipulation();
+        }
+        if (event.preventDefault) {
+            event.preventDefault();
+        }
+
+        var touch = this.convertPointerToTurbulenzTouch(event);
+
+        // console.log("onPointerUp: id: " + touch.identifier +
+        //             " (" + event.pointerId + ")" +
+        //             ", type: " + event.type +
+        //             ", pointerType: " + event.pointerType);
+        var e = this.createTurbulenzTouchEvent(touch);
+
+        var eventHandlers = this.handlers.touchend;
+        this.sendEventToHandlers(eventHandlers, e);
+
+        this.removePointerById(event.pointerId, touch.identifier);
+    };
+
+    WebGLInputDevice.prototype.onPointerCancel = function (event) {
+        if (event.preventManipulation) {
+            event.preventManipulation();
+        }
+        if (event.preventDefault) {
+            event.preventDefault();
+        }
+
+        var touch = this.convertPointerToTurbulenzTouch(event);
+
+        // console.log("onPointerCancel: id: " + touch.identifier +
+        //             " (" + event.pointerId + ")" +
+        //             ", type: " + event.type +
+        //             ", pointerType: " + event.pointerType);
+        var e = this.createTurbulenzTouchEvent(touch);
+
+        var eventHandlers = this.handlers.touchend;
+        this.sendEventToHandlers(eventHandlers, e);
+
+        this.removePointerById(event.pointerId, touch.identifier);
+    };
+
     WebGLInputDevice.prototype.onTouchStart = function (event) {
         var eventHandlers = this.handlers.touchstart;
 
@@ -634,6 +740,91 @@ var WebGLInputDevice = (function () {
         this.removeTouches(event.changedTouches);
 
         this.sendEventToHandlers(eventHandlers, event);
+    };
+
+    // Return (and update) any existing Turbulenz touch object, or
+    // create a new one.
+    WebGLInputDevice.prototype.convertPointerToTurbulenzTouch = function (event) {
+        var pointerId = event.pointerId;
+        var pointerIdToTouch = this.pointerIdToTouch;
+
+        var canvasElement = this.canvas;
+        var canvasRect = canvasElement.getBoundingClientRect();
+
+        var isGameTouch = (event.target === canvasElement);
+        var positionX = event.pageX - canvasRect.left;
+        var positionY = event.pageY - canvasRect.top;
+
+        var touch = pointerIdToTouch[pointerId];
+        if (touch) {
+            touch.isGameTouch = isGameTouch;
+            touch.positionX = positionX;
+            touch.positionY = positionY;
+        } else {
+            // Search for a free ID.
+            var touches = this.touches;
+            var touchId = 0;
+
+            while (touchId < 32) {
+                if (!touches.hasOwnProperty(touchId)) {
+                    touch = {
+                        force: 0,
+                        identifier: touchId,
+                        isGameTouch: isGameTouch,
+                        positionX: positionX,
+                        positionY: positionY,
+                        radiusX: 1,
+                        radiusY: 1,
+                        rotationAngle: 0
+                    };
+
+                    this.touches[touchId] = touch;
+                    this.pointerIdToTouch[pointerId] = touch;
+                    return touch;
+                }
+
+                touchId += 1;
+            }
+
+            // If we get here, something is wrong.  We have more than
+            // 32 active touches.
+            debug.assert(false);
+        }
+
+        return touch;
+    };
+
+    WebGLInputDevice.prototype.createTurbulenzTouchEvent = function (changedTouch) {
+        var touches = [];
+        var gameTouches = [];
+
+        // var pointerIdToTouch = this.pointerIdToTouch;
+        var pointerIdToTouch = this.touches;
+
+        var pointerId;
+        var touch;
+
+        for (pointerId in pointerIdToTouch) {
+            if (pointerIdToTouch.hasOwnProperty(pointerId)) {
+                touch = pointerIdToTouch[pointerId];
+                touches.push(touch);
+
+                if (touch.isGameTouch) {
+                    gameTouches.push(touch);
+                }
+            }
+        }
+
+        return {
+            changedTouches: [changedTouch],
+            gameTouches: gameTouches,
+            touches: touches
+        };
+    };
+
+    WebGLInputDevice.prototype.removePointerById = function (eventId, touchId) {
+        delete this.pointerIdToTouch[eventId];
+        this.removeTouchById(touchId);
     };
 
     WebGLInputDevice.prototype.convertW3TouchEventToTurbulenzTouchEvent = function (w3TouchEvent) {
@@ -791,7 +982,7 @@ var WebGLInputDevice = (function () {
     // Window event handlers
     WebGLInputDevice.prototype.onFullscreenChanged = function (/* event */ ) {
         if (this.isMouseLocked) {
-            if (document.fullscreenEnabled || document.mozFullScreen || document.webkitIsFullScreen) {
+            if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
                 this.ignoreNextMouseMoves = 2;
                 this.requestBrowserLock();
             } else {
@@ -846,12 +1037,13 @@ var WebGLInputDevice = (function () {
         this.addInternalEventListener(document, 'fullscreenchange', this.onFullscreenChanged);
         this.addInternalEventListener(document, 'mozfullscreenchange', this.onFullscreenChanged);
         this.addInternalEventListener(document, 'webkitfullscreenchange', this.onFullscreenChanged);
+        this.addInternalEventListener(document, 'MSFullscreenChange', this.onFullscreenChanged);
     };
 
     WebGLInputDevice.prototype.setEventHandlersUnlock = function () {
         this.removeInternalEventListener(document, 'webkitfullscreenchange', this.onFullscreenChanged);
         this.removeInternalEventListener(document, 'mozfullscreenchange', this.onFullscreenChanged);
-        this.removeInternalEventListener(document, 'fullscreenchange', this.onFullscreenChanged);
+        this.removeInternalEventListener(document, 'MSFullscreenChange', this.onFullscreenChanged);
 
         this.removeInternalEventListener(window, 'mousemove', this.onMouseMove);
 
@@ -878,6 +1070,11 @@ var WebGLInputDevice = (function () {
 
     WebGLInputDevice.prototype.setEventHandlersTouch = function () {
         var canvas = this.canvas;
+
+        this.addInternalEventListener(canvas, "pointerdown", this.onPointerDown);
+        this.addInternalEventListener(canvas, "pointermove", this.onPointerMove);
+        this.addInternalEventListener(canvas, "pointerup", this.onPointerUp);
+        this.addInternalEventListener(canvas, "pointerout", this.onPointerUp);
 
         this.addInternalEventListener(canvas, 'touchstart', this.onTouchStart);
         this.addInternalEventListener(canvas, 'touchend', this.onTouchEnd);
@@ -1313,10 +1510,12 @@ var WebGLInputDevice = (function () {
                     }
                 };
             } else {
+                /* tslint:disable:no-empty */
                 id.requestBrowserLock = function requestBrowserLockFn() {
                 };
                 id.requestBrowserUnlock = function requestBrowserUnlockFn() {
                 };
+                /* tslint:enable:no-empty */
             }
         }
 
@@ -1333,6 +1532,8 @@ var WebGLInputDevice = (function () {
         var sysInfo = TurbulenzEngine.getSystemInfo();
         id.macosx = ("Darwin" === sysInfo.osName);
         id.webkit = (/WebKit/.test(navigator.userAgent));
+
+        id.pointerIdToTouch = {};
 
         return id;
     };

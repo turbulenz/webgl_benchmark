@@ -7,7 +7,10 @@ var LoadingScreen = (function () {
     };
 
     LoadingScreen.prototype.setTexture = function (texture) {
+        /* tslint:disable:no-string-literal */
         this.textureMaterial['diffuse'] = texture;
+
+        /* tslint:enable:no-string-literal */
         this.textureWidthHalf = (texture.width * 0.5);
         this.textureHeightHalf = (texture.height * 0.5);
     };
@@ -61,7 +64,10 @@ var LoadingScreen = (function () {
                 var backgroundColor = this.backgroundColor;
                 backgroundMaterial = this.backgroundMaterial;
 
+                /* tslint:disable:no-string-literal */
                 backgroundMaterial['color'] = backgroundColor;
+
+                /* tslint:enable:no-string-literal */
                 gd.setTechniqueParameters(backgroundMaterial);
 
                 writer = gd.beginDraw(primitive, 4, this.posVertexFormats, this.posSemantics);
@@ -113,7 +119,10 @@ var LoadingScreen = (function () {
 
             gd.setTechnique(this.backgroundTechnique);
 
+            /* tslint:disable:no-string-literal */
             backgroundMaterial['color'] = barBackgroundColor;
+
+            /* tslint:enable:no-string-literal */
             gd.setTechniqueParameters(backgroundMaterial);
 
             writer = gd.beginDraw(primitive, 4, this.posVertexFormats, this.posSemantics);
@@ -132,7 +141,10 @@ var LoadingScreen = (function () {
                 writer = null;
             }
 
+            /* tslint:disable:no-string-literal */
             backgroundMaterial['color'] = barColor;
+
+            /* tslint:enable:no-string-literal */
             gd.setTechniqueParameters(backgroundMaterial);
 
             writer = gd.beginDraw(primitive, 4, this.posVertexFormats, this.posSemantics);
@@ -165,8 +177,11 @@ var LoadingScreen = (function () {
             clipSpace[0] = xScale;
             clipSpace[1] = yScale;
 
+            /* tslint:disable:no-string-literal */
             textureMaterial['clipSpace'] = clipSpace;
             textureMaterial['alpha'] = textureAlpha;
+
+            /* tslint:enable:no-string-literal */
             gd.setTechniqueParameters(textureMaterial);
 
             writer = gd.beginDraw(primitive, 4, this.textureVertexFormats, this.textureSemantics);
@@ -262,6 +277,8 @@ var LoadingScreen = (function () {
             }
         }
 
+        /* tslint:disable:whitespace */
+        /* tslint:disable:max-line-length */
         var shaderParams = {
             "version": 1,
             "name": "loadingscreen.cgfx",
@@ -339,6 +356,8 @@ var LoadingScreen = (function () {
             }
         };
 
+        /* tslint:enable:max-line-length */
+        /* tslint:enable:whitespace */
         var shader = gd.createShader(shaderParams);
         if (shader) {
             f.backgroundTechnique = shader.getTechnique("background");

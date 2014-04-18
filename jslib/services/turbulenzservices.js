@@ -56,7 +56,37 @@ var ServiceRequester = (function () {
     //     neverDiscard - Never discard the request. Always queues the request
     //                    for when the service is again available. (Ignores
     //                    server preference)
-    ServiceRequester.prototype.request = function (params) {
+    ServiceRequester.prototype.request = function (params, serviceAction) {
+        // If there is a specific services domain set prefix any relative api urls
+        var servicesDomain = TurbulenzServices.servicesDomain;
+        if (servicesDomain) {
+            if (params.url.indexOf('http') !== 0) {
+                if (params.url[0] === '/') {
+                    params.url = servicesDomain + params.url;
+                } else {
+                    params.url = servicesDomain + '/' + params.url;
+                }
+            }
+            if (window.location) {
+                if (servicesDomain !== ServiceRequester.locationOrigin) {
+                    params.enableCORSCredentials = true;
+                }
+            }
+        }
+
+        if (TurbulenzServices.bridgeServices) {
+            //TurbulenzServices.addSignature(dataSpec, url);
+            var processed = TurbulenzServices.callOnBridge(serviceAction ? serviceAction : params.url, params, function unpackResponse(response) {
+                if (params.callback) {
+                    params.callback(response, response.status);
+                }
+            });
+
+            if (processed) {
+                return true;
+            }
+        }
+
         var discardRequestFn = function discardRequestFn() {
             if (params.callback) {
                 params.callback({ 'ok': false, 'msg': 'Service Unavailable. Discarding request' }, 503);
@@ -122,6 +152,10 @@ var ServiceRequester = (function () {
     };
 
     ServiceRequester.create = function (serviceName, params) {
+        if (typeof (ServiceRequester.locationOrigin) === undefined && typeof (window.location) !== undefined) {
+            ServiceRequester.locationOrigin = window.location.protocol + '//' + window.location.host;
+        }
+
         var serviceRequester = new ServiceRequester();
 
         if (!params) {
@@ -155,7 +189,14 @@ var TurbulenzServices = (function () {
     };
 
     TurbulenzServices.addBridgeEvents = function () {
-        var turbulenz = window.top.Turbulenz;
+        var turbulenz = window.Turbulenz;
+        if (!turbulenz) {
+            try  {
+                turbulenz = window.top.Turbulenz;
+            } catch (e) {
+            }
+            /* tslint:enable:no-empty */
+        }
         var turbulenzData = (turbulenz && turbulenz.Data) || {};
         var sessionToJoin = turbulenzData.joinMultiplayerSessionId;
         var that = this;
@@ -176,6 +217,17 @@ var TurbulenzServices = (function () {
             }
 
             that.bridgeServices = !!config.bridgeServices;
+
+            if (config.servicesDomain) {
+                that.servicesDomain = config.servicesDomain;
+            }
+
+            if (config.syncing) {
+                that.syncing = true;
+            }
+            if (config.offline) {
+                that.offline = true;
+            }
         };
 
         if (sessionToJoin) {
@@ -194,6 +246,18 @@ var TurbulenzServices = (function () {
         TurbulenzBridge.on("bridgeservices.response", function (jsondata) {
             that.routeResponse(jsondata);
         });
+        TurbulenzBridge.on("bridgeservices.sync.start", function () {
+            that.syncing = true;
+        });
+        TurbulenzBridge.on("bridgeservices.sync.end", function () {
+            that.syncing = false;
+        });
+        TurbulenzBridge.on("bridgeservices.offline.start", function () {
+            that.offline = true;
+        });
+        TurbulenzBridge.on("bridgeservices.offline.end", function () {
+            that.offline = false;
+        });
     };
 
     TurbulenzServices.callOnBridge = function (event, data, callback) {
@@ -206,7 +270,9 @@ var TurbulenzServices = (function () {
             this.responseHandlers[this.responseIndex] = callback;
             request.key = this.responseIndex;
         }
-        TurbulenzBridge.emit('bridgeservices.' + event, JSON.stringify(request));
+        var resultJSON = TurbulenzBridge.emit('bridgeservices.' + event, JSON.stringify(request));
+        var result = JSON.parse(resultJSON);
+        return result.fullyProcessed;
     };
 
     TurbulenzServices.addSignature = function (data, url) {
@@ -234,7 +300,8 @@ var TurbulenzServices = (function () {
     TurbulenzServices.onServiceAvailable = function (serviceName, callContext) {
     };
 
-    TurbulenzServices.createGameSession = function (requestHandler, sessionCreatedFn, errorCallbackFn) {
+    TurbulenzServices.createGameSession = /* tslint:enable:no-empty */
+    function (requestHandler, sessionCreatedFn, errorCallbackFn) {
         return GameSession.create(requestHandler, sessionCreatedFn, errorCallbackFn);
     };
 
@@ -339,7 +406,7 @@ var TurbulenzServices = (function () {
                     }
                 },
                 requestHandler: requestHandler
-            });
+            }, 'profile.user');
         }
 
         return userProfile;
@@ -406,7 +473,7 @@ var TurbulenzServices = (function () {
             },
             requestHandler: requestHandler,
             encrypt: true
-        });
+        }, 'custommetrics.addevent');
     };
 
     TurbulenzServices.sendCustomMetricEventBatch = function (eventBatch, requestHandler, gameSession, errorCallbackFn) {
@@ -481,7 +548,7 @@ var TurbulenzServices = (function () {
             },
             requestHandler: requestHandler,
             encrypt: true
-        });
+        }, 'custommetrics.addeventbatch');
     };
 
     TurbulenzServices.getService = function (serviceName) {
@@ -586,12 +653,30 @@ var TurbulenzServices = (function () {
             }
         };
 
+        var params = {
+            url: serviceUrl,
+            method: 'GET',
+            callback: servicesStatusCB
+        };
+
+        var servicesDomain = TurbulenzServices.servicesDomain;
+        if (servicesDomain) {
+            if (serviceUrl.indexOf('http') !== 0) {
+                if (serviceUrl[0] === '/') {
+                    params.url = servicesDomain + serviceUrl;
+                } else {
+                    params.url = servicesDomain + '/' + serviceUrl;
+                }
+            }
+            if (window.location) {
+                if (servicesDomain !== ServiceRequester.locationOrigin) {
+                    params.enableCORSCredentials = true;
+                }
+            }
+        }
+
         pollServiceStatus = function pollServiceStatusFn() {
-            Utilities.ajax({
-                url: serviceUrl,
-                method: 'GET',
-                callback: servicesStatusCB
-            });
+            Utilities.ajax(params);
         };
 
         pollServiceStatus();
@@ -600,8 +685,10 @@ var TurbulenzServices = (function () {
         // A FIFO queue that passes events through to the handler when
         // un-paused and buffers up events while paused
         argsQueue: [],
+        /* tslint:disable:no-empty */
         handler: function nopFn() {
         },
+        /* tslint:enable:no-empty */
         context: undefined,
         paused: true,
         onEvent: function onEventFn(handler, context) {

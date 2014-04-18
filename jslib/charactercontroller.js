@@ -98,6 +98,8 @@ var CharacterController = (function () {
 
         dynamicsWorld.addCharacter(c.character);
 
+        c.dynamicsWorld = dynamicsWorld;
+
         // keyboard handling
         var keyCodes, padCodes;
         if (id) {
@@ -365,19 +367,6 @@ var CharacterController = (function () {
             }
         };
 
-        // Attach to an InputDevice
-        c.attach = function attachFn(inputDevice) {
-            inputDevice.addEventListener('keydown', c.onkeydown);
-            inputDevice.addEventListener('keyup', c.onkeyup);
-            inputDevice.addEventListener('mousewheel', c.onmousewheel);
-            inputDevice.addEventListener('mousemove', c.onmousemove);
-            inputDevice.addEventListener('padmove', c.onpadmove);
-            inputDevice.addEventListener('paddown', c.onpaddown);
-            inputDevice.addEventListener('touchstart', c.ontouchstart);
-            inputDevice.addEventListener('touchend', c.ontouchend);
-            inputDevice.addEventListener('touchmove', c.ontouchmove);
-        };
-
         if (id) {
             c.attach(id);
         }
@@ -601,6 +590,47 @@ var CharacterController = (function () {
         }
 
         md.m43SetPos(matrix, position);
+    };
+
+    CharacterController.prototype.attach = function (inputDevice) {
+        this.inputDevice = inputDevice;
+        inputDevice.addEventListener('keydown', this.onkeydown);
+        inputDevice.addEventListener('keyup', this.onkeyup);
+        inputDevice.addEventListener('mousewheel', this.onmousewheel);
+        inputDevice.addEventListener('mousemove', this.onmousemove);
+        inputDevice.addEventListener('padmove', this.onpadmove);
+        inputDevice.addEventListener('paddown', this.onpaddown);
+        inputDevice.addEventListener('touchstart', this.ontouchstart);
+        inputDevice.addEventListener('touchend', this.ontouchend);
+        inputDevice.addEventListener('touchmove', this.ontouchmove);
+    };
+
+    CharacterController.prototype.detach = function (inputDevice) {
+        inputDevice.removeEventListener('keydown', this.onkeydown);
+        inputDevice.removeEventListener('keyup', this.onkeyup);
+        inputDevice.removeEventListener('mousewheel', this.onmousewheel);
+        inputDevice.removeEventListener('mousemove', this.onmousemove);
+        inputDevice.removeEventListener('padmove', this.onpadmove);
+        inputDevice.removeEventListener('paddown', this.onpaddown);
+        inputDevice.removeEventListener('touchstart', this.ontouchstart);
+        inputDevice.removeEventListener('touchend', this.ontouchend);
+        inputDevice.removeEventListener('touchmove', this.ontouchmove);
+    };
+
+    CharacterController.prototype.destroy = function () {
+        if (this.dynamicsWorld) {
+            if (this.character) {
+                this.dynamicsWorld.removeCharacter(this.character);
+                this.character = null;
+            }
+
+            this.dynamicsWorld = null;
+        }
+
+        if (this.inputDevice) {
+            this.detach(this.inputDevice);
+            this.inputDevice = null;
+        }
     };
     CharacterController.version = 1;
     return CharacterController;

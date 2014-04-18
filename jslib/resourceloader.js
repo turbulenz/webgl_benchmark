@@ -1,4 +1,4 @@
-// Copyright (c) 2010-2012 Turbulenz Limited
+// Copyright (c) 2010-2014 Turbulenz Limited
 /*global TurbulenzEngine:false*/
 /*global VMath:false*/
 ;
@@ -351,8 +351,11 @@ var ResourceLoader = (function () {
         var shapesNamePrefix = loadParams.shapesNamePrefix;
 
         function begetFn(o) {
+            /* tslint:disable:no-empty */
             var F = function () {
             };
+
+            /* tslint:enable:no-empty */
             F.prototype = o;
             return new F();
         }
