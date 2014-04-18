@@ -344,6 +344,10 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
 
     var config = benchmarkApp.config = Config.create();
 
+    var prefixCaptureURL = config.captureLookUp[config.defaultCapture];
+    var prefixAssetURL = config.prefixAssetURL;
+    var prefixTemplatesURL = config.prefixTemplatesURL;
+
     var graphicsDeviceOptions = {};
 
     if (config.antialias)
@@ -416,7 +420,10 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
         graphicsDevice: graphicsDevice,
         mathDevice: mathDevice,
         requestHandler: requestHandler,
-        elements: benchmarkApp.elements
+        elements: benchmarkApp.elements,
+        prefixCaptureURL: prefixCaptureURL,
+        prefixAssetURL: prefixAssetURL,
+        prefixTemplatesURL: prefixTemplatesURL
     });
     benchmarkApp.playbackController.multisample = multisample;
     benchmarkApp.playbackController.antialias = antialias;

@@ -1131,9 +1131,9 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
         window.alert(msg);
     };
 
-    playbackController.prefixAssetURL = null;
-    playbackController.prefixCaptureURL = null;
-    playbackController.prefixTemplatesURL = null;
+    playbackController.prefixAssetURL = params.prefixAssetURL || null;
+    playbackController.prefixCaptureURL = params.prefixCaptureURL || null;
+    playbackController.prefixTemplatesURL = params.prefixTemplatesURL || null;
 
     var numTotalFrames = playbackController.numTotalFrames = config.numTotalFrames;
     var numFramesPerGroup = playbackController.numFramesPerGroup = config.numFramesPerGroup;
