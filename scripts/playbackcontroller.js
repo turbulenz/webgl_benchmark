@@ -51,6 +51,7 @@ PlaybackController.prototype =
                 ];
             }
         }
+        this.testMeta = tests;
     },
 
     _postFrame: function postFrameFn(frameIndex)
@@ -58,6 +59,7 @@ PlaybackController.prototype =
         var testRange;
         var testRanges = this.testRanges;
         var testsActive = this.testsActive;
+        var testScore, scoreText;
         testsActive.length = 0;
         for (var t in testRanges)
         {
@@ -78,6 +80,7 @@ PlaybackController.prototype =
         {
             font = this.font = this.fontManager.get(this.fontName);
         }
+        textParameters.scale = 1.0;
 
         var textTechniqueParameters = this.textTechniqueParameters;
         var graphicsDevice = this.graphicsDevice;
@@ -89,9 +92,9 @@ PlaybackController.prototype =
                                 textTechniqueParameters.clipSpace);
         graphicsDevice.setTechniqueParameters(textTechniqueParameters);
 
-        var length = testsActive.length;
+        var i, length = testsActive.length;
         var text, textDimensions;
-        for (var i = 0; i < length; i += 1)
+        for (i = 0; i < length; i += 1)
         {
             text = testsActive[i];
             textDimensions = this.textDimensions = font.calculateTextDimensions(text, 1, 0, 0, this.textDimensions);
@@ -101,6 +104,121 @@ PlaybackController.prototype =
             rect[3] = textDimensions.height;
             font.drawTextRect(text, textParameters);
         }
+
+        if (this.atEnd)
+        {
+            i = 0;
+            var testScores = this.testScores;
+            var totalScore = 0;
+            var testTotalIgnores = this.testTotalIgnores || [];
+            var textTop = 10;
+            var testScoreInt;
+            for (t in testScores)
+            {
+                if (testScores.hasOwnProperty(t))
+                {
+                    testScore = testScores[t];
+                    testScoreInt = Math.floor(testScore.score);
+                    if (testTotalIgnores.indexOf(t) === -1)
+                    {
+                        totalScore += testScoreInt;
+                    }
+
+                    scoreText = testScoreInt + (!testScore.complete ? " (Incomplete, Accuracy: " + Math.floor(testScore.completeRatio * 100) + "%)": "");
+                    if (testScore.completeRatio === 0.0)
+                    {
+                        scoreText = "Not started";
+                    }
+                    text = t + ": " + scoreText;
+                    textDimensions = this.textDimensions = font.calculateTextDimensions(text, 1, 0, 0, this.textDimensions);
+                    rect[0] = (graphicsDevice.width / 2) - (textDimensions.width / 2);
+                    rect[1] = textTop;
+                    rect[2] = textDimensions.width;
+                    rect[3] = textDimensions.height;
+                    font.drawTextRect(text, textParameters);
+                    textTop += textDimensions.height;
+                    i += 1;
+                }
+            }
+
+            textParameters.scale = 2.0;
+            text = "Total: " + totalScore;
+            textDimensions = this.textDimensions = font.calculateTextDimensions(text, textParameters.scale, 0, 0, this.textDimensions);
+            rect[0] = (graphicsDevice.width / 2) - (textDimensions.width / 2);
+            rect[1] = textTop + textDimensions.height;
+            rect[2] = textDimensions.width;
+            rect[3] = textDimensions.height;
+            font.drawTextRect(text, textParameters);
+        }
+    },
+
+    _processScores: function playbackControllerProcessScores()
+    {
+        var testRanges = this.testRanges;
+        var testRange, startFrame, endFrame, incompleteTest, framesProcessed;
+        var t, i, length;
+
+        var frameRate = 60;
+        var timePerFrame = (1 / frameRate) * 1000;
+        var scorePerSecond = 1000 / 30; // 1000pts for every 30 seconds of test
+        var scorePerFrame = (scorePerSecond) / frameRate;
+        var totalMs, baseScore, targetMs, testScore;
+
+        var msPerFrame = this.msPerFrame;
+        var testScores = {};
+        for (t in testRanges)
+        {
+            if (testRanges.hasOwnProperty(t))
+            {
+                totalMs = 0;
+                testRange = testRanges[t];
+                startFrame = testRange[0];
+                endFrame = testRange[1];
+                length = endFrame - startFrame + 1;
+                incompleteTest = false;
+
+                baseScore = scorePerFrame * length;
+
+                framesProcessed = 0;
+
+                for (i = startFrame; i <= endFrame; i += 1)
+                {
+                    if (msPerFrame[i] !== undefined)
+                    {
+                        totalMs += msPerFrame[i];
+                        framesProcessed += 1;
+                    }
+                    else
+                    {
+                        incompleteTest = true;
+                    }
+                }
+
+                targetMs = timePerFrame * framesProcessed;
+
+                if (totalMs > 0)
+                {
+                    testScore = baseScore * (targetMs / totalMs);
+                }
+                else
+                {
+                    testScore = 0;
+                }
+
+                testScores[t] = {
+                    complete: true,
+                    totalTimeMs: totalMs,
+                    score: testScore,
+                    completeRatio: 1.0
+                };
+                if (incompleteTest)
+                {
+                    testScores[t].complete = false;
+                    testScores[t].completeRatio = framesProcessed / length;
+                }
+            }
+        }
+        this.testScores = testScores;
     },
 
     _processSequenceList: function playbackcontrollerProcessSequenceList(sequenceList)
@@ -144,6 +262,7 @@ PlaybackController.prototype =
                             testMeta.startFrame,
                             testMeta.endFrame ? testMeta.endFrame: testMeta.lastFrame
                         ];
+                        this.testTotalIgnores = [testMeta.name];
 
                         if (testMeta.subTests)
                         {
@@ -519,6 +638,8 @@ PlaybackController.prototype =
                             streamStats.frameCount = this.framesRendered;
                             streamStats.averageFps = this.framesRendered / recordingTime;
                             streamStats.endTime = (new Date().getTime());
+
+                            this._processScores();
 
                             var playbackConfig = this.playbackConfig;
                             playbackConfig.canvasWidth = graphicsDevice.width;
