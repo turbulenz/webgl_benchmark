@@ -36,10 +36,11 @@ PlaybackController.prototype =
         return true;
     },
 
-    _processSubTests: function playbackcontrollerProcessSubTestsFn(subTests, tests)
+    _processSubTests: function playbackcontrollerProcessSubTestsFn(subTests, tests, testID)
     {
         var length = subTests.length;
         var subTest;
+        var testsData = this.testsData;
         for (var i = 0; i < length; i += 1)
         {
             subTest = tests[subTests[i]];
@@ -50,6 +51,12 @@ PlaybackController.prototype =
                     subTest.endFrame ? subTest.endFrame: subTest.lastFrame
                 ];
             }
+
+            testsData.push({
+                name: subTests[i],
+                id: testID + '-' + i,
+                stats: {}
+            });
         }
         this.testMeta = tests;
     },
@@ -258,6 +265,12 @@ PlaybackController.prototype =
                     {
                         testMeta = streamMeta.tests[test.name];
 
+                        this.testsData = [{
+                            id: test.id,
+                            name: test.name,
+                            stats: {}
+                        }];
+
                         this.testRanges[testMeta.name] = [
                             testMeta.startFrame,
                             testMeta.endFrame ? testMeta.endFrame: testMeta.lastFrame
@@ -266,7 +279,7 @@ PlaybackController.prototype =
 
                         if (testMeta.subTests)
                         {
-                            this._processSubTests(testMeta.subTests, streamMeta.tests);
+                            this._processSubTests(testMeta.subTests, streamMeta.tests, test.id);
                         }
                     }
 
@@ -726,15 +739,7 @@ PlaybackController.prototype =
 
         framesData.indices = resultsData.frameIndices;
 
-        var testsData = [];
-        var testStats = resultsData.testStats;
-        var testStatCount = testStats.length;
-        for (var i = 0; i < testStatCount; i += 1)
-        {
-            testsData.push({
-                stats: testStats[i]
-            });
-        }
+        var testsData = resultsData.testsData;
 
         //TODO: Multiple streams and tests
         userDataResult.data.sequences = [{
@@ -902,9 +907,7 @@ PlaybackController.prototype =
         resultsData.streamStats = this.streamStats;
         this.streamStats = {};
 
-        // Same as sequence results
-        //TODO: Seperate tests out as seperate data
-        resultsData.testStats = [resultsData.streamStats];
+        resultsData.testsData = this.testsData;
 
         this.resultsData = resultsData;
         this.resultsData.userData = this.generateUserData(resultsData);
