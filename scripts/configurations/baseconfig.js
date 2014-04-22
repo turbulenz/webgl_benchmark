@@ -80,6 +80,9 @@ BaseConfig.prototype =
     // Launch the graph on start
     graphOnStart: false,
 
+    // Launch the graph at the end
+    graphOnEnd: false,
+
     // Prompt for hardware name (if not specified)
     promptHardwareName: true,
 

@@ -204,7 +204,6 @@ BenchmarkApp.prototype =
                 }
                 if (that.playbackController.atEnd)
                 {
-                    that.displayResults();
                     if (saveElement && saveElement.disabled)
                     {
                         saveElement.disabled = false;
@@ -213,7 +212,11 @@ BenchmarkApp.prototype =
                     {
                         downloadCSVElement.disabled = false;
                     }
-                    return;
+                    if (config.graphOnEnd)
+                    {
+                        that.displayResults();
+                        return;
+                    }
                 }
                 requestAnimationFrame(update);
             }
