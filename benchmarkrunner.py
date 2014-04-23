@@ -486,7 +486,8 @@ def download_assets(config_name="default", max_connections=20, force_download=Fa
             threads.append(Thread(target=downloader, args=[download_path, output_path, bounded_semaphore]))
             paths.append(download_path)
 
-    capture_files = 0
+    add_downloader('meta.json')
+    capture_files = 1
     for start_frame in xrange(0, NUM_FRAMES, NUM_FRAMES_BLOCK):
         block_postfix = '%d-%d' % (start_frame, start_frame + NUM_FRAMES_BLOCK - 1)
         add_downloader('resources-%s.json' % block_postfix)
