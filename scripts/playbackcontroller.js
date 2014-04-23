@@ -41,8 +41,10 @@ PlaybackController.prototype =
         var length = subTests.length;
         var subTest;
         var testsData = this.testsData;
+        var stats;
         for (var i = 0; i < length; i += 1)
         {
+            stats = {};
             subTest = tests[subTests[i]];
             if (subTest)
             {
@@ -51,14 +53,17 @@ PlaybackController.prototype =
                     range: [
                         subTest.startFrame,
                         subTest.endFrame ? subTest.endFrame: subTest.lastFrame
-                    ]
+                    ],
+                    stats: stats,
+                    started: false,
+                    ended: false
                 };
             }
 
             testsData.push({
                 name: subTests[i],
                 id: testID + '-' + i,
-                stats: {}
+                stats: stats
             });
         }
         this.testMeta = tests;
@@ -69,16 +74,92 @@ PlaybackController.prototype =
         var testRange;
         var testRanges = this.testRanges;
         var testsActive = this.testsActive;
-        var testScore, scoreText;
+        var testScore, scoreText, stats, maxFrameMs, minFrameMs, maxDispatchMs, minDispatchMs;
         testsActive.length = 0;
+
+        var i, length;
+
+        var msPerFrame = this.msPerFrame;
+        var msDispatchPerFrame = this.msDispatchPerFrame;
         for (var t in testRanges)
         {
             if (testRanges.hasOwnProperty(t))
             {
                 testRange = this.testRanges[t];
+                stats = testRange.stats;
                 if (frameIndex >= testRange.range[0] && frameIndex <= testRange.range[1])
                 {
                     testsActive[testsActive.length] = testRange.name;
+                    if (!testRange.started)
+                    {
+                        stats.startTime = (new Date().getTime());
+                        stats.frameCount = 1;
+                        testRange.testStart = TurbulenzEngine.getTime();
+                        testRange.started = true;
+                    }
+                    else
+                    {
+                        stats.frameCount += 1;
+                    }
+                }
+                else
+                {
+                    if (testRange.started && !testRange.ended)
+                    {
+                        stats.endTime = (new Date().getTime());
+                        stats.playDuration = (TurbulenzEngine.getTime() - testRange.testStart) / 1000;
+                        stats.averageFps = stats.frameCount / stats.playDuration;
+
+                        maxFrameMs = -1;
+                        minFrameMs = -1;
+                        maxDispatchMs = -1;
+                        minDispatchMs = -1;
+
+                        for (i = testRange.range[0]; i <= testRange.range[1]; i += 1)
+                        {
+                            if (maxFrameMs === -1)
+                            {
+                                maxFrameMs = msPerFrame[i];
+                            }
+                            else if (msPerFrame[i] > maxFrameMs)
+                            {
+                                maxFrameMs = msPerFrame[i];
+                            }
+
+                            if (minFrameMs === -1)
+                            {
+                                minFrameMs = msPerFrame[i];
+                            }
+                            else if (msPerFrame[i] < minFrameMs)
+                            {
+                                minFrameMs = msPerFrame[i];
+                            }
+
+                            if (maxDispatchMs === -1)
+                            {
+                                maxDispatchMs = msDispatchPerFrame[i];
+                            }
+                            else if (msDispatchPerFrame[i] > maxDispatchMs)
+                            {
+                                maxDispatchMs = msDispatchPerFrame[i];
+                            }
+
+                            if (minDispatchMs === -1)
+                            {
+                                minDispatchMs = msDispatchPerFrame[i];
+                            }
+                            else if (msDispatchPerFrame[i] < minDispatchMs)
+                            {
+                                minDispatchMs = msDispatchPerFrame[i];
+                            }
+                        }
+
+                        stats.maxFrameMs = maxFrameMs;
+                        stats.minFrameMs = minFrameMs;
+                        stats.maxDispatchMs = maxDispatchMs;
+                        stats.minDispatchMs = minDispatchMs;
+                        testRange.ended = true;
+                    }
                 }
             }
         }
@@ -102,7 +183,7 @@ PlaybackController.prototype =
                                 textTechniqueParameters.clipSpace);
         graphicsDevice.setTechniqueParameters(textTechniqueParameters);
 
-        var i, length = testsActive.length;
+        length = testsActive.length;
         var text, textDimensions;
         for (i = 0; i < length; i += 1)
         {
@@ -234,7 +315,7 @@ PlaybackController.prototype =
 
     _processSequenceList: function playbackcontrollerProcessSequenceList(sequenceList)
     {
-        var sequence, stream, test, streamMeta, testMeta;
+        var sequence, stream, test, streamMeta, testMeta, stats;
         var numTotalFrames, numFramesPerGroup, numGroups;
         var i, iLen, j, jLen, k, kLen;
         iLen = sequenceList.length;
@@ -269,10 +350,11 @@ PlaybackController.prototype =
                     {
                         testMeta = streamMeta.tests[test.name];
 
+                        stats = {};
                         this.testsData = [{
                             id: test.id,
                             name: test.name,
-                            stats: {}
+                            stats: stats
                         }];
 
                         this.testRanges[test.name] = {
@@ -280,7 +362,10 @@ PlaybackController.prototype =
                             range: [
                                 testMeta.startFrame,
                                 testMeta.endFrame ? testMeta.endFrame: testMeta.lastFrame
-                            ]
+                            ],
+                            stats: stats,
+                            started: false,
+                            ended: false
                         };
                         this.testTotalIgnores = [test.name];
 
@@ -519,10 +604,7 @@ PlaybackController.prototype =
                 playbackGraphicsDevice.play(this.relativeFrameIndex);
                 var dispatchTime = TurbulenzEngine.getTime() - frameStart;
 
-                if (this._postFrame)
-                {
-                    this._postFrame(((this.currentGroupIndex * this.numFramesPerGroup) + this.relativeFrameIndex));
-                }
+                this._postFrame(((this.currentGroupIndex * this.numFramesPerGroup) + this.relativeFrameIndex));
 
                 var frameTime;
                 if (this.config.blockForRendering)
