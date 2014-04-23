@@ -46,10 +46,13 @@ PlaybackController.prototype =
             subTest = tests[subTests[i]];
             if (subTest)
             {
-                this.testRanges[subTest.name] = [
-                    subTest.startFrame,
-                    subTest.endFrame ? subTest.endFrame: subTest.lastFrame
-                ];
+                this.testRanges[subTests[i]] = {
+                    name: subTest.name,
+                    range: [
+                        subTest.startFrame,
+                        subTest.endFrame ? subTest.endFrame: subTest.lastFrame
+                    ]
+                };
             }
 
             testsData.push({
@@ -73,9 +76,9 @@ PlaybackController.prototype =
             if (testRanges.hasOwnProperty(t))
             {
                 testRange = this.testRanges[t];
-                if (frameIndex >= testRange[0] && frameIndex <= testRange[1])
+                if (frameIndex >= testRange.range[0] && frameIndex <= testRange.range[1])
                 {
-                    testsActive[testsActive.length] = t;
+                    testsActive[testsActive.length] = testRange.name;
                 }
             }
         }
@@ -136,7 +139,7 @@ PlaybackController.prototype =
                     {
                         scoreText = "Not started";
                     }
-                    text = t + ": " + scoreText;
+                    text = testScore.name + ": " + scoreText;
                     textDimensions = this.textDimensions = font.calculateTextDimensions(text, 1, 0, 0, this.textDimensions);
                     rect[0] = (graphicsDevice.width / 2) - (textDimensions.width / 2);
                     rect[1] = textTop;
@@ -179,8 +182,8 @@ PlaybackController.prototype =
             {
                 totalMs = 0;
                 testRange = testRanges[t];
-                startFrame = testRange[0];
-                endFrame = testRange[1];
+                startFrame = testRange.range[0];
+                endFrame = testRange.range[1];
                 length = endFrame - startFrame + 1;
                 incompleteTest = false;
 
@@ -213,6 +216,7 @@ PlaybackController.prototype =
                 }
 
                 testScores[t] = {
+                    name: testRange.name,
                     complete: true,
                     totalTimeMs: totalMs,
                     score: testScore,
@@ -271,11 +275,14 @@ PlaybackController.prototype =
                             stats: {}
                         }];
 
-                        this.testRanges[testMeta.name] = [
-                            testMeta.startFrame,
-                            testMeta.endFrame ? testMeta.endFrame: testMeta.lastFrame
-                        ];
-                        this.testTotalIgnores = [testMeta.name];
+                        this.testRanges[test.name] = {
+                            name: testMeta.name,
+                            range: [
+                                testMeta.startFrame,
+                                testMeta.endFrame ? testMeta.endFrame: testMeta.lastFrame
+                            ]
+                        };
+                        this.testTotalIgnores = [test.name];
 
                         if (testMeta.subTests)
                         {
