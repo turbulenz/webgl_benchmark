@@ -378,7 +378,7 @@ PlaybackController.prototype =
                     if (testMeta)
                     {
                         var testEndFrame = testMeta.endFrame ? testMeta.endFrame: testMeta.lastFrame;
-                        numGroups = this.numGroups = Math.ceil(testEndFrame / numFramesPerGroup);
+                        numGroups = this.numGroups = Math.ceil(testEndFrame / numFramesPerGroup) + this.additionalGroups;
                     }
                 }
             }
@@ -1363,6 +1363,7 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
     playbackController.loadingResults = false;
     playbackController.emptyData = [-1, -1, -1, -1];
     playbackController.defaultHardwareName = "Unspecified";
+    playbackController.additionalGroups = 1; // The number of additional groups to add post the end of the tests to act as padding
 
     playbackController.step = false;
 
