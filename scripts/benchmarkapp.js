@@ -20,6 +20,8 @@ BenchmarkApp.prototype =
         var config = this.config;
         var that = this;
 
+        var streamIDs = config.streamIDs || {};
+
         var metaResponse = false;
         var metaLoaded = function metaLoadedFn(responseText, status)
         {
@@ -35,8 +37,6 @@ BenchmarkApp.prototype =
                     Utilities.error("Could not parse meta information");
                 }
             }
-
-            var streamIDs = config.streamIDs || {};
 
             // Default benchmark behaviour
             // Single sequence, single stream, single test
@@ -91,6 +91,12 @@ BenchmarkApp.prototype =
         // var fullscreenElement = document.getElementById("buttonFullscreen");
 
         var elements = this.elements;
+        var streamIDElement = elements.streamID;
+        if (streamIDElement)
+        {
+            streamIDElement.textContent = streamIDs[config.defaultCapture];
+        }
+
         var captureNameElement = elements.captureName;
         if (captureNameElement)
         {
@@ -383,6 +389,7 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
 
     var elements = benchmarkApp.elements = {};
     var htmlControls = benchmarkApp.htmlControls = {
+        "streamID": "streamID",
         "captureName": "captureName",
         "time": "time",
         "frameTime": "frameTime",
