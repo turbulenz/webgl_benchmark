@@ -245,8 +245,9 @@ PlaybackController.prototype =
 
     _processScores: function playbackControllerProcessScores()
     {
+        var testsData = this.testsData;
         var testRanges = this.testRanges;
-        var testRange, startFrame, endFrame, incompleteTest, framesProcessed;
+        var testRange, startFrame, endFrame, incompleteTest, framesProcessed, testData;
         var t, i, length;
 
         var frameRate = 60;
@@ -307,6 +308,16 @@ PlaybackController.prototype =
                 {
                     testScores[t].complete = false;
                     testScores[t].completeRatio = framesProcessed / length;
+                }
+
+                length = testsData.length;
+                for (i = 0; i < length; i += 1)
+                {
+                    testData = testsData[i];
+                    if (testData.name === t)
+                    {
+                        testData.score = testScores[t];
+                    }
                 }
             }
         }
@@ -1434,7 +1445,7 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
         rect: [0, 0, 10, 10]
     };
 
-    playbackController.resultsData = null;
+    playbackController.resultsData = {};
     playbackController.dataProcessed = false;
 
     playbackController.resultsTemplateData = null;
