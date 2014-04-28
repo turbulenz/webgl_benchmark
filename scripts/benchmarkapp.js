@@ -25,6 +25,11 @@ BenchmarkApp.prototype =
         var metaResponse = false;
         var metaLoaded = function metaLoadedFn(responseText, status)
         {
+            if (config.graphOnStart)
+            {
+                return;
+            }
+
             var streamMeta = null;
             if (status === 200)
             {
