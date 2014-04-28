@@ -29,7 +29,7 @@ OnlineConfig.create = function onlineCreateFn()
     captureLookUp['story_shadows_rendertarget']        = '//tzawsuser-benchmark.s3.amazonaws.com/521f13a3/';
     captureLookUp['story_high']                        = '//tzawsuser-benchmark.s3.amazonaws.com/5230dc14/';
     captureLookUp['stress_high']                       = '//tzawsuser-benchmark.s3.amazonaws.com/523b443e/';
-    captureLookUp['story_high_particles']              = '//tzawsuser-benchmark.s3.amazonaws.com/53511573/';
+    captureLookUp['story_high_particles']              = '//tzawsuser-benchmark.s3.amazonaws.com/535912a5/';
     captureLookUp['stress_zoom']                       = '//tzawsuser-benchmark.s3.amazonaws.com/523203e6/';
     captureLookUp['stress_seige']                      = '//tzawsuser-benchmark.s3.amazonaws.com/520109eb/';
 
