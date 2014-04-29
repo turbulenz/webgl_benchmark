@@ -408,9 +408,10 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
     var textureManager = TextureManager.create(graphicsDevice, requestHandler);
 
     var fonts = {
-        regular: "avenirmedium"
+        regular: "avenirmedium",
     };
 
+    globals.fontSizes = [8, 16, 32, 64];
     globals.fonts = fonts;
     globals.mathDevice = mathDevice;
     globals.graphicsDevice = graphicsDevice;

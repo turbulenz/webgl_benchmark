@@ -402,7 +402,7 @@ SimpleFontRenderer.create = function simpleFontRendererCreateFn(globals)
     simpleFontRenderer.fonts = {};
 
     // The standard set of sizes to request (sorted)
-    var fontSizes = simpleFontRenderer.fontSizes = [8, 16, 32, 64, 128];
+    var fontSizes = simpleFontRenderer.fontSizes = globals.fontSizes || [8, 16, 32, 64, 128];
     simpleFontRenderer.fontSizeMax = fontSizes[0];
     simpleFontRenderer.fontSizeMin = fontSizes[fontSizes.length - 1];
 
