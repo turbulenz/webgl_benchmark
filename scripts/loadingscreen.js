@@ -13,6 +13,9 @@ var LoadingScreen = (function () {
         this.textureMaterial['diffuse'] = texture;
         this.textureWidthHalf = (texture.width * 0.5);
         this.textureHeightHalf = (texture.height * 0.5);
+        this.textureWidth = texture.width;
+        this.textureHeight = texture.height;
+        this.textureRatio = (texture.height / texture.width);
     };
     LoadingScreen.prototype.setSimpleFonts = function (simplefonts) {
         this.simplefonts = simplefonts;
@@ -131,6 +134,52 @@ var LoadingScreen = (function () {
         var progress = (assetTracker && assetTracker.getLoadingProgress()) || this.progress;
         var xScale = 2 / screenWidth;
         var yScale = -2 / screenHeight;
+        var textureWidthHalf = this.textureWidthHalf;
+        var textureHeightHalf = this.textureHeightHalf;
+        var screenWidthHalf;
+        var screenHeightHalf;
+        if(0 < textureWidthHalf && 0 < textureAlpha) {
+            var textureMaterial = this.textureMaterial;
+            gd.setTechnique(this.textureTechnique);
+            var clipSpace = this.clipSpace;
+            clipSpace[0] = xScale;
+            clipSpace[1] = yScale;
+            textureMaterial['clipSpace'] = clipSpace;
+            textureMaterial['alpha'] = textureAlpha;
+            gd.setTechniqueParameters(textureMaterial);
+            writer = gd.beginDraw(primitive, 4, this.textureVertexFormats, this.textureSemantics);
+            if(writer) {
+                screenWidthHalf = centerx = (screenWidth * 0.5);
+                screenHeightHalf = centery = (screenHeight * 0.5);
+
+                var textureRatio = this.textureRatio;
+                var screenRatio = (screenHeight / screenWidth);
+
+                if (textureRatio > screenRatio)
+                {
+                    var scaledTextureHeightHalf = screenWidthHalf * textureRatio;
+                    left = 0;
+                    right = screenWidth;
+                    top = (centery - scaledTextureHeightHalf);
+                    bottom = (centery + scaledTextureHeightHalf);
+                }
+                else
+                {
+                    var scaledTextureWidthHalf = screenHeightHalf / textureRatio;
+                    left = (centerx - scaledTextureWidthHalf);
+                    right = (centerx + scaledTextureWidthHalf);
+                    top = 0;
+                    bottom = screenHeight;
+                }
+
+                writer(left, top, 0, 0);
+                writer(right, top, 1, 0);
+                writer(left, bottom, 0, 1);
+                writer(right, bottom, 1, 1);
+                gd.endDraw(writer);
+                writer = null;
+            }
+        }
         if((progress !== null) && (backgroundAlpha > 0)) {
             if(progress < 0) {
                 progress = 0;
@@ -175,33 +224,6 @@ var LoadingScreen = (function () {
                 writer((right * xScale) - 1, (top * yScale) + 1);
                 writer((left * xScale) - 1, (bottom * yScale) + 1);
                 writer((right * xScale) - 1, (bottom * yScale) + 1);
-                gd.endDraw(writer);
-                writer = null;
-            }
-        }
-        var textureWidthHalf = this.textureWidthHalf;
-        var textureHeightHalf = this.textureHeightHalf;
-        if(0 < textureWidthHalf && 0 < textureAlpha) {
-            var textureMaterial = this.textureMaterial;
-            gd.setTechnique(this.textureTechnique);
-            var clipSpace = this.clipSpace;
-            clipSpace[0] = xScale;
-            clipSpace[1] = yScale;
-            textureMaterial['clipSpace'] = clipSpace;
-            textureMaterial['alpha'] = textureAlpha;
-            gd.setTechniqueParameters(textureMaterial);
-            writer = gd.beginDraw(primitive, 4, this.textureVertexFormats, this.textureSemantics);
-            if(writer) {
-                centerx = (screenWidth * 0.5);
-                centery = (screenHeight * 0.5);
-                left = (centerx - textureWidthHalf);
-                right = (centerx + textureWidthHalf);
-                top = (centery - textureHeightHalf);
-                bottom = (centery + textureHeightHalf);
-                writer(left, top, 0, 0);
-                writer(right, top, 1, 0);
-                writer(left, bottom, 0, 1);
-                writer(right, bottom, 1, 1);
                 gd.endDraw(writer);
                 writer = null;
             }

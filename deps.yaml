@@ -11,6 +11,5 @@
 - textures/avenirmedium-32_0.dds
 - fonts/avenirmedium-64.fnt
 - textures/avenirmedium-64_0.dds
-- fonts/avenirmedium-128.fnt
-- textures/avenirmedium-128_0.dds
 - shaders/font.cgfx
+- textures/bench-bg.dds

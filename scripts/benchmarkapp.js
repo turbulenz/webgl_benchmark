@@ -270,6 +270,10 @@ BenchmarkApp.prototype =
             }
             else if (that.preloaded && metaResponse)
             {
+                // Clear font and progress rendering
+                that.loadingScreen.simplefonts = null;
+                that.loadingScreen.progress = null;
+
                 TurbulenzEngine.clearInterval(that.intervalID);
                 requestAnimationFrame(update);
             }
@@ -278,6 +282,7 @@ BenchmarkApp.prototype =
             {
                 graphicsDevice.clear(this.loadingColor);
                 that.loadingScreen.render(1, 1);
+                graphicsDevice.endFrame();
             }
         }
 
@@ -477,6 +482,7 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
             {
                 simplefonts.preload();
                 benchmarkApp.loadingScreen.setSimpleFonts(simplefonts);
+                benchmarkApp.loadingScreen.loadAndSetTexture(graphicsDevice, requestHandler, mappingTable, "textures/bench-bg.dds");
             }
         }
     });
