@@ -10,6 +10,10 @@
 /*global RequestHandler: false*/
 /*global Utilities: false*/
 /*global debug: false*/
+/*global FontManager: false*/
+/*global ShaderManager: false*/
+/*global TextureManager: false*/
+/*global SimpleFontRenderer: false*/
 
 function BenchmarkApp() {}
 
@@ -253,13 +257,18 @@ BenchmarkApp.prototype =
                 return;
             }
 
-            if (playbackController.addingResources || playbackController.loadingResources || playbackController.loadingTemplates || playbackController.loadingAppResources)
+            if (!that.preloaded)
+            {
+                that.preloaded = that.loadingScreen.hasLoaded();
+            }
+
+            if (that.preloaded && (playbackController.addingResources || playbackController.loadingResources || playbackController.loadingTemplates || playbackController.loadingAppResources))
             {
                 playbackController.update();
                 var progress = playbackController.getLoadingProgress();
                 that.loadingScreen.setProgress(progress);
             }
-            else if (metaResponse)
+            else if (that.preloaded && metaResponse)
             {
                 TurbulenzEngine.clearInterval(that.intervalID);
                 requestAnimationFrame(update);
@@ -356,6 +365,8 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
 {
     var benchmarkApp = new BenchmarkApp();
 
+    var globals = {};
+
     var config = benchmarkApp.config = Config.create();
 
     var prefixCaptureURL = config.captureLookUp[config.defaultCapture];
@@ -391,6 +402,24 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
 
     var requestHandlerParameters = {};
     var requestHandler = benchmarkApp.requestHandler = RequestHandler.create(requestHandlerParameters);
+
+    var shaderManager = ShaderManager.create(graphicsDevice, requestHandler);
+    var fontManager = FontManager.create(graphicsDevice, requestHandler);
+    var textureManager = TextureManager.create(graphicsDevice, requestHandler);
+
+    var fonts = {
+        regular: "avenirmedium"
+    };
+
+    globals.fonts = fonts;
+    globals.mathDevice = mathDevice;
+    globals.graphicsDevice = graphicsDevice;
+    globals.requestHandler = requestHandler;
+    globals.textureManager = textureManager;
+    globals.shaderManager = shaderManager;
+    globals.fontManager = fontManager;
+
+    var simplefonts = benchmarkApp.simplefonts = SimpleFontRenderer.create(globals);
 
     var elements = benchmarkApp.elements = {};
     var htmlControls = benchmarkApp.htmlControls = {
@@ -435,15 +464,25 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
         graphicsDevice: graphicsDevice,
         mathDevice: mathDevice,
         requestHandler: requestHandler,
+        shaderManager: shaderManager,
+        fontManager: fontManager,
         elements: benchmarkApp.elements,
         prefixCaptureURL: prefixCaptureURL,
         prefixAssetURL: prefixAssetURL,
-        prefixTemplatesURL: prefixTemplatesURL
+        prefixTemplatesURL: prefixTemplatesURL,
+        mappingTableCallback: function (mappingTable) {
+            //TODO: Do mapping table loading in benchmarkapp. Now required globally.
+            if (mappingTable)
+            {
+                simplefonts.preload();
+                benchmarkApp.loadingScreen.setSimpleFonts(simplefonts);
+            }
+        }
     });
     benchmarkApp.playbackController.multisample = multisample;
     benchmarkApp.playbackController.antialias = antialias;
 
-    benchmarkApp.loadingScreen = LoadingScreen.create(graphicsDevice, mathDevice, {progress: 0});
+    benchmarkApp.loadingScreen = LoadingScreen.create(graphicsDevice, mathDevice, {progress: 0, checkFontLoaded: true});
 
     benchmarkApp.resultsID = "results";
 
@@ -452,6 +491,8 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
     });
 
     benchmarkApp.intervalID = null;
+
+    benchmarkApp.preloaded = false;
 
     return benchmarkApp;
 };

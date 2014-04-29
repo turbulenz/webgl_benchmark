@@ -13,6 +13,7 @@
 /*{{ javascript("scripts/playbackcontroller.js") }}*/
 /*{{ javascript("scripts/config.js") }}*/
 /*{{ javascript("scripts/querystring.js") }}*/
+/*{{ javascript("scripts/simplefonts.js") }}*/
 
 /*{# jslib files #}*/
 /*{{ javascript("jslib/services/turbulenzservices.js") }}*/
@@ -22,6 +23,7 @@
 /*{{ javascript("jslib/services/gamesession.js") }}*/
 /*{{ javascript("jslib/shadermanager.js") }}*/
 /*{{ javascript("jslib/fontmanager.js") }}*/
+/*{{ javascript("jslib/texturemanager.js") }}*/
 /*{{ javascript("jslib/requesthandler.js") }}*/
 
 /*{# updated jslib files #}*/

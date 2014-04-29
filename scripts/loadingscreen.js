@@ -14,8 +14,39 @@ var LoadingScreen = (function () {
         this.textureWidthHalf = (texture.width * 0.5);
         this.textureHeightHalf = (texture.height * 0.5);
     };
+    LoadingScreen.prototype.setSimpleFonts = function (simplefonts) {
+        this.simplefonts = simplefonts;
+
+        var scale = 4;
+        var spacing = undefined;
+        var horizontalAlign = simplefonts.textHorizontalAlign.CENTER;
+        var verticalAlign = simplefonts.textVerticalAlign.MIDDLE;
+        var fontStyle = "regular";
+        var screenWidth = this.screenWidth;
+        var screenHeight = this.screenHeight;
+        var v3Color = this.md.v3BuildOne();
+
+        this.fontParams =
+        {
+            x : screenWidth / 2,
+            y : screenHeight / 2,
+
+            r : v3Color[0],
+            g : v3Color[1],
+            b : v3Color[2],
+
+            scale : scale,
+            spacing : spacing,
+            alignment : horizontalAlign,
+            valignment : verticalAlign,
+            fontStyle : fontStyle
+        };
+
+        this.checkFontLoaded = true;
+    };
     LoadingScreen.prototype.loadAndSetTexture = function (graphicsDevice, requestHandler, mappingTable, name) {
         var that = this;
+        this.checkTextureLoaded = true;
         if(mappingTable) {
             var urlMapping = mappingTable.urlMapping;
             var assetPrefix = mappingTable.assetPrefix;
@@ -31,10 +62,20 @@ var LoadingScreen = (function () {
                 onload: function (t) {
                     if(t) {
                         that.setTexture(t);
+                        that.textureLoaded = true;
                     }
                 }
             });
         }
+    };
+    LoadingScreen.prototype.hasLoaded = function () {
+        var textureLoaded = this.checkTextureLoaded ? this.textureLoaded: true;
+        var simplefonts = this.simplefonts;
+        var fontLoaded = this.checkFontLoaded ?
+                            ((simplefonts !== undefined) && simplefonts.hasLoaded() && (simplefonts.technique2D !== undefined)):
+                            true;
+
+        return (textureLoaded && fontLoaded);
     };
     LoadingScreen.prototype.render = function (backgroundAlpha, textureAlpha) {
         var gd = this.gd;
@@ -43,6 +84,18 @@ var LoadingScreen = (function () {
         if((screenWidth === 0) || (screenHeight === 0)) {
             return;
         }
+
+        if ((screenWidth !== this.screenWidth) || (screenHeight !== this.screenHeight)) {
+            var fontParams = this.fontParams;
+            if (fontParams)
+            {
+                fontParams.x = screenWidth / 2;
+                fontParams.y = screenHeight / 2;
+            }
+            this.screenHeight = screenHeight;
+            this.screenWidth = screenWidth;
+        }
+
         var writer;
         var primitive = gd.PRIMITIVE_TRIANGLE_STRIP;
         var backgroundMaterial;
@@ -153,10 +206,21 @@ var LoadingScreen = (function () {
                 writer = null;
             }
         }
+        var simplefonts = this.simplefonts;
+        if (simplefonts)
+        {
+            var fontLoaded = simplefonts.hasLoaded();
+            if (fontLoaded)
+            {
+                simplefonts.drawFont("" + Math.floor(progress * 100) + "%", this.fontParams);
+                simplefonts.render();
+            }
+        }
     };
     LoadingScreen.create = function create(gd, md, parameters) {
         var f = new LoadingScreen();
         f.gd = gd;
+        f.md = md;
         f.backgroundColor = md.v4Build(0.231, 0.231, 0.231, 1.0);
         f.backgroundTechnique = null;
         f.backgroundMaterial = gd.createTechniqueParameters();
@@ -179,6 +243,10 @@ var LoadingScreen = (function () {
             'POSITION',
             'TEXCOORD0'
         ]);
+        f.checkFontLoaded = false;
+        f.checkTextureLoaded = false;
+        f.screenWidth = 0;
+        f.screenHeight = 0;
         if(parameters) {
             f.barBackgroundColor = md.v4BuildZero();
             f.barColor = md.v4BuildOne();
@@ -221,6 +289,12 @@ var LoadingScreen = (function () {
             }
             if(parameters.progress) {
                 f.progress = parameters.progress;
+            }
+            if(parameters.simplefonts) {
+                f.simplefonts = parameters.simplefonts;
+            }
+            if(parameters.checkFontLoaded) {
+                f.checkFontLoaded = true;
             }
         }
         var shaderParams = {

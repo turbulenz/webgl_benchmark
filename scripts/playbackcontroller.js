@@ -31,7 +31,6 @@ PlaybackController.prototype =
             Utilities.log("Sequence information could not be processed");
             return false;
         }
-        this.loadAssets();
         this.resultsData = {};
         return true;
     },
@@ -536,6 +535,7 @@ PlaybackController.prototype =
         {
             this._requestData(g);
         }
+        this.requestInit = true;
     },
 
     getLoadingProgress : function playbackcontrollerGetLoadingProgressFn()
@@ -568,6 +568,11 @@ PlaybackController.prototype =
         var framesReady = false;
         var graphicsDevice = this.graphicsDevice;
         var playbackGraphicsDevice = this.playbackGraphicsDevice;
+
+        if (!this.requestInit)
+        {
+            this.loadAssets();
+        }
 
         var group = this.groups[this.currentGroupIndex];
         if (group && group.ready)
@@ -1406,6 +1411,7 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
     playbackController.msDispatchPerFrame = [];
     playbackController.testRanges = {};
     playbackController.testsActive = [];
+    playbackController.requestInit = false;
 
     if (config.outputMetrics)
     {
@@ -1431,7 +1437,7 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
     playbackController.playbackConfig = {};
     playbackController.streamMeta = {};
     playbackController.sequenceList = [];
-    playbackController.fontName = "fonts/opensans-32.fnt";
+    playbackController.fontName = "fonts/avenirmedium-32.fnt";
     playbackController.fontShaderName = "shaders/font.cgfx";
     playbackController.textTechnique = null;
     playbackController.textTechniqueParameters = null;
@@ -1457,12 +1463,18 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
     playbackController.userDataManager = null;
 
     playbackController.mappingTable = null;
+    playbackController.mappingTableCallbackFn = params.mappingTableCallback;
 
     var mappingTableErrorFn = function mappingTableErrorFn()
     {
         window.alert("Mapping table is missing. Cannot save data.");
         playbackController.resultsTemplateData = null;
         playbackController.loadingTemplates = false;
+
+        if (playbackController.mappingTableCallbackFn)
+        {
+            playbackController.mappingTableCallbackFn(null);
+        }
     };
 
     var mappingTableReceived = function mappingTableReceivedFn(mappingTable) {
@@ -1538,6 +1550,11 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
             {
                 TurbulenzEngine.request(mappingTable.getURL(templateRequest), templateLoaded);
             }
+        }
+
+        if (playbackController.mappingTableCallbackFn)
+        {
+            playbackController.mappingTableCallbackFn(mappingTable);
         }
 
         TurbulenzEngine.request(templateRequest, retryTemplateOnFail);
