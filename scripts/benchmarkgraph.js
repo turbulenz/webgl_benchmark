@@ -32,8 +32,27 @@ BenchmarkGraph.prototype =
         var stats = stream0.stats;
         var frames = stream0.frames;
         var frameTime = frames.msPerFrame;
+        var ignoreFrame = frames.ignoreFrame;
         this.frameCount = stats.frameCount;
         this.maxFrameMs = stats.maxFrameMs;
+
+        var filteredFrameTime = [];
+        var length = frameTime.length;
+        var lastValidTime = 0;
+        for (var i = 0; i < length; i += 1)
+        {
+            if (ignoreFrame[i] === 0)
+            {
+                filteredFrameTime.push(frameTime[i]);
+                lastValidTime = frameTime[i];
+            }
+            else
+            {
+                filteredFrameTime.push(lastValidTime);
+            }
+        }
+        frameTime = filteredFrameTime;
+        frames.msPerFrame = filteredFrameTime;
 
         var scales = this.scales = {
             x: d3.scale.linear().range(xRange),
@@ -119,6 +138,13 @@ BenchmarkGraph.prototype =
         return frames[frameDataName];
     },
 
+    _setFrameData: function getFrameDataFn(resultData, frameDataName, data)
+    {
+        var stream0 = resultData.data.sequences[0].streams[0];
+        var frames = stream0.frames;
+        frames[frameDataName] = data;
+    },
+
     _getStatData: function getStatDataFn(resultData, frameDataName)
     {
         var stream0 = resultData.data.sequences[0].streams[0];
@@ -182,10 +208,29 @@ BenchmarkGraph.prototype =
         var hardwareName = resultData.config.hardware.name;
 
         var newFrameTime = this._getFrameData(resultData, "msPerFrame");
+        var ignoreFrame = this._getFrameData(resultData, "ignoreFrame");
         var newFrameCount = this._getStatData(resultData, "frameCount");
 
+        var filteredFrameTime = [];
+        var length = newFrameTime.length;
+        var lastValidTime = 0;
+        for (var i = 0; i < length; i += 1)
+        {
+            if (ignoreFrame[i] === 0)
+            {
+                lastValidTime = newFrameTime[i];
+                filteredFrameTime.push(lastValidTime);
+            }
+            else
+            {
+                filteredFrameTime.push(lastValidTime);
+            }
+        }
+
+        this._setFrameData(resultData, "msPerFrame", filteredFrameTime);
+
         this._updateNames(hardwareName, resultData);
-        this._createLine(lineNames[lineNames.length - 1], newFrameTime);
+        this._createLine(lineNames[lineNames.length - 1], filteredFrameTime);
 
         if (newFrameCount > this.frameCount)
         {
