@@ -211,6 +211,7 @@ BenchmarkApp.prototype =
                                      window.mozRequestAnimationFrame);
         function update()
         {
+            var graphicsDevice = that.graphicsDevice;
             if (!TurbulenzEngine.isUnloading()) {
                 that.playbackController.update();
                 if (abortElement && abortElement.disabled)
@@ -231,6 +232,17 @@ BenchmarkApp.prototype =
                     {
                         that.displayResults();
                         return;
+                    }
+                    if (!that.formattedScores)
+                    {
+                        that.formattedScores = that._formatScores(that.playbackController.getScores());
+                    }
+                    if (graphicsDevice.beginFrame())
+                    {
+                        graphicsDevice.clear(that.loadingColor);
+                        that.loadingScreen.render(1, 1);
+                        that.renderResults();
+                        graphicsDevice.endFrame();
                     }
                 }
                 requestAnimationFrame(update);
@@ -287,6 +299,117 @@ BenchmarkApp.prototype =
         }
 
         this.intervalID = TurbulenzEngine.setInterval(loadingUpdate, 1000 / 60);
+    },
+
+    _formatScores : function benchmarkAppFormatScoresFn(testScores)
+    {
+        var scorePanelWrapX = 3;
+        var scorePanelWidth = 1000;
+        var scorePerPanelHeight = 100;
+        var simplefonts = this.simplefonts;
+        var horizontalAlign = simplefonts.textHorizontalAlign.CENTER;
+        var verticalAlign = simplefonts.textVerticalAlign.MIDDLE;
+        var formattedScores = [];
+        var testScore, scoreText, testScoreInt;
+        var index = 0;
+        for (var t in testScores)
+        {
+            if (testScores.hasOwnProperty(t))
+            {
+                testScore = testScores[t];
+                testScoreInt = Math.floor(testScore.score);
+
+                scoreText = testScoreInt + "";
+                if (testScore.completeRatio === 0.0)
+                {
+                    scoreText = "Not started";
+                }
+
+                formattedScores.push({
+                    text: testScore.name,
+                    fontParams: {
+                        x: ((scorePanelWidth / scorePanelWrapX) * (index % scorePanelWrapX)) + (scorePanelWidth * 0.5 / scorePanelWrapX) - (scorePanelWidth * 0.5),
+                        y: (scorePerPanelHeight * Math.floor(index / scorePanelWrapX)) + (scorePerPanelHeight * 0.5) - (scorePerPanelHeight / 3),
+
+                        r: 1.0,
+                        g: 1.0,
+                        b: 1.0,
+
+                        alignment : horizontalAlign,
+                        valignment : verticalAlign,
+
+                        scale: 2.0,
+                        fontStyle: "regular"
+                    }
+                });
+
+                formattedScores.push({
+                    text: scoreText,
+                    fontParams: {
+                        x: ((scorePanelWidth / scorePanelWrapX) * (index % scorePanelWrapX)) + (scorePanelWidth * 0.5 / scorePanelWrapX) - (scorePanelWidth * 0.5),
+                        y: (scorePerPanelHeight * Math.floor(index / scorePanelWrapX)) + (scorePerPanelHeight * 0.5),
+
+                        r: 1.0,
+                        g: 1.0,
+                        b: 1.0,
+
+                        alignment : horizontalAlign,
+                        valignment : verticalAlign,
+
+                        scale: 3.0,
+                        fontStyle: "regular"
+                    }
+                });
+                if (!testScore.complete)
+                {
+                    formattedScores.push({
+                        text: "(Incomplete, Accuracy: " + Math.floor(testScore.completeRatio * 100) + "%)",
+                        fontParams: {
+                            x: ((scorePanelWidth / scorePanelWrapX) * (index % scorePanelWrapX)) + (scorePanelWidth * 0.5 / scorePanelWrapX) - (scorePanelWidth * 0.5),
+                            y: (scorePerPanelHeight * Math.floor(index / scorePanelWrapX)) + (scorePerPanelHeight * 0.5) + (scorePerPanelHeight / 3),
+
+                            r: 1.0,
+                            g: 1.0,
+                            b: 1.0,
+
+                            alignment : horizontalAlign,
+                            valignment : verticalAlign,
+
+                            scale: 1.0,
+                            fontStyle: "regular"
+                        }
+                    });
+                }
+
+                index += 1;
+            }
+        }
+        return formattedScores;
+    },
+
+    renderResults : function benchmarkAppRenderResultsFn()
+    {
+        var formattedScores = this.formattedScores;
+        var formattedScore;
+        var simplefonts = this.simplefonts;
+        var length = formattedScores.length;
+
+        var graphicsDevice = this.graphicsDevice;
+
+        var centerX = graphicsDevice.width / 2;
+        var centerY = graphicsDevice.height / 2;
+
+        var scorePanelTop = centerY - 200;
+        for (var i = 0; i < length; i += 1)
+        {
+            formattedScore = formattedScores[i];
+            formattedScore.fontParams.x += centerX;
+            formattedScore.fontParams.y += scorePanelTop;
+            simplefonts.drawFont(formattedScore.text, formattedScore.fontParams);
+            formattedScore.fontParams.x -= centerX;
+            formattedScore.fontParams.y -= scorePanelTop;
+        }
+        simplefonts.render();
     },
 
     displayResults : function benchmarkAppDisplayResultsFn()

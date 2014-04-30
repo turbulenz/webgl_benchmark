@@ -21,6 +21,7 @@ PlaybackController.prototype =
         this.prefixCaptureURL = prefixCaptureURL;
         this.prefixTemplatesURL = prefixTemplatesURL;
         this.testRanges = {};
+        this.testSubTestDict = {};
         if (!sequenceList)
         {
             Utilities.log("Sequence information is required to playback");
@@ -35,12 +36,15 @@ PlaybackController.prototype =
         return true;
     },
 
-    _processSubTests: function playbackcontrollerProcessSubTestsFn(subTests, tests, testID)
+    _processSubTests: function playbackcontrollerProcessSubTestsFn(subTests, tests, testID, testData)
     {
         var length = subTests.length;
         var subTest;
         var testsData = this.testsData;
-        var stats;
+        var stats, subTestObj;
+        var subTestList = [];
+        var subTestID;
+        testData.subTestIDs = [];
         for (var i = 0; i < length; i += 1)
         {
             stats = {};
@@ -57,15 +61,23 @@ PlaybackController.prototype =
                     started: false,
                     ended: false
                 };
-            }
 
-            testsData.push({
-                name: subTests[i],
-                id: testID + '-' + i,
-                stats: stats
-            });
+                subTestID = testID + '-' + i;
+                subTestObj = {
+                    name: subTests[i],
+                    id: subTestID,
+                    stats: stats
+                };
+                testData.subTestIDs.push(subTestID);
+                testsData.push(subTestObj);
+                subTestList.push(subTestObj);
+            }
         }
         this.testMeta = tests;
+        this.testSubTestDict[testID] = {
+            testData: testData,
+            subTestList: subTestList
+        };
     },
 
     _postFrame: function postFrameFn(frameIndex)
@@ -73,7 +85,7 @@ PlaybackController.prototype =
         var testRange;
         var testRanges = this.testRanges;
         var testsActive = this.testsActive;
-        var testScore, scoreText, stats, maxFrameMs, minFrameMs, maxDispatchMs, minDispatchMs;
+        var stats, maxFrameMs, minFrameMs, maxDispatchMs, minDispatchMs;
         testsActive.length = 0;
 
         var i, length;
@@ -194,52 +206,6 @@ PlaybackController.prototype =
             rect[3] = textDimensions.height;
             font.drawTextRect(text, textParameters);
         }
-
-        if (this.atEnd)
-        {
-            i = 0;
-            var testScores = this.testScores;
-            var totalScore = 0;
-            var testTotalIgnores = this.testTotalIgnores || [];
-            var textTop = 10;
-            var testScoreInt;
-            for (t in testScores)
-            {
-                if (testScores.hasOwnProperty(t))
-                {
-                    testScore = testScores[t];
-                    testScoreInt = Math.floor(testScore.score);
-                    if (testTotalIgnores.indexOf(t) === -1)
-                    {
-                        totalScore += testScoreInt;
-                    }
-
-                    scoreText = testScoreInt + (!testScore.complete ? " (Incomplete, Accuracy: " + Math.floor(testScore.completeRatio * 100) + "%)": "");
-                    if (testScore.completeRatio === 0.0)
-                    {
-                        scoreText = "Not started";
-                    }
-                    text = testScore.name + ": " + scoreText;
-                    textDimensions = this.textDimensions = font.calculateTextDimensions(text, 1, 0, 0, this.textDimensions);
-                    rect[0] = (graphicsDevice.width / 2) - (textDimensions.width / 2);
-                    rect[1] = textTop;
-                    rect[2] = textDimensions.width;
-                    rect[3] = textDimensions.height;
-                    font.drawTextRect(text, textParameters);
-                    textTop += textDimensions.height;
-                    i += 1;
-                }
-            }
-
-            textParameters.scale = 2.0;
-            text = "Total: " + totalScore;
-            textDimensions = this.textDimensions = font.calculateTextDimensions(text, textParameters.scale, 0, 0, this.textDimensions);
-            rect[0] = (graphicsDevice.width / 2) - (textDimensions.width / 2);
-            rect[1] = textTop + textDimensions.height;
-            rect[2] = textDimensions.width;
-            rect[3] = textDimensions.height;
-            font.drawTextRect(text, textParameters);
-        }
     },
 
     _processScores: function playbackControllerProcessScores()
@@ -320,15 +286,61 @@ PlaybackController.prototype =
                 }
             }
         }
+
+        // Process scores from subTests
+        var subTestObj, subTestDataObj;
+        var testSubTestDict = this.testSubTestDict;
+        var scoreObj;
+        var totalScore = 0;
+        var totalRatio = 0;
+        totalMs = 0;
+        incompleteTest = false;
+        for (t in testSubTestDict)
+        {
+            if (testSubTestDict.hasOwnProperty(t))
+            {
+                subTestObj = testSubTestDict[t];
+                testData = subTestObj.testData;
+
+                length = subTestObj.subTestList.length;
+                for (i = 0; i < length; i += 1)
+                {
+                    subTestDataObj = subTestObj.subTestList[i];
+                    scoreObj = subTestDataObj.score;
+                    if (scoreObj)
+                    {
+                        totalMs += scoreObj.totalTimeMs;
+                        totalRatio += scoreObj.completeRatio;
+                        totalScore += scoreObj.score;
+                        incompleteTest = !scoreObj.complete || incompleteTest;
+                    }
+                    else
+                    {
+                        incompleteTest = true;
+                    }
+                }
+
+                scoreObj = {
+                    name: "Total",
+                    complete: !incompleteTest,
+                    totalTimeMs: totalMs,
+                    score: totalScore,
+                    completeRatio: totalRatio / length
+                };
+                testData.score = scoreObj;
+                testScores[testData.name] = scoreObj;
+            }
+        }
         this.testScores = testScores;
     },
 
     _processSequenceList: function playbackcontrollerProcessSequenceList(sequenceList)
     {
-        var sequence, stream, test, streamMeta, testMeta, stats;
+        var sequence, stream, test, streamMeta, testMeta, stats, testData;
         var numTotalFrames, numFramesPerGroup, numGroups;
         var i, iLen, j, jLen, k, kLen;
         iLen = sequenceList.length;
+        this.testsData = [];
 
         for (i = 0; i < iLen; i += 1)
         {
@@ -361,27 +373,29 @@ PlaybackController.prototype =
                         testMeta = streamMeta.tests[test.name];
 
                         stats = {};
-                        this.testsData = [{
+                        testData = {
                             id: test.id,
                             name: test.name,
                             stats: stats
-                        }];
-
-                        this.testRanges[test.name] = {
-                            name: testMeta.name,
-                            range: [
-                                testMeta.startFrame,
-                                testMeta.endFrame ? testMeta.endFrame: testMeta.lastFrame
-                            ],
-                            stats: stats,
-                            started: false,
-                            ended: false
                         };
-                        this.testTotalIgnores = [test.name];
+                        this.testsData.push(testData);
 
                         if (testMeta.subTests)
                         {
-                            this._processSubTests(testMeta.subTests, streamMeta.tests, test.id);
+                            this._processSubTests(testMeta.subTests, streamMeta.tests, test.id, testData);
+                        }
+                        else
+                        {
+                            this.testRanges[test.name] = {
+                                name: testMeta.name,
+                                range: [
+                                    testMeta.startFrame,
+                                    testMeta.endFrame ? testMeta.endFrame: testMeta.lastFrame
+                                ],
+                                stats: stats,
+                                started: false,
+                                ended: false
+                            };
                         }
                     }
 
@@ -1019,6 +1033,11 @@ PlaybackController.prototype =
         this.dataProcessed = true;
 
         return this.resultsData;
+    },
+
+    getScores : function playbackControllerGetScoresFn()
+    {
+        return this.testScores;
     },
 
     loadResults : function playbackControllerloadResultsFn(resultLoadedCallback)
