@@ -42,7 +42,7 @@ BaseConfig.prototype =
     numFramesPerGroup: 60,
 
     // Enable anti-aliasing (where available). Note: The benchmark will warn if this is not possible.
-    antialias: true,
+    antialias: false,
 
     // Multi-sampling amount (where configurable). Note: This will be specified, but may not be set. The actual samples used will be recorded.
     multisample: 4,
