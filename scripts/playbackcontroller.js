@@ -92,6 +92,7 @@ PlaybackController.prototype =
 
         var msPerFrame = this.msPerFrame;
         var msDispatchPerFrame = this.msDispatchPerFrame;
+        var ignoreFrame = this.ignoreFrame;
         for (var t in testRanges)
         {
             if (testRanges.hasOwnProperty(t))
@@ -128,40 +129,43 @@ PlaybackController.prototype =
 
                         for (i = testRange.range[0]; i <= testRange.range[1]; i += 1)
                         {
-                            if (maxFrameMs === -1)
+                            if (ignoreFrame[i] === 0)
                             {
-                                maxFrameMs = msPerFrame[i];
-                            }
-                            else if (msPerFrame[i] > maxFrameMs)
-                            {
-                                maxFrameMs = msPerFrame[i];
-                            }
+                                if (maxFrameMs === -1)
+                                {
+                                    maxFrameMs = msPerFrame[i];
+                                }
+                                else if (msPerFrame[i] > maxFrameMs)
+                                {
+                                    maxFrameMs = msPerFrame[i];
+                                }
 
-                            if (minFrameMs === -1)
-                            {
-                                minFrameMs = msPerFrame[i];
-                            }
-                            else if (msPerFrame[i] < minFrameMs)
-                            {
-                                minFrameMs = msPerFrame[i];
-                            }
+                                if (minFrameMs === -1)
+                                {
+                                    minFrameMs = msPerFrame[i];
+                                }
+                                else if (msPerFrame[i] < minFrameMs)
+                                {
+                                    minFrameMs = msPerFrame[i];
+                                }
 
-                            if (maxDispatchMs === -1)
-                            {
-                                maxDispatchMs = msDispatchPerFrame[i];
-                            }
-                            else if (msDispatchPerFrame[i] > maxDispatchMs)
-                            {
-                                maxDispatchMs = msDispatchPerFrame[i];
-                            }
+                                if (maxDispatchMs === -1)
+                                {
+                                    maxDispatchMs = msDispatchPerFrame[i];
+                                }
+                                else if (msDispatchPerFrame[i] > maxDispatchMs)
+                                {
+                                    maxDispatchMs = msDispatchPerFrame[i];
+                                }
 
-                            if (minDispatchMs === -1)
-                            {
-                                minDispatchMs = msDispatchPerFrame[i];
-                            }
-                            else if (msDispatchPerFrame[i] < minDispatchMs)
-                            {
-                                minDispatchMs = msDispatchPerFrame[i];
+                                if (minDispatchMs === -1)
+                                {
+                                    minDispatchMs = msDispatchPerFrame[i];
+                                }
+                                else if (msDispatchPerFrame[i] < minDispatchMs)
+                                {
+                                    minDispatchMs = msDispatchPerFrame[i];
+                                }
                             }
                         }
 
@@ -222,6 +226,7 @@ PlaybackController.prototype =
         var totalMs, baseScore, targetMs, testScore;
 
         var msPerFrame = this.msPerFrame;
+        var ignoreFrame = this.ignoreFrame;
         var testScores = {};
         for (t in testRanges)
         {
@@ -240,14 +245,17 @@ PlaybackController.prototype =
 
                 for (i = startFrame; i <= endFrame; i += 1)
                 {
-                    if (msPerFrame[i] !== undefined)
+                    if (ignoreFrame[i] === 0)
                     {
-                        totalMs += msPerFrame[i];
-                        framesProcessed += 1;
-                    }
-                    else
-                    {
-                        incompleteTest = true;
+                        if (msPerFrame[i] !== undefined)
+                        {
+                            totalMs += msPerFrame[i];
+                            framesProcessed += 1;
+                        }
+                        else
+                        {
+                            incompleteTest = true;
+                        }
                     }
                 }
 
@@ -582,6 +590,7 @@ PlaybackController.prototype =
         var framesReady = false;
         var graphicsDevice = this.graphicsDevice;
         var playbackGraphicsDevice = this.playbackGraphicsDevice;
+        var ignorePrevFrame = this.ignoreNextFrame;
 
         if (!this.requestInit)
         {
@@ -627,6 +636,7 @@ PlaybackController.prototype =
                     this.resultsData = {};
                     this.playbackConfig = {};
                     this.streamStats.startTime = (new Date().getTime());
+                    this.ignoreNextFrame = true;
                     return;
                 }
 
@@ -649,6 +659,8 @@ PlaybackController.prototype =
                     frameTime = (timeNow - this.previousFrameTime);
                     this.previousFrameTime = timeNow;
                 }
+                // Use this frame unless set otherwise
+                this.ignoreNextFrame = false;
 
                 var frameTimeElement = this.frameTimeElement;
                 if (frameTimeElement)
@@ -716,6 +728,17 @@ PlaybackController.prototype =
 
                         this.msPerFrame[this.msPerFrame.length] = frameTime;
                         this.msDispatchPerFrame[this.msDispatchPerFrame.length] = dispatchTime;
+                        this.ignoreFrame[this.ignoreFrame.length] = ignorePrevFrame ? 1: 0;
+                        if (ignorePrevFrame)
+                        {
+                            // Ignore the next frame too
+                            // Ensure no impact from the previous frame affects this frame
+                            var lastButOneFrame = this.ignoreFrame.length - 2;
+                            if (lastButOneFrame >= 0)
+                            {
+                                this.ignoreNextFrame = (this.ignoreFrame[lastButOneFrame] === 0);
+                            }
+                        }
 
                         if (this.metricsPerFrame)
                         {
@@ -750,6 +773,7 @@ PlaybackController.prototype =
                         {
                             // skip the remaining playback in this group
                             playbackGraphicsDevice.skip(this.numFramesPerGroup);
+                            this.ignoreNextFrame = true;
                         }
 
                         if ((this.currentGroupIndex + 1) < this.numGroups && !this.aborted)
@@ -760,6 +784,7 @@ PlaybackController.prototype =
                             this.currentGroupIndex += 1;
                             this.relativeFrameIndex -= this.numFramesPerGroup;
                             this.addingResources = true;
+                            this.ignoreNextFrame = true;
                         }
                         else
                         {
@@ -790,6 +815,9 @@ PlaybackController.prototype =
             else
             {
                 graphicsDevice.clear(this.loadingColor);
+
+                // Not frame processing occurred, ignore the following frame's timing calculation
+                this.ignoreNextFrame = true;
             }
 
             graphicsDevice.endFrame();
@@ -887,10 +915,12 @@ PlaybackController.prototype =
             msPerFrame: [],
             msDispatchPerFrame: [],
             averageMsPerFrame: [],
-            averageMsPerDispatch: []
+            averageMsPerDispatch: [],
+            ignoreFrame: []
         };
-        var timingDataCSV = 'msPerFrame,msDispatchPerFrame,averageMsPerFrame,averageMsPerDispatch\n';
+        var timingDataCSV = 'msPerFrame,msDispatchPerFrame,averageMsPerFrame,averageMsPerDispatch,ignoreFrame\n';
         var msPerFrame = this.msPerFrame;
+        var ignoreFrame = this.ignoreFrame;
         if (msPerFrame.length > 0)
         {
             var msDispatchPerFrame = this.msDispatchPerFrame;
@@ -903,59 +933,68 @@ PlaybackController.prototype =
             var minFrameMs = -1;
             var maxDispatchMs = -1;
             var minDispatchMs = -1;
+            var averageCounter = 0;
             var i;
             for (i = 0; i < msPerFrameLength; i += 1)
             {
-                if (i % 60 === 0)
+                if (averageCounter % 60 === 0)
                 {
                     averageFrameMs = newAverageFrameMs;
                     averageDispatchMs = newAverageDispatchMs;
                     newAverageFrameMs = 0;
                     newAverageDispatchMs = 0;
                 }
-                newAverageFrameMs += msPerFrame[i] / 60.0;
-                newAverageDispatchMs += msDispatchPerFrame[i] / 60.0;
 
-                if (maxFrameMs === -1)
+                // Ignore contribution to averages
+                if (ignoreFrame[i] === 0)
                 {
-                    maxFrameMs = msPerFrame[i];
-                }
-                else if (msPerFrame[i] > maxFrameMs)
-                {
-                    maxFrameMs = msPerFrame[i];
+                    newAverageFrameMs += msPerFrame[i] / 60.0;
+                    newAverageDispatchMs += msDispatchPerFrame[i] / 60.0;
+                    averageCounter += 1;
+
+                    if (maxFrameMs === -1)
+                    {
+                        maxFrameMs = msPerFrame[i];
+                    }
+                    else if (msPerFrame[i] > maxFrameMs)
+                    {
+                        maxFrameMs = msPerFrame[i];
+                    }
+
+                    if (minFrameMs === -1)
+                    {
+                        minFrameMs = msPerFrame[i];
+                    }
+                    else if (msPerFrame[i] < minFrameMs)
+                    {
+                        minFrameMs = msPerFrame[i];
+                    }
+
+                    if (maxDispatchMs === -1)
+                    {
+                        maxDispatchMs = msDispatchPerFrame[i];
+                    }
+                    else if (msDispatchPerFrame[i] > maxDispatchMs)
+                    {
+                        maxDispatchMs = msDispatchPerFrame[i];
+                    }
+
+                    if (minDispatchMs === -1)
+                    {
+                        minDispatchMs = msDispatchPerFrame[i];
+                    }
+                    else if (msDispatchPerFrame[i] < minDispatchMs)
+                    {
+                        minDispatchMs = msDispatchPerFrame[i];
+                    }
                 }
 
-                if (minFrameMs === -1)
-                {
-                    minFrameMs = msPerFrame[i];
-                }
-                else if (msPerFrame[i] < minFrameMs)
-                {
-                    minFrameMs = msPerFrame[i];
-                }
-
-                if (maxDispatchMs === -1)
-                {
-                    maxDispatchMs = msDispatchPerFrame[i];
-                }
-                else if (msDispatchPerFrame[i] > maxDispatchMs)
-                {
-                    maxDispatchMs = msDispatchPerFrame[i];
-                }
-
-                if (minDispatchMs === -1)
-                {
-                    minDispatchMs = msDispatchPerFrame[i];
-                }
-                else if (msDispatchPerFrame[i] < minDispatchMs)
-                {
-                    minDispatchMs = msDispatchPerFrame[i];
-                }
-
+                // Still include the data up to this point
                 timingDataCSV +=    msPerFrame[i] + ',' +
                                     msDispatchPerFrame[i] + ',' +
                                     averageFrameMs + ',' +
-                                    averageDispatchMs +
+                                    averageDispatchMs + ',' +
+                                    ignoreFrame[i] +
                                     '\n';
                 timingData.averageMsPerFrame.push(averageFrameMs);
                 timingData.averageMsPerDispatch.push(averageDispatchMs);
@@ -973,6 +1012,7 @@ PlaybackController.prototype =
 
             timingData.msPerFrame = this.msPerFrame;
             timingData.msDispatchPerFrame = this.msDispatchPerFrame;
+            timingData.ignoreFrame = this.ignoreFrame;
 
             resultsData.timing = {
                 csv: timingDataCSV,
@@ -981,6 +1021,7 @@ PlaybackController.prototype =
 
             this.msPerFrame = [];
             this.msDispatchPerFrame = [];
+            this.ignoreFrame = [];
 
             var metricsData = {};
             var metricsPerFrame = this.metricsPerFrame;
@@ -1428,6 +1469,7 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
     playbackController.xhrPool = [];
     playbackController.msPerFrame = [];
     playbackController.msDispatchPerFrame = [];
+    playbackController.ignoreFrame = [];
     playbackController.testRanges = {};
     playbackController.testsActive = [];
     playbackController.requestInit = false;
