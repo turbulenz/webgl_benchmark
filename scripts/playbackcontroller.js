@@ -80,6 +80,54 @@ PlaybackController.prototype =
         };
     },
 
+    _getWebGLDebugRendererInfo: function playbackControllerGetWebGLDebugRendererInfo()
+    {
+        var graphicsDevice = this.graphicsDevice;
+        var gl = graphicsDevice.gl;
+        if (gl)
+        {
+            var webGLDebugRendererInfoExt = gl.getExtension('WEBGL_debug_renderer_info');
+            if (webGLDebugRendererInfoExt)
+            {
+                var webGLDebugRendererInfo = {};
+                var vendorParamID = webGLDebugRendererInfoExt.UNMASKED_VENDOR_WEBGL;
+                if (vendorParamID)
+                {
+                    webGLDebugRendererInfo.vendor = gl.getParameter(vendorParamID);
+                }
+                var rendererParamID = webGLDebugRendererInfoExt.UNMASKED_RENDERER_WEBGL;
+                if (rendererParamID)
+                {
+                    webGLDebugRendererInfo.renderer = gl.getParameter(rendererParamID);
+                }
+                return webGLDebugRendererInfo;
+            }
+        }
+        return null;
+    },
+
+    _processTemplate: function playbackControllerProcessTemplateFn(templateData)
+    {
+        var config = templateData.config;
+        if (config && config.hardware)
+        {
+            var hardware = config.hardware;
+            var webGLDebugRendererInfo = this._getWebGLDebugRendererInfo();
+            if (webGLDebugRendererInfo)
+            {
+                if (!hardware.rendererVendor)
+                {
+                    hardware.rendererVendor = webGLDebugRendererInfo.vendor;
+                }
+                if (!hardware.renderer)
+                {
+                    hardware.renderer = webGLDebugRendererInfo.renderer;
+                }
+            }
+        }
+        return templateData;
+    },
+
     _postFrame: function postFrameFn(frameIndex)
     {
         var testRange;
@@ -1545,17 +1593,18 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
             if (responseText && status === 200)
             {
                 try {
-                    playbackController.resultsTemplateData = JSON.parse(responseText);
-                    if (!playbackController.resultsTemplateData)
+                    var templateData = JSON.parse(responseText);
+                    if (!templateData)
                     {
                         window.alert("Results template is empty. Cannot save data.");
                         playbackController.resultsTemplateData = null;
                     }
-                    else if (!playbackController._isSupportedTemplate(playbackController.resultsTemplateData))
+                    else if (!playbackController._isSupportedTemplate(templateData))
                     {
                         window.alert("Results template is incompatible. Cannot save data.");
                         playbackController.resultsTemplateData = null;
                     }
+                    playbackController.resultsTemplateData = playbackController._processTemplate(templateData);
                     playbackController.loadingTemplates = false;
                 }
                 catch (e)
