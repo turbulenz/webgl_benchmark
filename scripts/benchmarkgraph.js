@@ -22,6 +22,7 @@ BenchmarkGraph.prototype =
         var width = this.width = 960 - margin.left - margin.right;
         var height = this.height = 500 - margin.top - margin.bottom;
         var height2 = this.height2 = 500 - margin2.top - margin2.bottom;
+        this.tooltipWidth = 0;
 
         var xRange = [0, width];
         var yRange = [height, 0];
@@ -504,13 +505,22 @@ BenchmarkGraph.prototype =
         this.graph.selectAll(".tooltip .textbox text").remove();
         var tooltipText = this.graph.select(".tooltip .textbox");
         var height = textLines.length * 10;
+        var longestLine = 0;
+        var i, length;
 
-        for (var i = 0; i < textLines.length; i += 1)
+        for (i = 0, length = textLines.length; i < length; i += 1)
         {
             tooltipText.append("text")
                 .attr("transform", "translate(5," + ((i * 10) + 10) + ")")
                 .text(textLines[i]);
+
+            if (textLines[i].length > longestLine)
+            {
+                longestLine = textLines[i].length;
+            }
         }
+
+        var width = this.tooltipWidth = longestLine * 6;
 
         this.graph.select(".tooltip .textbox").transition().duration(750)
             .style("opacity", "1.0")
@@ -518,6 +528,7 @@ BenchmarkGraph.prototype =
 
         this.graph.select(".tooltip rect").transition().duration(500)
             .attr("height", height)
+            .attr("width", width)
             .style("opacity", "0.9")
             .style("visibility", null);
     },
@@ -526,9 +537,10 @@ BenchmarkGraph.prototype =
     {
         var margin = this.margin;
         var pos = d3.mouse(event);
+        var tooltipWidthHalf = Math.floor(0.5 * this.tooltipWidth);
         this.graph.select(".tooltip")
             .attr("transform", function (d, i) {
-                return "translate(" + pos[0] + "," + ((i * 20) + margin.top + pos[1]) + ")";
+                return "translate(" + (pos[0] - tooltipWidthHalf) + "," + ((i * 20) + margin.top + pos[1]) + ")";
             });
     },
 
