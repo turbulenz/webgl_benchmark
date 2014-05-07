@@ -260,8 +260,20 @@ BenchmarkGraph.prototype =
         var axes = this.axes;
         var lines = this.lines;
         var yScaleMax = this.yScaleMax;
-        var focusTrans = focus.transition().duration(750);
-        var contextTrans = context.transition().duration(750);
+        var disableTransitions = this.disableTransitions;
+        var focusTrans;
+        var contextTrans;
+        if (disableTransitions)
+        {
+            focusTrans = focus;
+            contextTrans = context;
+        }
+        else
+        {
+            focusTrans = focus.transition().duration(750);
+            contextTrans = context.transition().duration(750);
+        }
+
 
         var lineData;
         var maxY;
@@ -343,6 +355,24 @@ BenchmarkGraph.prototype =
         return lineData;
     },
 
+    _addLine: function createLineFn(lineName)
+    {
+        var added = false;
+        var lines = this.lines;
+        var length = lines.length;
+        var line;
+        for (var i = 0; i < length; i += 1)
+        {
+            line = lines[i];
+            if (line && line.lineName === lineName)
+            {
+                line.hide = false;
+                added = true;
+            }
+        }
+        return added;
+    },
+
     _removeLine: function createLineFn(lineName)
     {
         var removed = false;
@@ -414,19 +444,26 @@ BenchmarkGraph.prototype =
         for (var i = 0; i < lines.length; i += 1)
         {
             lineData = lines[i];
-            if (lineData.focus)
-            {
-                focusTrans = lineData.focus.transition().duration(750);
-                focusTrans.attr("d", lineData.line(lineData.data));
-            }
-            else
-            {
-                lineData.focus = this._createFocusLine(lineData, i);
-            }
 
             if (lineData.hide)
             {
-                lineData.focus.remove();
+                if (lineData.focus)
+                {
+                    lineData.focus.remove();
+                    delete lineData.focus;
+                }
+            }
+            else
+            {
+                if (lineData.focus)
+                {
+                    focusTrans = this.disableTransitions ? lineData.focus: lineData.focus.transition().duration(750);
+                    focusTrans.attr("d", lineData.line(lineData.data));
+                }
+                else
+                {
+                    lineData.focus = this._createFocusLine(lineData, i);
+                }
             }
         }
     },
@@ -465,19 +502,26 @@ BenchmarkGraph.prototype =
         for (var i = 0; i < lines.length; i += 1)
         {
             lineData = lines[i];
-            if (lineData.context)
-            {
-                lineData.context.attr("d", lineData.line2(lineData.data));
-            }
-            else
-            {
-                lineData.context = this._createContextLine(lineData, i);
-                this._addBrush();
-            }
 
             if (lineData.hide)
             {
-                lineData.context.remove();
+                if (lineData.context)
+                {
+                    lineData.context.remove();
+                    delete lineData.context;
+                }
+            }
+            else
+            {
+                if (lineData.context)
+                {
+                    lineData.context.attr("d", lineData.line2(lineData.data));
+                }
+                else
+                {
+                    lineData.context = this._createContextLine(lineData, i);
+                    this._addBrush();
+                }
             }
         }
     },
@@ -501,7 +545,7 @@ BenchmarkGraph.prototype =
 
         var brushend = function brushendFn() {
             scales.x.domain(brush.empty() ? scales.x2.domain() : brush.extent());
-            var trans = focus.transition().duration(750);
+            var trans = this.disableTransitions ? focus: focus.transition().duration(750);
             trans.select(".x.axis").call(axes.x);
             that._updateDomains();
             that._updateFocusLines();
@@ -562,12 +606,19 @@ BenchmarkGraph.prototype =
 
         var width = this.tooltipWidth = longestLine * 6;
 
-        this.graph.select(".tooltip .textbox").transition().duration(750)
-            .style("opacity", "1.0")
-            .style("visibility", null);
+        var textbox = this.graph.select(".tooltip .textbox");
+        var rect = this.graph.select(".tooltip rect");
+        if (!this.disableTransitions)
+        {
+            textbox.transition().duration(750);
+            rect.transition().duration(500);
+        }
 
-        this.graph.select(".tooltip rect").transition().duration(500)
-            .attr("height", height)
+        textbox.style("opacity", "1.0")
+               .style("visibility", null);
+
+
+        rect.attr("height", height)
             .attr("width", width)
             .style("opacity", "0.9")
             .style("visibility", null);
@@ -586,11 +637,17 @@ BenchmarkGraph.prototype =
 
     _tooltipOut: function tooltipOutFn()
     {
-        this.graph.select(".tooltip .textbox").transition().duration(50)
-            .style("opacity", "0.0")
-            .style("visibility", "hidden");
-        this.graph.select(".tooltip rect").transition().duration(50)
-            .attr("height", 0)
+        var textbox = this.graph.select(".tooltip .textbox");
+        var rect = this.graph.select(".tooltip rect");
+        if (!this.disableTransitions)
+        {
+            textbox.transition().duration(50);
+            rect.transition().duration(50);
+        }
+        textbox.style("opacity", "0.0")
+               .style("visibility", "hidden");
+
+        rect.attr("height", 0)
             .style("opacity", "0.0")
             .style("visibility", "hidden");
     },
@@ -611,7 +668,21 @@ BenchmarkGraph.prototype =
             this._updateDomains();
             this._updateFocusLines();
             this._updateContextLines();
-            this.currentLineIndex = -1;
+            return true;
+        }
+        return false;
+    },
+
+    _showLine: function selectLineFn(lineName)
+    {
+        var hiddenLineNames = this.hiddenLineNames;
+
+        if (hiddenLineNames[lineName] && this._addLine(lineName))
+        {
+            delete hiddenLineNames[lineName];
+            this._updateDomains();
+            this._updateFocusLines();
+            this._updateContextLines();
             return true;
         }
         return false;
@@ -717,6 +788,18 @@ BenchmarkGraph.prototype =
                         });
                     }
                 }
+                else
+                {
+                    if (that._showLine(d))
+                    {
+                        text.style("opacity", function (d) {
+                            return that.hiddenLineNames[d] ? 0.2: 1.0;
+                        });
+                        rect.style("opacity", function (d) {
+                            return that.hiddenLineNames[d] ? 0.2: 1.0;
+                        });
+                    }
+                }
             })
             .on("mouseover", function (d, i) {
                 that._tooltipOver(d, i);
@@ -786,5 +869,6 @@ BenchmarkGraph.create = function benchmarkGraphCreateFn(params)
     // e.g. yScaleMax === 1 the max value is at the top of the graph
     benchmarkGraph.yScaleMax = 1.5;
     benchmarkGraph.filterIgnoreFrames = true;
+    benchmarkGraph.disableTransitions = true;
     return benchmarkGraph;
 };
