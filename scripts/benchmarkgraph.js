@@ -541,11 +541,11 @@ BenchmarkGraph.prototype =
         }
 
         brush.on("brushend", null);
-        this.graph.selectAll(".x brush").remove();
+        this.graph.selectAll(".x.brush").remove();
 
         var brushend = function brushendFn() {
             scales.x.domain(brush.empty() ? scales.x2.domain() : brush.extent());
-            var trans = this.disableTransitions ? focus: focus.transition().duration(750);
+            var trans = that.disableTransitions ? focus: focus.transition().duration(750);
             trans.select(".x.axis").call(axes.x);
             that._updateDomains();
             that._updateFocusLines();
