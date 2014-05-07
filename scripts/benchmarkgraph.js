@@ -37,28 +37,6 @@ BenchmarkGraph.prototype =
         this.frameCount = stats.frameCount;
         this.maxFrameMs = stats.maxFrameMs;
 
-        if (ignoreFrame && this.filterIgnoreFrames)
-        {
-            var filteredFrameTime = [];
-            var length = frameTime.length;
-            var lastValidTime = 0;
-            for (var i = 0; i < length; i += 1)
-            {
-                if (ignoreFrame[i] === 0)
-                {
-                    filteredFrameTime.push(frameTime[i]);
-                    lastValidTime = frameTime[i];
-                }
-                else
-                {
-                    filteredFrameTime.push(lastValidTime);
-                }
-            }
-            frameTime = filteredFrameTime;
-            frames.msPerFrame = filteredFrameTime;
-        }
-
-
         var scales = this.scales = {
             x: d3.scale.linear().range(xRange),
             y: d3.scale.linear().range(yRange),
@@ -123,7 +101,11 @@ BenchmarkGraph.prototype =
         // Add initial data
         this.graphData.push(resultData);
         this._updateNames(hardwareName, resultData);
-        this._createLine(lineNames[lineNames.length - 1], frameTime);
+        var processedData = this._processResultData({
+            msPerFrame: frameTime,
+            ignoreFrame: ignoreFrame
+        });
+        this._createLine(lineNames[lineNames.length - 1], processedData);
         this.currentLineIndex = 0;
         this._updateDomains(frameTime);
         this._updateFocusLines();
@@ -196,6 +178,73 @@ BenchmarkGraph.prototype =
         return textArray;
     },
 
+    _processResultData: function processResultDataFn(dataObject)
+    {
+        var msPerFrame = dataObject.msPerFrame;
+        var ignoreFrame = dataObject.ignoreFrame;
+
+        var samples = [];
+        var processedData = {
+            source: dataObject,
+            filtered: {},
+            samples: samples
+        };
+
+        var i, length;
+
+        if (ignoreFrame && this.filterNoIgnored)
+        {
+            var msPerFrameNoIgnored = [];
+            length = msPerFrame.length;
+            var lastValidTime = 0;
+            for (i = 0; i < length; i += 1)
+            {
+                if (ignoreFrame[i] === 0)
+                {
+                    lastValidTime = msPerFrame[i];
+                    msPerFrameNoIgnored.push(lastValidTime);
+                }
+                else
+                {
+                    msPerFrameNoIgnored.push(lastValidTime);
+                }
+            }
+            //this._setFrameData(resultData, "msPerFrame", filteredFrameTime);
+            //newFrameTime = filteredFrameTime;
+
+            processedData.filtered.msPerFrameNoIgnored = msPerFrameNoIgnored;
+        }
+
+        if (this.filterSampleCount > 1)
+        {
+            var msPerFrameSample;
+            var sampleCount = 0;
+            var sampleMod;
+            length = msPerFrame.length;
+
+            while (sampleCount < this.filterSampleCount)
+            {
+                msPerFrameSample = [];
+                sampleMod = Math.pow(2, sampleCount);
+                for (i = 0; i < length; i += 1)
+                {
+                    if (i % sampleMod === 0)
+                    {
+                        msPerFrameSample.push(msPerFrame[i]);
+                    }
+                }
+                samples.push(msPerFrameSample);
+                sampleCount += 1;
+            }
+        }
+        else
+        {
+            samples.push(msPerFrame);
+        }
+
+        return processedData;
+    },
+
     addResult: function addResultFn(resultData)
     {
         if (!this.initialized)
@@ -213,32 +262,17 @@ BenchmarkGraph.prototype =
         var hardwareName = resultData.config.hardware.name;
 
         var newFrameTime = this._getFrameData(resultData, "msPerFrame");
-        var ignoreFrame = this._getFrameData(resultData, "ignoreFrame");
+        var newIgnoreFrame = this._getFrameData(resultData, "ignoreFrame");
         var newFrameCount = this._getStatData(resultData, "frameCount");
 
-        if (ignoreFrame && this.filterIgnoreFrames)
-        {
-            var filteredFrameTime = [];
-            var length = newFrameTime.length;
-            var lastValidTime = 0;
-            for (var i = 0; i < length; i += 1)
-            {
-                if (ignoreFrame[i] === 0)
-                {
-                    lastValidTime = newFrameTime[i];
-                    filteredFrameTime.push(lastValidTime);
-                }
-                else
-                {
-                    filteredFrameTime.push(lastValidTime);
-                }
-            }
-            this._setFrameData(resultData, "msPerFrame", filteredFrameTime);
-            newFrameTime = filteredFrameTime;
-        }
+        var processedData = this._processResultData({
+            msPerFrame: newFrameTime,
+            ignoreFrame: newIgnoreFrame,
+            frameCount: newFrameCount
+        });
 
         this._updateNames(hardwareName, resultData);
-        this._createLine(lineNames[lineNames.length - 1], newFrameTime);
+        this._createLine(lineNames[lineNames.length - 1], processedData);
 
         if (newFrameCount > this.frameCount)
         {
@@ -327,19 +361,25 @@ BenchmarkGraph.prototype =
         }
     },
 
-    _createLine: function createLineFn(lineName, data)
+    _createLine: function createLineFn(lineName, processedData)
     {
         var scales = this.scales;
         var line = d3.svg.line();
+
+        var samples = processedData.samples;
+        var sampleStep = Math.pow(2, samples.length - 1);
+
+        var lineStepX = 1;
+        var line2StepY = sampleStep;
         line.x(function (d, i) {
-            return scales.x(i);
+            return scales.x(i * lineStepX);
         });
         line.y(function (d) {
             return scales.y(d);
         });
         var line2 = d3.svg.line();
         line2.x(function (d, i) {
-            return scales.x2(i);
+            return scales.x2(i * line2StepY);
         });
         line2.y(function (d) {
             return scales.y2(d);
@@ -348,7 +388,8 @@ BenchmarkGraph.prototype =
             lineName: lineName,
             line: line,
             line2: line2,
-            data: data,
+            data: processedData.source.msPerFrame,
+            data2: samples[samples.length - 1],
             className: 'line'
         };
         this.lines.push(lineData);
@@ -473,7 +514,7 @@ BenchmarkGraph.prototype =
         var context = this.context;
         var color = this.color;
         return context.append("svg:path")
-            .attr("d", lineData.line2(lineData.data))
+            .attr("d", lineData.line2(lineData.data2))
             .attr("class", lineData.className)
             .style("stroke", color(index))
             .attr("clip-path", "url(#clip)");
@@ -515,7 +556,7 @@ BenchmarkGraph.prototype =
             {
                 if (lineData.context)
                 {
-                    lineData.context.attr("d", lineData.line2(lineData.data));
+                    lineData.context.attr("d", lineData.line2(lineData.data2));
                 }
                 else
                 {
@@ -868,7 +909,8 @@ BenchmarkGraph.create = function benchmarkGraphCreateFn(params)
     // The percentage of the max Y-value the graph should use as a max Y-value.
     // e.g. yScaleMax === 1 the max value is at the top of the graph
     benchmarkGraph.yScaleMax = 1.5;
-    benchmarkGraph.filterIgnoreFrames = true;
+    benchmarkGraph.filterNoIgnored = true;
+    benchmarkGraph.filterSampleCount = 6;
     benchmarkGraph.disableTransitions = true;
     return benchmarkGraph;
 };
