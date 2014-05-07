@@ -37,23 +37,27 @@ BenchmarkGraph.prototype =
         this.frameCount = stats.frameCount;
         this.maxFrameMs = stats.maxFrameMs;
 
-        var filteredFrameTime = [];
-        var length = frameTime.length;
-        var lastValidTime = 0;
-        for (var i = 0; i < length; i += 1)
+        if (ignoreFrame && this.filterIgnoreFrames)
         {
-            if (ignoreFrame[i] === 0)
+            var filteredFrameTime = [];
+            var length = frameTime.length;
+            var lastValidTime = 0;
+            for (var i = 0; i < length; i += 1)
             {
-                filteredFrameTime.push(frameTime[i]);
-                lastValidTime = frameTime[i];
+                if (ignoreFrame[i] === 0)
+                {
+                    filteredFrameTime.push(frameTime[i]);
+                    lastValidTime = frameTime[i];
+                }
+                else
+                {
+                    filteredFrameTime.push(lastValidTime);
+                }
             }
-            else
-            {
-                filteredFrameTime.push(lastValidTime);
-            }
+            frameTime = filteredFrameTime;
+            frames.msPerFrame = filteredFrameTime;
         }
-        frameTime = filteredFrameTime;
-        frames.msPerFrame = filteredFrameTime;
+
 
         var scales = this.scales = {
             x: d3.scale.linear().range(xRange),
@@ -212,26 +216,29 @@ BenchmarkGraph.prototype =
         var ignoreFrame = this._getFrameData(resultData, "ignoreFrame");
         var newFrameCount = this._getStatData(resultData, "frameCount");
 
-        var filteredFrameTime = [];
-        var length = newFrameTime.length;
-        var lastValidTime = 0;
-        for (var i = 0; i < length; i += 1)
+        if (ignoreFrame && this.filterIgnoreFrames)
         {
-            if (ignoreFrame[i] === 0)
+            var filteredFrameTime = [];
+            var length = newFrameTime.length;
+            var lastValidTime = 0;
+            for (var i = 0; i < length; i += 1)
             {
-                lastValidTime = newFrameTime[i];
-                filteredFrameTime.push(lastValidTime);
+                if (ignoreFrame[i] === 0)
+                {
+                    lastValidTime = newFrameTime[i];
+                    filteredFrameTime.push(lastValidTime);
+                }
+                else
+                {
+                    filteredFrameTime.push(lastValidTime);
+                }
             }
-            else
-            {
-                filteredFrameTime.push(lastValidTime);
-            }
+            this._setFrameData(resultData, "msPerFrame", filteredFrameTime);
+            newFrameTime = filteredFrameTime;
         }
 
-        this._setFrameData(resultData, "msPerFrame", filteredFrameTime);
-
         this._updateNames(hardwareName, resultData);
-        this._createLine(lineNames[lineNames.length - 1], filteredFrameTime);
+        this._createLine(lineNames[lineNames.length - 1], newFrameTime);
 
         if (newFrameCount > this.frameCount)
         {
@@ -277,21 +284,26 @@ BenchmarkGraph.prototype =
             return d;
         }
 
+        var line;
         if (this.currentLineIndex !== -1)
         {
-            lineData = lines[this.currentLineIndex].data;
-
-            xDomain = scales.x.domain();
-            dataY = lineData.map(inXDomain);
-
-            maxY = d3.max(dataY) * yScaleMax;
-            if (maxY !== this.maxValueY)
+            line = lines[this.currentLineIndex];
+            if (line)
             {
-                scales.y.domain([0, maxY]);
-                scales.y2.domain(scales.y.domain());
-                focusTrans.select(".y.axis").call(axes.y);
-                contextTrans.select(".y.axis").call(axes.y);
-                this.maxValueY = maxY;
+                lineData = line.data;
+
+                xDomain = scales.x.domain();
+                dataY = lineData.map(inXDomain);
+
+                maxY = d3.max(dataY) * yScaleMax;
+                if (maxY !== this.maxValueY)
+                {
+                    scales.y.domain([0, maxY]);
+                    scales.y2.domain(scales.y.domain());
+                    focusTrans.select(".y.axis").call(axes.y);
+                    contextTrans.select(".y.axis").call(axes.y);
+                    this.maxValueY = maxY;
+                }
             }
         }
         else
@@ -329,6 +341,24 @@ BenchmarkGraph.prototype =
         };
         this.lines.push(lineData);
         return lineData;
+    },
+
+    _removeLine: function createLineFn(lineName)
+    {
+        var removed = false;
+        var lines = this.lines;
+        var length = lines.length;
+        var line;
+        for (var i = 0; i < length; i += 1)
+        {
+            line = lines[i];
+            if (line && line.lineName === lineName)
+            {
+                line.hide = true;
+                removed = true;
+            }
+        }
+        return removed;
     },
 
     _updateNames: function updateNamesFn(hardwareName, resultData)
@@ -393,6 +423,11 @@ BenchmarkGraph.prototype =
             {
                 lineData.focus = this._createFocusLine(lineData, i);
             }
+
+            if (lineData.hide)
+            {
+                lineData.focus.remove();
+            }
         }
     },
 
@@ -438,6 +473,11 @@ BenchmarkGraph.prototype =
             {
                 lineData.context = this._createContextLine(lineData, i);
                 this._addBrush();
+            }
+
+            if (lineData.hide)
+            {
+                lineData.context.remove();
             }
         }
     },
@@ -555,6 +595,41 @@ BenchmarkGraph.prototype =
             .style("visibility", "hidden");
     },
 
+    _isHidden: function isSelectedFn(lineName)
+    {
+        var hiddenLineNames = this.hiddenLineNames;
+        return hiddenLineNames[lineName] !== undefined;
+    },
+
+    _hideLine: function selectLineFn(lineName)
+    {
+        var hiddenLineNames = this.hiddenLineNames;
+
+        if (this._removeLine(lineName))
+        {
+            hiddenLineNames[lineName] = true;
+            this._updateDomains();
+            this._updateFocusLines();
+            this._updateContextLines();
+            this.currentLineIndex = -1;
+            return true;
+        }
+        return false;
+    },
+
+    _isSelected: function isSelectedFn(lineName)
+    {
+        var lineNames = this.lineNames;
+        for (var i = 0; i < lineNames.length; i += 1)
+        {
+            if (lineNames[i] === lineName)
+            {
+                return this.currentLineIndex === i;
+            }
+        }
+        return false;
+    },
+
     _selectLine: function selectLineFn(lineName)
     {
         var lineNames = this.lineNames;
@@ -614,16 +689,34 @@ BenchmarkGraph.prototype =
             .attr("class", "legend")
             .attr("transform", function (d, i) { return "translate(0," + ((i * 20) + margin.top) + ")"; });
 
-        legend.append("rect")
+        var rect = legend.append("rect")
             .attr("x", width - 18)
             .attr("width", 18)
             .attr("height", 18)
+            .style("opacity", function (d) {
+                return that.hiddenLineNames[d] ? 0.2: 1.0;
+            })
             .style("fill", function (d, i) {
                 return color(i);
             })
             .style("cursor", "pointer")
             .on("click", function (d) {
-                that._selectLine(d);
+                if (!that._isSelected(d))
+                {
+                    that._selectLine(d);
+                }
+                else if (!that._isHidden(d))
+                {
+                    if (that._hideLine(d))
+                    {
+                        text.style("opacity", function (d) {
+                            return that.hiddenLineNames[d] ? 0.2: 1.0;
+                        });
+                        rect.style("opacity", function (d) {
+                            return that.hiddenLineNames[d] ? 0.2: 1.0;
+                        });
+                    }
+                }
             })
             .on("mouseover", function (d, i) {
                 that._tooltipOver(d, i);
@@ -637,12 +730,15 @@ BenchmarkGraph.prototype =
                 that._tooltipMove(d, this);
             });
 
-        legend.append("text")
+        var text = legend.append("text")
             .attr("x", width - 24)
             .attr("y", 9)
             .attr("dy", ".35em")
             .style("text-anchor", "end")
             .style("cursor", "pointer")
+            .style("opacity", function (d) {
+                return that.hiddenLineNames[d] ? 0.2: 1.0;
+            })
             .text(function (d) { return d; })
             .on("click", function (d) {
                 that._selectLine(d);
@@ -672,6 +768,7 @@ BenchmarkGraph.prototype =
         this.axes = {};
         this.frameCount = 0;
         this.maxFrameMs = 0;
+        this.hiddenLineNames = {};
         this.initialized = false;
     }
 };
@@ -688,5 +785,6 @@ BenchmarkGraph.create = function benchmarkGraphCreateFn(params)
     // The percentage of the max Y-value the graph should use as a max Y-value.
     // e.g. yScaleMax === 1 the max value is at the top of the graph
     benchmarkGraph.yScaleMax = 1.5;
+    benchmarkGraph.filterIgnoreFrames = true;
     return benchmarkGraph;
 };
