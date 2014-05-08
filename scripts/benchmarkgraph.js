@@ -321,9 +321,11 @@ BenchmarkGraph.prototype =
             contextTrans.select(".x.axis").call(axes.x2);
         }
 
+        var lineStep;
         var xDomain;
         function inXDomain(d, i) {
-            if (i < xDomain[0] || i > xDomain[1])
+            var indexStep = i * lineStep;
+            if (indexStep < xDomain[0] || indexStep > xDomain[1])
             {
                 return 0;
             }
@@ -339,6 +341,7 @@ BenchmarkGraph.prototype =
                 lineData = line.data;
 
                 xDomain = scales.x.domain();
+                lineStep = line.lineStepX;
                 dataY = lineData.map(inXDomain);
 
                 maxY = d3.max(dataY) * yScaleMax;
@@ -369,8 +372,20 @@ BenchmarkGraph.prototype =
         var samples = processedData.samples;
         var sampleStep = Math.pow(2, samples.length - 1);
 
-        var lineStepX = 1;
-        var line2StepY = sampleStep;
+        var lineStepX;
+        var sampleIndex;
+        if (samples.length > 1)
+        {
+            lineStepX = 2;
+            sampleIndex = 1;
+        }
+        else
+        {
+            lineStepX = 1;
+            sampleIndex = 0;
+        }
+
+        var line2StepX = sampleStep;
         line.x(function (d, i) {
             return scales.x(i * lineStepX);
         });
@@ -379,7 +394,7 @@ BenchmarkGraph.prototype =
         });
         var line2 = d3.svg.line();
         line2.x(function (d, i) {
-            return scales.x2(i * line2StepY);
+            return scales.x2(i * line2StepX);
         });
         line2.y(function (d) {
             return scales.y2(d);
@@ -387,8 +402,10 @@ BenchmarkGraph.prototype =
         var lineData = {
             lineName: lineName,
             line: line,
+            lineStepX: lineStepX,
             line2: line2,
-            data: processedData.source.msPerFrame,
+            line2StepX: line2StepX,
+            data: samples[sampleIndex],
             data2: samples[samples.length - 1],
             className: 'line'
         };
