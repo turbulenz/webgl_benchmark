@@ -567,7 +567,7 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
         "abort": "buttonAbort",
         "save": config.enableSave ? "buttonSave": null,
         "downloadCSV": config.enableDownloadCSV ? "buttonDownloadCSV": null,
-        "fixed": "checkboxFixed"
+        "fixed": null//"checkboxFixed"
     };
 
     var controlElem;
