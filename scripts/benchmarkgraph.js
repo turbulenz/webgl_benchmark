@@ -183,20 +183,19 @@ BenchmarkGraph.prototype =
         var msPerFrame = dataObject.msPerFrame;
         var ignoreFrame = dataObject.ignoreFrame;
 
-        var samples = [];
         var processedData = {
             source: dataObject,
-            filtered: {},
-            samples: samples
+            filtered: {}
         };
 
         var i, length;
+        var lastValidTime;
 
         if (ignoreFrame && this.filterNoIgnored)
         {
             var msPerFrameNoIgnored = [];
             length = msPerFrame.length;
-            var lastValidTime = 0;
+            lastValidTime = 0;
             for (i = 0; i < length; i += 1)
             {
                 if (ignoreFrame[i] === 0)
@@ -209,14 +208,54 @@ BenchmarkGraph.prototype =
                     msPerFrameNoIgnored.push(lastValidTime);
                 }
             }
-            //this._setFrameData(resultData, "msPerFrame", filteredFrameTime);
-            //newFrameTime = filteredFrameTime;
 
             processedData.filtered.msPerFrameNoIgnored = msPerFrameNoIgnored;
         }
 
+        var msPerFrameAverage = [];
+        length = msPerFrame.length;
+        var accum = 0;
+        var firstIndex = 0, msPerFrameAvg = 0;
+        var avgWindow = this.averageWindow;
+        lastValidTime = 0;
+        var ignoreCount = 0;
+        for (i = 0; i < length; i += 1)
+        {
+            if (ignoreFrame && ignoreFrame[i] === 1)
+            {
+                ignoreCount += 1;
+            }
+            else
+            {
+                accum += msPerFrame[i];
+            }
+
+            if (i > avgWindow)
+            {
+                if (ignoreFrame && ignoreFrame[firstIndex] === 1)
+                {
+                    ignoreCount -= 1;
+                }
+                else
+                {
+                    accum -= msPerFrame[firstIndex];
+                }
+
+                msPerFrameAvg = accum / (i - firstIndex + 1 - ignoreCount);
+                firstIndex += 1;
+            }
+            else if (i > 1)
+            {
+                msPerFrameAvg = accum / (i + 1 - ignoreCount);
+            }
+            msPerFrameAverage.push(msPerFrameAvg);
+        }
+
+        processedData.filtered.msPerFrameAverage = msPerFrameAverage;
+
         if (this.filterSampleCount > 1)
         {
+            var samples = [];
             var msPerFrameSample;
             var sampleCount = 0;
             var sampleMod;
@@ -236,10 +275,29 @@ BenchmarkGraph.prototype =
                 samples.push(msPerFrameSample);
                 sampleCount += 1;
             }
-        }
-        else
-        {
-            samples.push(msPerFrame);
+
+            processedData.source.msPerFrameSamples = samples;
+
+            samples = [];
+            sampleCount = 0;
+            length = msPerFrameAverage.length;
+
+            while (sampleCount < this.filterSampleCount)
+            {
+                msPerFrameSample = [];
+                sampleMod = Math.pow(2, sampleCount);
+                for (i = 0; i < length; i += 1)
+                {
+                    if (i % sampleMod === 0)
+                    {
+                        msPerFrameSample.push(msPerFrameAverage[i]);
+                    }
+                }
+                samples.push(msPerFrameSample);
+                sampleCount += 1;
+            }
+
+            processedData.filtered.msPerFrameAverageSamples = samples;
         }
 
         return processedData;
@@ -369,23 +427,33 @@ BenchmarkGraph.prototype =
         var scales = this.scales;
         var line = d3.svg.line();
 
-        var samples = processedData.samples;
-        var sampleStep = Math.pow(2, samples.length - 1);
+        var enableAverage = this.enableAverage;
+        var filtered = processedData.filtered;
+        var source = processedData.source;
+        var samples = enableAverage ? filtered.msPerFrameAverageSamples: source.msPerFrameSamples;
+        var data = enableAverage ? filtered.msPerFrameAverage: source.msPerFrame;
 
-        var lineStepX;
-        var sampleIndex;
-        if (samples.length > 1)
+        var lineStepX = 1, line2StepX = 1;
+        var data2 = data;
+        var lineSampleLevel = this.lineSampleLevel;
+        var line2SampleLevel = this.line2SampleLevel;
+
+        var sampleCount = samples.length;
+        if (samples)
         {
-            lineStepX = 2;
-            sampleIndex = 1;
-        }
-        else
-        {
-            lineStepX = 1;
-            sampleIndex = 0;
+            if (lineSampleLevel && lineSampleLevel > 0 && lineSampleLevel < sampleCount)
+            {
+                lineStepX = Math.pow(2, lineSampleLevel);
+                data = samples[lineSampleLevel];
+            }
+
+            if (line2SampleLevel && line2SampleLevel > 0 && line2SampleLevel < sampleCount)
+            {
+                line2StepX = Math.pow(2, line2SampleLevel);
+                data2 = samples[line2SampleLevel];
+            }
         }
 
-        var line2StepX = sampleStep;
         line.x(function (d, i) {
             return scales.x(i * lineStepX);
         });
@@ -405,8 +473,8 @@ BenchmarkGraph.prototype =
             lineStepX: lineStepX,
             line2: line2,
             line2StepX: line2StepX,
-            data: samples[sampleIndex],
-            data2: samples[samples.length - 1],
+            data: data,
+            data2: data2,
             className: 'line'
         };
         this.lines.push(lineData);
@@ -928,6 +996,10 @@ BenchmarkGraph.create = function benchmarkGraphCreateFn(params)
     benchmarkGraph.yScaleMax = 1.5;
     benchmarkGraph.filterNoIgnored = true;
     benchmarkGraph.filterSampleCount = 6;
+    benchmarkGraph.lineSampleLevel = -1;
+    benchmarkGraph.line2SampleLevel = 6;
+    benchmarkGraph.enableAverage = true;
+    benchmarkGraph.averageWindow = 60;
     benchmarkGraph.disableTransitions = true;
     return benchmarkGraph;
 };
