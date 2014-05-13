@@ -78,7 +78,7 @@ BenchmarkGraph.prototype =
             .attr("clip-path", "url(#clip)");
         this.focusBg = this.focusClip.append("g");
 
-        this._addRanges(resultData);
+        var range = this._addRanges(resultData);
 
         focus.append("g")
             .attr("class", "x axis")
@@ -108,6 +108,7 @@ BenchmarkGraph.prototype =
 
         // Add initial data
         this.graphData.push(resultData);
+        this.rangeData.push(range);
         this._updateNames(hardwareName, resultData);
         var processedData = this._processResultData({
             msPerFrame: frameTime,
@@ -340,6 +341,9 @@ BenchmarkGraph.prototype =
         this._updateNames(hardwareName, resultData);
         this._createLine(lineNames[lineNames.length - 1], processedData);
 
+        var range = this._addRanges(resultData);
+        this.rangeData.push(range);
+
         if (newFrameCount > this.frameCount)
         {
             this._updateDomains(newFrameTime);
@@ -420,6 +424,50 @@ BenchmarkGraph.prototype =
                     this.maxValueY = maxY;
                 }
             }
+
+            var rangeIndex, rangeLen = this.rangeData.length;
+            var testRanges;
+            for (rangeIndex = 0; rangeIndex < rangeLen; rangeIndex += 1)
+            {
+                testRanges = this.rangeData[rangeIndex];
+                if (testRanges)
+                {
+                    var testRange;
+                    var xDomainWidth = xDomain[1] - xDomain[0];
+                    var length = testRanges.length;
+                    xDomain = scales.x.domain();
+                    var testRatio;
+                    var x, width;
+
+                    for (var i = 0; i < length; i += 1)
+                    {
+                        testRange = testRanges[i];
+
+                        if (this.currentLineIndex === rangeIndex)
+                        {
+                            testRatio = this.width / xDomainWidth;
+                            x = (testRange.x - xDomain[0]) * testRatio;
+                            width = testRange.width * testRatio;
+
+                            testRange.rect
+                                .attr("x", x)
+                                .attr("width", width)
+                                .attr("visibility", "visible");
+
+                            testRange.text
+                                .attr('x', x + 20)
+                                .attr("visibility", "visible");
+                        }
+                        else
+                        {
+                            testRange.rect
+                                .attr("visibility", "hidden");
+                            testRange.text
+                                .attr("visibility", "hidden");
+                        }
+                    }
+                }
+            }
         }
         else
         {
@@ -427,30 +475,6 @@ BenchmarkGraph.prototype =
             scales.y2.domain(scales.y.domain());
             focusTrans.select(".y.axis").call(axes.y);
             contextTrans.select(".y.axis").call(axes.y);
-        }
-
-        var testRanges = this.testRanges;
-        var testRange;
-        var xDomainWidth = xDomain[1] - xDomain[0];
-        var length = testRanges.length;
-        xDomain = scales.x.domain();
-        var testRatio;
-        var x, width;
-
-        for (var i = 0; i < length; i += 1)
-        {
-            testRange = testRanges[i];
-
-            testRatio = this.width / xDomainWidth;
-            x = (testRange.x - xDomain[0]) * testRatio;
-            width = testRange.width * testRatio;
-
-            testRange.rect
-                .attr("x", x)
-                .attr("width", width);
-
-            testRange.text
-                .attr('x', x + 20);
         }
     },
 
@@ -1024,14 +1048,16 @@ BenchmarkGraph.prototype =
                         .attr("width", width)
                         .attr("height", height)
                         .style("opacity", 0.4)
-                        .style("fill", baseColor.darker((index % 5) * 0.25));
+                        .style("fill", baseColor.darker((index % 5) * 0.25))
+                        .attr("visibility", "hidden");
 
                     offset += 20;
 
                     text = focus.append('text').text(t)
                         .attr('x', x + 20)
                         .attr('y', offset - 5)
-                        .attr('fill', 'black');
+                        .attr('fill', 'black')
+                        .attr("visibility", "hidden");
 
                     testRanges.push({
                         x: x,
@@ -1046,7 +1072,7 @@ BenchmarkGraph.prototype =
                 }
             }
         }
-        this.testRanges = testRanges;
+        return testRanges;
     },
 
     clear: function clearFn()
@@ -1063,6 +1089,7 @@ BenchmarkGraph.prototype =
         this.lineNames = [];
         this.hardwareNames = {};
         this.graphData = [];
+        this.rangeData = [];
         this.lines = [];
         this.scales = {};
         this.context = null;
