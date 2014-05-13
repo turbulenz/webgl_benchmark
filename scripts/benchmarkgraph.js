@@ -59,10 +59,12 @@ BenchmarkGraph.prototype =
             .attr("width", width + margin.left + margin.right)
             .attr("height", height + margin.top + margin.bottom);
 
-        graph.append("defs")
-            .append("clipPath")
+        graph.append("defs").append("svg:clipPath")
             .attr("id", "clip")
-            .append("rect")
+            .append("svg:rect")
+            .attr("id", "clip-rect")
+            .attr("x", "0")
+            .attr("y", "0")
             .attr("width", width)
             .attr("height", height);
 
@@ -71,6 +73,12 @@ BenchmarkGraph.prototype =
 
         var context = this.context = graph.append("g")
             .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
+
+        this.focusClip = focus.append("g")
+            .attr("clip-path", "url(#clip)");
+        this.focusBg = this.focusClip.append("g");
+
+        this._addRanges(resultData);
 
         focus.append("g")
             .attr("class", "x axis")
@@ -419,6 +427,30 @@ BenchmarkGraph.prototype =
             scales.y2.domain(scales.y.domain());
             focusTrans.select(".y.axis").call(axes.y);
             contextTrans.select(".y.axis").call(axes.y);
+        }
+
+        var testRanges = this.testRanges;
+        var testRange;
+        var xDomainWidth = xDomain[1] - xDomain[0];
+        var length = testRanges.length;
+        xDomain = scales.x.domain();
+        var testRatio;
+        var x, width;
+
+        for (var i = 0; i < length; i += 1)
+        {
+            testRange = testRanges[i];
+
+            testRatio = this.width / xDomainWidth;
+            x = (testRange.x - xDomain[0]) * testRatio;
+            width = testRange.width * testRatio;
+
+            testRange.rect
+                .attr("x", x)
+                .attr("width", width);
+
+            testRange.text
+                .attr('x', x + 20);
         }
     },
 
@@ -954,6 +986,67 @@ BenchmarkGraph.prototype =
             });
 
         this._selectLegend(this.lineNames[this.currentLineIndex]);
+    },
+
+    _addRanges: function addRangesFn(resultData)
+    {
+        var focus = this.focusBg;
+        var baseColor = d3.rgb('#eee');
+        var streamMeta = resultData.config.sequences[0].streams[0].meta;
+        var testRanges = [];
+        if (streamMeta && streamMeta.tests)
+        {
+            var tests = streamMeta.tests;
+            var testMeta;
+
+            var x, y, width, height, offset, totalHeight;
+            var index = 0;
+
+            offset = 0;
+            totalHeight = this.height;
+
+            var rect;
+            var text;
+            for (var t in tests)
+            {
+                if (tests.hasOwnProperty(t))
+                {
+                    testMeta = tests[t];
+
+                    x = testMeta.startFrame;
+                    y = offset;
+                    width = (testMeta.endFrame - testMeta.startFrame);
+                    height = totalHeight - offset;
+
+                    rect = focus.append("rect")
+                        .attr("x", x)
+                        .attr("y", y)
+                        .attr("width", width)
+                        .attr("height", height)
+                        .style("opacity", 0.4)
+                        .style("fill", baseColor.darker((index % 5) * 0.25));
+
+                    offset += 20;
+
+                    text = focus.append('text').text(t)
+                        .attr('x', x + 20)
+                        .attr('y', offset - 5)
+                        .attr('fill', 'black');
+
+                    testRanges.push({
+                        x: x,
+                        y: y,
+                        width: width,
+                        height: height,
+                        rect: rect,
+                        text: text
+                    });
+
+                    index += 1;
+                }
+            }
+        }
+        this.testRanges = testRanges;
     },
 
     clear: function clearFn()
