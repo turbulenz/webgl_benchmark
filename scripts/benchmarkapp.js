@@ -3,7 +3,7 @@
 //
 
 /*global TurbulenzEngine: false*/
-/*global LoadingScreen: false*/
+/*global BenchmarkLoadingScreen: false*/
 /*global PlaybackController: false*/
 /*global Config: false*/
 /*global BenchmarkGraph: false*/
@@ -606,13 +606,14 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
                 simplefonts.preload();
                 benchmarkApp.loadingScreen.setSimpleFonts(simplefonts);
                 benchmarkApp.loadingScreen.loadAndSetTexture(graphicsDevice, requestHandler, mappingTable, "textures/bench-bg.dds");
+                benchmarkApp.loadingScreen.loadAndSetImage(graphicsDevice, requestHandler, mappingTable, "textures/loading_text_sprite.dds");
             }
         }
     });
     benchmarkApp.playbackController.multisample = multisample;
     benchmarkApp.playbackController.antialias = antialias;
 
-    benchmarkApp.loadingScreen = LoadingScreen.create(graphicsDevice, mathDevice, {progress: 0, checkFontLoaded: true});
+    benchmarkApp.loadingScreen = BenchmarkLoadingScreen.create(graphicsDevice, mathDevice, {progress: 0, checkFontLoaded: true});
 
     benchmarkApp.resultsID = "results";
 
