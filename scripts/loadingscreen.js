@@ -1,38 +1,40 @@
-/* This file was generated from TypeScript source tslib/loadingscreen.ts */
-
 // Copyright (c) 2009-2013 Turbulenz Limited
-/// <reference path="turbulenz.d.ts" />
-/// <reference path="assettracker.ts" />
-var LoadingScreen = (function () {
-    function LoadingScreen() { }
-    LoadingScreen.version = 1;
-    LoadingScreen.prototype.setProgress = function (progress) {
+var BenchmarkLoadingScreen = (function () {
+    function BenchmarkLoadingScreen() { }
+    BenchmarkLoadingScreen.version = 1;
+    BenchmarkLoadingScreen.prototype.setProgress = function (progress) {
         this.progress = progress;
     };
-    LoadingScreen.prototype.setTexture = function (texture) {
-        this.textureMaterial['diffuse'] = texture;
+    BenchmarkLoadingScreen.prototype.setTexture = function (texture) {
+        this.textureMaterial.diffuse = texture;
         this.textureWidthHalf = (texture.width * 0.5);
         this.textureHeightHalf = (texture.height * 0.5);
         this.textureWidth = texture.width;
         this.textureHeight = texture.height;
         this.textureRatio = (texture.height / texture.width);
     };
-    LoadingScreen.prototype.setSimpleFonts = function (simplefonts) {
+    BenchmarkLoadingScreen.prototype.setImage = function (texture) {
+        this.imageMaterial.diffuse = texture;
+        this.imageWidthHalf = (texture.width * 0.5);
+        this.imageHeightHalf = (texture.height * 0.5);
+        this.imageWidth = texture.width;
+        this.imageHeight = texture.height;
+        this.imageRatio = (texture.height / texture.width);
+    };
+    BenchmarkLoadingScreen.prototype.setSimpleFonts = function (simplefonts) {
         this.simplefonts = simplefonts;
 
-        var scale = 4;
+        var scale = 1.5;
         var spacing = undefined;
         var horizontalAlign = simplefonts.textHorizontalAlign.CENTER;
         var verticalAlign = simplefonts.textVerticalAlign.MIDDLE;
         var fontStyle = "regular";
-        var screenWidth = this.screenWidth;
-        var screenHeight = this.screenHeight;
         var v3Color = this.md.v3BuildOne();
 
         this.fontParams =
         {
-            x : screenWidth / 2,
-            y : screenHeight / 2,
+            x : 0,
+            y : 0,
 
             r : v3Color[0],
             g : v3Color[1],
@@ -47,7 +49,7 @@ var LoadingScreen = (function () {
 
         this.checkFontLoaded = true;
     };
-    LoadingScreen.prototype.loadAndSetTexture = function (graphicsDevice, requestHandler, mappingTable, name) {
+    BenchmarkLoadingScreen.prototype.loadAndSetTexture = function (graphicsDevice, requestHandler, mappingTable, name) {
         var that = this;
         this.checkTextureLoaded = true;
         if(mappingTable) {
@@ -71,32 +73,46 @@ var LoadingScreen = (function () {
             });
         }
     };
-    LoadingScreen.prototype.hasLoaded = function () {
+    BenchmarkLoadingScreen.prototype.loadAndSetImage = function (graphicsDevice, requestHandler, mappingTable, name) {
+        var that = this;
+        this.checkImageLoaded = true;
+        if(mappingTable) {
+            var urlMapping = mappingTable.urlMapping;
+            var assetPrefix = mappingTable.assetPrefix;
+            requestHandler.request({
+                src: ((urlMapping && urlMapping[name]) || (assetPrefix + name)),
+                requestFn: function textureRequestFn(src, onload) {
+                    return graphicsDevice.createTexture({
+                        src: src,
+                        mipmaps: false,
+                        onload: onload
+                    });
+                },
+                onload: function (t) {
+                    if(t) {
+                        that.setImage(t);
+                        that.imageLoaded = true;
+                    }
+                }
+            });
+        }
+    };
+    BenchmarkLoadingScreen.prototype.hasLoaded = function () {
         var textureLoaded = this.checkTextureLoaded ? this.textureLoaded: true;
+        var imageLoaded = this.checkImageLoaded ? this.imageLoaded: true;
         var simplefonts = this.simplefonts;
         var fontLoaded = this.checkFontLoaded ?
                             ((simplefonts !== undefined) && simplefonts.hasLoaded() && (simplefonts.technique2D !== undefined)):
                             true;
 
-        return (textureLoaded && fontLoaded);
+        return (textureLoaded && fontLoaded && imageLoaded);
     };
-    LoadingScreen.prototype.render = function (backgroundAlpha, textureAlpha) {
+    BenchmarkLoadingScreen.prototype.render = function (backgroundAlpha, textureAlpha) {
         var gd = this.gd;
         var screenWidth = gd.width;
         var screenHeight = gd.height;
         if((screenWidth === 0) || (screenHeight === 0)) {
             return;
-        }
-
-        if ((screenWidth !== this.screenWidth) || (screenHeight !== this.screenHeight)) {
-            var fontParams = this.fontParams;
-            if (fontParams)
-            {
-                fontParams.x = screenWidth / 2;
-                fontParams.y = screenHeight / 2;
-            }
-            this.screenHeight = screenHeight;
-            this.screenWidth = screenWidth;
         }
 
         var writer;
@@ -135,9 +151,13 @@ var LoadingScreen = (function () {
         var xScale = 2 / screenWidth;
         var yScale = -2 / screenHeight;
         var textureWidthHalf = this.textureWidthHalf;
-        var textureHeightHalf = this.textureHeightHalf;
+        var imageWidthHalf = this.imageWidthHalf;
+        var imageHeightHalf = this.imageHeightHalf;
         var screenWidthHalf;
         var screenHeightHalf;
+        var screenRatio = (screenHeight / screenWidth);
+        var scaledTextureHeightHalf, scaledTextureWidthHalf;
+
         if(0 < textureWidthHalf && 0 < textureAlpha) {
             var textureMaterial = this.textureMaterial;
             gd.setTechnique(this.textureTechnique);
@@ -153,11 +173,10 @@ var LoadingScreen = (function () {
                 screenHeightHalf = centery = (screenHeight * 0.5);
 
                 var textureRatio = this.textureRatio;
-                var screenRatio = (screenHeight / screenWidth);
 
                 if (textureRatio > screenRatio)
                 {
-                    var scaledTextureHeightHalf = screenWidthHalf * textureRatio;
+                    scaledTextureHeightHalf = screenWidthHalf * textureRatio;
                     left = 0;
                     right = screenWidth;
                     top = (centery - scaledTextureHeightHalf);
@@ -165,12 +184,39 @@ var LoadingScreen = (function () {
                 }
                 else
                 {
-                    var scaledTextureWidthHalf = screenHeightHalf / textureRatio;
+                    scaledTextureWidthHalf = screenHeightHalf / textureRatio;
                     left = (centerx - scaledTextureWidthHalf);
                     right = (centerx + scaledTextureWidthHalf);
                     top = 0;
                     bottom = screenHeight;
                 }
+
+                writer(left, top, 0, 0);
+                writer(right, top, 1, 0);
+                writer(left, bottom, 0, 1);
+                writer(right, bottom, 1, 1);
+                gd.endDraw(writer);
+                writer = null;
+            }
+        }
+        if(0 < imageWidthHalf && 0 < textureAlpha) {
+            var imageMaterial = this.imageMaterial;
+            gd.setTechnique(this.textureTechnique);
+            var clipSpace = this.clipSpace;
+            clipSpace[0] = xScale;
+            clipSpace[1] = yScale;
+            imageMaterial['clipSpace'] = clipSpace;
+            imageMaterial['alpha'] = textureAlpha;
+            gd.setTechniqueParameters(imageMaterial);
+            writer = gd.beginDraw(primitive, 4, this.textureVertexFormats, this.textureSemantics);
+            if(writer) {
+                centerx = (screenWidth * 0.5);
+                centery = (screenHeight * 0.5);
+
+                left = (centerx - imageWidthHalf);
+                right = (centerx + imageWidthHalf);
+                top = (centery - imageHeightHalf - this.imageOffset);
+                bottom = (centery + imageHeightHalf - this.imageOffset);
 
                 writer(left, top, 0, 0);
                 writer(right, top, 1, 0);
@@ -188,7 +234,6 @@ var LoadingScreen = (function () {
             }
             backgroundMaterial = this.backgroundMaterial;
             var barBackgroundColor = this.barBackgroundColor;
-            barBackgroundColor[3] = backgroundAlpha;
             var barColor = this.barColor;
             barColor[3] = backgroundAlpha;
             centerx = this.barCenter.x * screenWidth;
@@ -234,13 +279,17 @@ var LoadingScreen = (function () {
             var fontLoaded = simplefonts.hasLoaded();
             if (fontLoaded)
             {
+                this.fontParams.x = this.barCenter.x * screenWidth;
+                this.fontParams.y = this.barCenter.y * screenHeight + this.textOffset;
                 simplefonts.drawFont("" + Math.floor(progress * 100) + "%", this.fontParams);
                 simplefonts.render();
             }
         }
     };
-    LoadingScreen.create = function create(gd, md, parameters) {
-        var f = new LoadingScreen();
+    BenchmarkLoadingScreen.create = function create(gd, md, parameters) {
+        var f = new BenchmarkLoadingScreen();
+        f.textOffset = 30;
+        f.imageOffset = 80;
         f.gd = gd;
         f.md = md;
         f.backgroundColor = md.v4Build(0.231, 0.231, 0.231, 1.0);
@@ -257,6 +306,7 @@ var LoadingScreen = (function () {
         f.textureHeightHalf = 0;
         f.textureTechnique = null;
         f.textureMaterial = gd.createTechniqueParameters();
+        f.imageMaterial = gd.createTechniqueParameters();
         f.textureVertexFormats = [
             gd.VERTEXFORMAT_FLOAT2,
             gd.VERTEXFORMAT_FLOAT2
@@ -267,18 +317,17 @@ var LoadingScreen = (function () {
         ]);
         f.checkFontLoaded = false;
         f.checkTextureLoaded = false;
-        f.screenWidth = 0;
-        f.screenHeight = 0;
+        f.checkImageLoaded = false;
         if(parameters) {
-            f.barBackgroundColor = md.v4BuildZero();
+            f.barBackgroundColor = md.v4Build(1, 1, 1, 0.2);
             f.barColor = md.v4BuildOne();
             f.barCenter = {
                 x: 0.5,
-                y: 0.75
+                y: 0.5
             };
-            f.barBorderSize = 4;
+            f.barBorderSize = 0;
             f.barBackgroundWidth = 544;
-            f.barBackgroundHeight = 32;
+            f.barBackgroundHeight = 2;
             f.assetTracker = null;
             f.progress = null;
             if(parameters.backgroundColor) {
@@ -426,6 +475,6 @@ var LoadingScreen = (function () {
         }
         return null;
     };
-    return LoadingScreen;
+    return BenchmarkLoadingScreen;
 })();
 

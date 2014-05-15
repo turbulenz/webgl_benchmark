@@ -21,3 +21,10 @@
 - textures/avenirlight-64_0.dds
 - shaders/font.cgfx
 - textures/bench-bg.dds
+- textures/benchmark_iconsheet.dds
+- textures/icon_info.dds
+- textures/loading_text_sprite.dds
+- textures/score_grid.dds
+- textures/share_facebook.dds
+- textures/share_twitter.dds
+- textures/yourscore_text_sprite.dds
