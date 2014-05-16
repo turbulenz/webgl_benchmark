@@ -269,7 +269,9 @@ PlaybackController.prototype =
 
         var frameRate = 60;
         var timePerFrame = (1 / frameRate) * 1000;
-        var scorePerSecond = 1000 / 30; // 1000pts for every 30 seconds of test
+        var maxScore = 2500;
+        var scorePerSecond = maxScore / 12; // 2500pts for every 12 seconds of test
+
         var scorePerFrame = (scorePerSecond) / frameRate;
         var totalMs, baseScore, targetMs, testScore;
 
@@ -284,7 +286,7 @@ PlaybackController.prototype =
                 testRange = testRanges[t];
                 startFrame = testRange.range[0];
                 endFrame = testRange.range[1];
-                length = endFrame - startFrame + 1;
+                length = endFrame - startFrame;
                 incompleteTest = false;
 
                 baseScore = scorePerFrame * length;
@@ -312,6 +314,9 @@ PlaybackController.prototype =
                 if (totalMs > 0)
                 {
                     testScore = baseScore * (targetMs / totalMs);
+                    if (testScore > maxScore) {
+                        testScore = maxScore;
+                    }
                 }
                 else
                 {
