@@ -199,7 +199,7 @@ var BenchmarkLoadingScreen = (function () {
                 writer = null;
             }
         }
-        if(0 < imageWidthHalf && 0 < textureAlpha) {
+        if((progress !== null) && (0 < imageWidthHalf && 0 < textureAlpha)) {
             var imageMaterial = this.imageMaterial;
             gd.setTechnique(this.textureTechnique);
             var clipSpace = this.clipSpace;
