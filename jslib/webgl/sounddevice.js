@@ -1439,8 +1439,8 @@ var WebGLSoundDevice = (function () {
                 sd: this,
                 src: src,
                 uncompress: params.uncompress,
-                onsoundload: function tarSoundLoadedFn(texture) {
-                    params.onsoundload(texture);
+                onsoundload: function tarSoundLoadedFn(sound) {
+                    params.onsoundload(sound);
                 },
                 onload: function soundTarLoadedFn(success, status) {
                     if (params.onload) {

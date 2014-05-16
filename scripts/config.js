@@ -19,7 +19,7 @@ Config.create = function configCreateFn()
     
     config.defaultSequenceName = "Story";
     config.defaultTestName = "story_flythrough_full";
-    config.streamIDs = {"story_shadows_rendertarget": "521f13a3", "zoom2_shadows_tiltshift": "5214d902", "stress_zoom": "523203e6", "noshadows_norendertarget": "51f94db3", "noshadows_rendertarget": "51f94bd6", "stress_seige": "520109eb", "shadows_norendertarget2": "51f94867", "shadows_norendertarget": "51f94867", "zoom2_shadows_norendertarget": "520e3905", "noshadows_rendertarget2": "520e3eb2", "shadows_rendertarget": "51f92bf7", "zoom_shadows_norendertarget": "5200c983", "noshadows_norendertarget2": "520e4fae", "shadows_rendertarget2": "520e3eb2", "story_high_particles": "535912a5", "stress_high": "523b443e", "story_high": "5230dc14", "waves3_noshadows_norendertarget": "520106fe", "waves3_shadows_norendertarget": "520109eb"};
+    config.streamIDs = {"story_shadows_rendertarget": "521f13a3", "zoom2_shadows_tiltshift": "5214d902", "stress_zoom": "523203e6", "noshadows_norendertarget": "51f94db3", "noshadows_rendertarget": "51f94bd6", "stress_seige": "520109eb", "shadows_norendertarget2": "51f94867", "shadows_norendertarget": "51f94867", "zoom2_shadows_norendertarget": "520e3905", "noshadows_rendertarget2": "520e3eb2", "shadows_rendertarget": "51f92bf7", "zoom_shadows_norendertarget": "5200c983", "noshadows_norendertarget2": "520e4fae", "shadows_rendertarget2": "520e3eb2", "story_high_particles": "53761fde", "stress_high": "523b443e", "story_high": "5230dc14", "waves3_noshadows_norendertarget": "520106fe", "waves3_shadows_norendertarget": "520109eb"};
     updateDictFromQueryString(config);
     return config;
 };

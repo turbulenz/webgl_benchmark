@@ -944,6 +944,11 @@ debug.evaluate(function debugSetupMathDevice() {
             debug.assert(debug.isMathType(b));
             return this._vmath.m43Mul(a, b, dst);
         },
+        m43MulM33: function m43MulM33Fn(a, b, dst) {
+            debug.assert(debug.isMathType(a));
+            debug.assert(debug.isMathType(b));
+            return this._vmath.m43MulM33(a, b, dst);
+        },
         m43MulM44: function m43MulM44Fn(a, b, dst) {
             debug.assert(debug.isMathType(a));
             debug.assert(debug.isMathType(b));

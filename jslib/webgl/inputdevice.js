@@ -204,8 +204,8 @@ var WebGLInputDevice = (function () {
                     // Update button states
                     var buttons = gamepad.buttons;
 
-                    if (this.padTimestampUpdate < gamepad.timestamp) {
-                        this.padTimestampUpdate = gamepad.timestamp;
+                    if (gamepad.timestamp === undefined || this.padTimestampUpdate < gamepad.timestamp) {
+                        this.padTimestampUpdate = gamepad.timestamp || 0;
 
                         var numButtons = buttons.length;
                         for (var n = 0; n < numButtons; n += 1) {
@@ -230,7 +230,7 @@ var WebGLInputDevice = (function () {
 
                     // Update axes states
                     var axes = gamepad.axes;
-                    if (axes.length <= 4) {
+                    if (axes.length >= 4) {
                         // Axis 1 & 2
                         var lX = axes[0];
                         var lY = -axes[1];
@@ -588,6 +588,9 @@ var WebGLInputDevice = (function () {
 
     // Private touch event methods
     WebGLInputDevice.prototype.onPointerDown = function (event) {
+        if ("touch" !== event.pointerType) {
+            return;
+        }
         if (event.preventManipulation) {
             event.preventManipulation();
         }
@@ -608,6 +611,9 @@ var WebGLInputDevice = (function () {
     };
 
     WebGLInputDevice.prototype.onPointerMove = function (event) {
+        if ("touch" !== event.pointerType) {
+            return;
+        }
         if (event.preventManipulation) {
             event.preventManipulation();
         }
@@ -628,6 +634,9 @@ var WebGLInputDevice = (function () {
     };
 
     WebGLInputDevice.prototype.onPointerUp = function (event) {
+        if ("touch" !== event.pointerType) {
+            return;
+        }
         if (event.preventManipulation) {
             event.preventManipulation();
         }
@@ -650,6 +659,9 @@ var WebGLInputDevice = (function () {
     };
 
     WebGLInputDevice.prototype.onPointerCancel = function (event) {
+        if ("touch" !== event.pointerType) {
+            return;
+        }
         if (event.preventManipulation) {
             event.preventManipulation();
         }

@@ -219,7 +219,11 @@ var CascadedShadowMapping = (function () {
 
         /* tslint:disable:no-string-literal */
         this.update = function _cascadedShadowsUpdateFn() {
-            this.shadowTechniqueParameters['world'] = this.node.world;
+            var node = this.node;
+            while (!node.local && node.parent) {
+                node = node.parent;
+            }
+            this.shadowTechniqueParameters['world'] = node.world;
         };
 
         this.skinnedUpdate = function _cascadedShadowsSkinnedUpdateFn() {
@@ -1214,7 +1218,7 @@ var CascadedShadowMapping = (function () {
             minimalViewWindowY = Math.max(Math.abs(maxLightDistanceY), Math.abs(minLightDistanceY));
         }
 
-        var borderPadding = (2.0 / shadowMapSize);
+        var borderPadding = ((this.blurEnabled ? 2.0 : 1.0) / shadowMapSize);
 
         minimalViewWindowX += borderPadding * minimalViewWindowX;
         if (lightViewWindowX > minimalViewWindowX) {

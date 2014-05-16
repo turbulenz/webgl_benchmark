@@ -407,6 +407,12 @@ var TurbulenzServices = (function () {
                 },
                 requestHandler: requestHandler
             }, 'profile.user');
+        } else {
+            // No Turbulenz services.  Make the error callback
+            // asynchronously.
+            TurbulenzEngine.setTimeout(function () {
+                errorCallbackFn("Error: createUserProfile: Turbulenz Services " + "unavailable");
+            }, 0.001);
         }
 
         return userProfile;

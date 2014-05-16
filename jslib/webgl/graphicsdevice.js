@@ -358,6 +358,28 @@ var TZWebGLTexture = (function () {
             } else {
                 return;
             }
+        } else if (format === gd.PIXELFORMAT_RGBA16F) {
+            if (gd.halfFloatTextureExtension) {
+                internalFormat = gl.RGBA;
+                gltype = gd.halfFloatTextureExtension.HALF_FLOAT_OES;
+                srcStep = 4;
+                if (data && !data.src) {
+                    bufferData = data;
+                }
+            } else {
+                return;
+            }
+        } else if (format === gd.PIXELFORMAT_RGB16F) {
+            if (gd.halfFloatTextureExtension) {
+                internalFormat = gl.RGB;
+                gltype = gd.halfFloatTextureExtension.HALF_FLOAT_OES;
+                srcStep = 3;
+                if (data && !data.src) {
+                    bufferData = data;
+                }
+            } else {
+                return;
+            }
         } else {
             return;
         }
@@ -414,6 +436,8 @@ var TZWebGLTexture = (function () {
                                 levelData = new Uint16Array(levelSize);
                             } else if (gltype === gl.FLOAT) {
                                 levelData = new Float32Array(levelSize);
+                            } else if (gd.halfFloatTextureExtension && gltype === gd.halfFloatTextureExtension.HALF_FLOAT_OES) {
+                                levelData = null;
                             } else {
                                 levelData = new Uint8Array(levelSize);
                             }
@@ -474,6 +498,8 @@ var TZWebGLTexture = (function () {
                             levelData = new Uint16Array(levelSize);
                         } else if (gltype === gl.FLOAT) {
                             levelData = new Float32Array(levelSize);
+                        } else if (gd.halfFloatTextureExtension && gltype === gd.halfFloatTextureExtension.HALF_FLOAT_OES) {
+                            levelData = null;
                         } else {
                             levelData = new Uint8Array(levelSize);
                         }
@@ -626,6 +652,22 @@ var TZWebGLTexture = (function () {
             } else {
                 return;
             }
+        } else if (format === gd.PIXELFORMAT_RGBA16F) {
+            if (gd.halfFloatTextureExtension) {
+                glformat = gl.RGBA;
+                gltype = gd.halfFloatTextureExtension.HALF_FLOAT_OES;
+                bufferData = data;
+            } else {
+                return;
+            }
+        } else if (format === gd.PIXELFORMAT_RGB16F) {
+            if (gd.halfFloatTextureExtension) {
+                glformat = gl.RGB;
+                gltype = gd.halfFloatTextureExtension.HALF_FLOAT_OES;
+                bufferData = data;
+            } else {
+                return;
+            }
         } else {
             return;
         }
@@ -722,6 +764,12 @@ var TZWebGLTexture = (function () {
             }
             if (format === gd.PIXELFORMAT_RGB32F) {
                 return (typedArray instanceof Float32Array) && (typedArray.length === 3 * this.width * this.height * this.depth);
+            }
+            if (format === gd.PIXELFORMAT_RGBA16F) {
+                return (typedArray instanceof Uint16Array) && (typedArray.length === 4 * this.width * this.height * this.depth);
+            }
+            if (format === gd.PIXELFORMAT_RGB16F) {
+                return (typedArray instanceof Uint16Array) && (typedArray.length === 3 * this.width * this.height * this.depth);
             }
         }
         return false;
@@ -4750,6 +4798,11 @@ var WebGLGraphicsDevice = (function () {
                 return true;
             }
             return false;
+        } else if ("TEXTURE_HALF_FLOAT" === name) {
+            if (this.halfFloatTextureExtension) {
+                return true;
+            }
+            return false;
         } else if ("INDEXFORMAT_UINT" === name) {
             if (gl.getExtension('OES_element_index_uint')) {
                 return true;
@@ -5428,6 +5481,13 @@ var WebGLGraphicsDevice = (function () {
             gd.floatTextureExtension = gl.getExtension('WEBGL_color_buffer_float');
         }
 
+        if (extensionsMap['OES_texture_half_float']) {
+            gd.halfFloatTextureExtension = gl.getExtension('OES_texture_half_float');
+        }
+        if (extensionsMap['WEBGL_color_buffer_half_float']) {
+            gl.getExtension('WEBGL_color_buffer_half_float');
+        }
+
         var proto = WebGLGraphicsDevice.prototype;
 
         proto.PRIMITIVE_POINTS = gl.POINTS;
@@ -5524,41 +5584,40 @@ var WebGLGraphicsDevice = (function () {
             return attributeFormat;
         };
 
-        if (gd.fixIE && gd.fixIE < "0.93") {
+        if (gd.fixIE && gd.fixIE < "0.94") {
             proto.VERTEXFORMAT_BYTE4 = makeVertexformat(0, 4, 16, gl.FLOAT, 'BYTE4');
-            proto.VERTEXFORMAT_BYTE4N = makeVertexformat(0, 4, 16, gl.FLOAT, 'BYTE4N');
             proto.VERTEXFORMAT_UBYTE4 = makeVertexformat(0, 4, 16, gl.FLOAT, 'UBYTE4');
-            proto.VERTEXFORMAT_UBYTE4N = makeVertexformat(0, 4, 16, gl.FLOAT, 'UBYTE4N');
             proto.VERTEXFORMAT_SHORT2 = makeVertexformat(0, 2, 8, gl.FLOAT, 'SHORT2');
-            proto.VERTEXFORMAT_SHORT2N = makeVertexformat(0, 2, 8, gl.FLOAT, 'SHORT2N');
             proto.VERTEXFORMAT_SHORT4 = makeVertexformat(0, 4, 16, gl.FLOAT, 'SHORT4');
-            proto.VERTEXFORMAT_SHORT4N = makeVertexformat(0, 4, 16, gl.FLOAT, 'SHORT4N');
             proto.VERTEXFORMAT_USHORT2 = makeVertexformat(0, 2, 8, gl.FLOAT, 'USHORT2');
-            proto.VERTEXFORMAT_USHORT2N = makeVertexformat(0, 2, 8, gl.FLOAT, 'USHORT2N');
             proto.VERTEXFORMAT_USHORT4 = makeVertexformat(0, 4, 16, gl.FLOAT, 'USHORT4');
-            proto.VERTEXFORMAT_USHORT4N = makeVertexformat(0, 4, 16, gl.FLOAT, 'USHORT4N');
-            proto.VERTEXFORMAT_FLOAT1 = makeVertexformat(0, 1, 4, gl.FLOAT, 'FLOAT1');
-            proto.VERTEXFORMAT_FLOAT2 = makeVertexformat(0, 2, 8, gl.FLOAT, 'FLOAT2');
-            proto.VERTEXFORMAT_FLOAT3 = makeVertexformat(0, 3, 12, gl.FLOAT, 'FLOAT3');
-            proto.VERTEXFORMAT_FLOAT4 = makeVertexformat(0, 4, 16, gl.FLOAT, 'FLOAT4');
         } else {
             proto.VERTEXFORMAT_BYTE4 = makeVertexformat(0, 4, 4, gl.BYTE, 'BYTE4');
-            proto.VERTEXFORMAT_BYTE4N = makeVertexformat(1, 4, 4, gl.BYTE, 'BYTE4N');
             proto.VERTEXFORMAT_UBYTE4 = makeVertexformat(0, 4, 4, gl.UNSIGNED_BYTE, 'UBYTE4');
-            proto.VERTEXFORMAT_UBYTE4N = makeVertexformat(1, 4, 4, gl.UNSIGNED_BYTE, 'UBYTE4N');
             proto.VERTEXFORMAT_SHORT2 = makeVertexformat(0, 2, 4, gl.SHORT, 'SHORT2');
-            proto.VERTEXFORMAT_SHORT2N = makeVertexformat(1, 2, 4, gl.SHORT, 'SHORT2N');
             proto.VERTEXFORMAT_SHORT4 = makeVertexformat(0, 4, 8, gl.SHORT, 'SHORT4');
-            proto.VERTEXFORMAT_SHORT4N = makeVertexformat(1, 4, 8, gl.SHORT, 'SHORT4N');
             proto.VERTEXFORMAT_USHORT2 = makeVertexformat(0, 2, 4, gl.UNSIGNED_SHORT, 'USHORT2');
-            proto.VERTEXFORMAT_USHORT2N = makeVertexformat(1, 2, 4, gl.UNSIGNED_SHORT, 'USHORT2N');
             proto.VERTEXFORMAT_USHORT4 = makeVertexformat(0, 4, 8, gl.UNSIGNED_SHORT, 'USHORT4');
-            proto.VERTEXFORMAT_USHORT4N = makeVertexformat(1, 4, 8, gl.UNSIGNED_SHORT, 'USHORT4N');
-            proto.VERTEXFORMAT_FLOAT1 = makeVertexformat(0, 1, 4, gl.FLOAT, 'FLOAT1');
-            proto.VERTEXFORMAT_FLOAT2 = makeVertexformat(0, 2, 8, gl.FLOAT, 'FLOAT2');
-            proto.VERTEXFORMAT_FLOAT3 = makeVertexformat(0, 3, 12, gl.FLOAT, 'FLOAT3');
-            proto.VERTEXFORMAT_FLOAT4 = makeVertexformat(0, 4, 16, gl.FLOAT, 'FLOAT4');
         }
+        if (gd.fixIE && gd.fixIE < "0.93") {
+            proto.VERTEXFORMAT_BYTE4N = makeVertexformat(0, 4, 16, gl.FLOAT, 'BYTE4N');
+            proto.VERTEXFORMAT_UBYTE4N = makeVertexformat(0, 4, 16, gl.FLOAT, 'UBYTE4N');
+            proto.VERTEXFORMAT_SHORT2N = makeVertexformat(0, 2, 8, gl.FLOAT, 'SHORT2N');
+            proto.VERTEXFORMAT_SHORT4N = makeVertexformat(0, 4, 16, gl.FLOAT, 'SHORT4N');
+            proto.VERTEXFORMAT_USHORT2N = makeVertexformat(0, 2, 8, gl.FLOAT, 'USHORT2N');
+            proto.VERTEXFORMAT_USHORT4N = makeVertexformat(0, 4, 16, gl.FLOAT, 'USHORT4N');
+        } else {
+            proto.VERTEXFORMAT_BYTE4N = makeVertexformat(1, 4, 4, gl.BYTE, 'BYTE4N');
+            proto.VERTEXFORMAT_UBYTE4N = makeVertexformat(1, 4, 4, gl.UNSIGNED_BYTE, 'UBYTE4N');
+            proto.VERTEXFORMAT_SHORT2N = makeVertexformat(1, 2, 4, gl.SHORT, 'SHORT2N');
+            proto.VERTEXFORMAT_SHORT4N = makeVertexformat(1, 4, 8, gl.SHORT, 'SHORT4N');
+            proto.VERTEXFORMAT_USHORT2N = makeVertexformat(1, 2, 4, gl.UNSIGNED_SHORT, 'USHORT2N');
+            proto.VERTEXFORMAT_USHORT4N = makeVertexformat(1, 4, 8, gl.UNSIGNED_SHORT, 'USHORT4N');
+        }
+        proto.VERTEXFORMAT_FLOAT1 = makeVertexformat(0, 1, 4, gl.FLOAT, 'FLOAT1');
+        proto.VERTEXFORMAT_FLOAT2 = makeVertexformat(0, 2, 8, gl.FLOAT, 'FLOAT2');
+        proto.VERTEXFORMAT_FLOAT3 = makeVertexformat(0, 3, 12, gl.FLOAT, 'FLOAT3');
+        proto.VERTEXFORMAT_FLOAT4 = makeVertexformat(0, 4, 16, gl.FLOAT, 'FLOAT4');
 
         var maxAttributes = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
         if (maxAttributes < 16) {
@@ -6343,6 +6402,9 @@ WebGLGraphicsDevice.prototype.SEMANTIC_ATTR12 = 12;
 WebGLGraphicsDevice.prototype.SEMANTIC_ATTR13 = 13;
 WebGLGraphicsDevice.prototype.SEMANTIC_ATTR14 = 14;
 WebGLGraphicsDevice.prototype.SEMANTIC_ATTR15 = 15;
+
+// Add any new additions need to go into into src/engine/pixelformat.h
+// and engine/tslib/turbulenz.d.ts.
 WebGLGraphicsDevice.prototype.PIXELFORMAT_A8 = 0;
 WebGLGraphicsDevice.prototype.PIXELFORMAT_L8 = 1;
 WebGLGraphicsDevice.prototype.PIXELFORMAT_L8A8 = 2;
@@ -6359,3 +6421,5 @@ WebGLGraphicsDevice.prototype.PIXELFORMAT_DXT5 = 12;
 WebGLGraphicsDevice.prototype.PIXELFORMAT_S8 = 13;
 WebGLGraphicsDevice.prototype.PIXELFORMAT_RGBA32F = 14;
 WebGLGraphicsDevice.prototype.PIXELFORMAT_RGB32F = 15;
+WebGLGraphicsDevice.prototype.PIXELFORMAT_RGBA16F = 16;
+WebGLGraphicsDevice.prototype.PIXELFORMAT_RGB16F = 17;
