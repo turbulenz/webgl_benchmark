@@ -5,5 +5,6 @@ _build
 capture
 data
 static_page
-
+jslib/.mkdir
+jslib/webgl/.mkdir
 .idea
