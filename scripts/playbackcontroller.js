@@ -314,7 +314,10 @@ PlaybackController.prototype =
                 if (totalMs > 0)
                 {
                     testScore = baseScore * (targetMs / totalMs);
-                    if (testScore > maxScore) {
+                    // Round to the nearest 10 (reducing the impact of random variation on the score)
+                    testScore = ((testScore / 1000).toFixed(2) * 1000);
+                    if (testScore > maxScore)
+                    {
                         testScore = maxScore;
                     }
                 }
