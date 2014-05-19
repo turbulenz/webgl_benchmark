@@ -118,7 +118,8 @@ RELEASE_FILES = [
     "css/base_template.css",
     "assets/config/stream_mapping.json",
     "assets/config/templates/online/results_template-default.json",
-    "js/d3.v3/d3.v3.js"
+    "js/d3.v3/d3.v3.js",
+    "js/whichbrowser-js-min.js"
 ]
 
 RELEASE_PAGE_FILES = [
