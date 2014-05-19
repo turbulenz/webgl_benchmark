@@ -118,6 +118,7 @@ RELEASE_FILES = [
     "css/base_template.css",
     "assets/config/stream_mapping.json",
     "assets/config/templates/online/results_template-default.json",
+    "assets/config/templates/offline/results_template-default.json",
     "js/d3.v3/d3.v3.js",
     "js/whichbrowser-js-min.js"
 ]
@@ -590,6 +591,8 @@ def copy_release():
         shutil_copy(srcfile, dstfile)
 
     shutil_copytree(normpath('staticmax'), path_join(STATIC_OUTPUT_PATH, 'staticmax'))
+    shutil_copytree(path_join(CAPTURES_PATH, DEFAULT_CAPTURE_NAME), path_join(STATIC_OUTPUT_PATH, CAPTURES_PATH, DEFAULT_CAPTURE_NAME))
+    shutil_copytree(path_join(CAPTURES_PATH, 'staticmax'), path_join(STATIC_OUTPUT_PATH, CAPTURES_PATH, 'staticmax'))
 
 class ServerOptions:
     def __init__(self, port = 8070, static = False):
