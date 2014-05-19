@@ -19,6 +19,8 @@
 - textures/avenirlight-32_0.dds
 - fonts/avenirlight-64.fnt
 - textures/avenirlight-64_0.dds
+- fonts/avenirlight-128.fnt
+- textures/avenirlight-128_0.dds
 - shaders/font.cgfx
 - textures/bench-bg.dds
 - textures/benchmark_iconsheet.dds

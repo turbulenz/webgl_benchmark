@@ -312,6 +312,36 @@ BenchmarkApp.prototype =
         var formattedScores = [];
         var testScore, scoreText, testScoreInt;
         var index = 0;
+
+        if (this.drawTestFonts)
+        {
+            var testFontSizes = [0.25, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 8.0, 10.0, 16.0];
+            var testFontY = -(scorePerPanelHeight * 0.5);
+            var testFontSize, length = testFontSizes.length;
+            for (var i = 0; i < length; i += 1)
+            {
+                testFontSize = testFontSizes[i];
+                formattedScores.push({
+                    text: "Font " + testFontSize,
+                    fontParams: {
+                        x: 0,
+                        y: testFontY,
+
+                        r: 1.0,
+                        g: 1.0,
+                        b: 1.0,
+
+                        alignment : simplefonts.textHorizontalAlign.LEFT,
+                        valignment : simplefonts.textVerticalAlign.TOP,
+
+                        scale: testFontSize,
+                        fontStyle: "regular"
+                    }
+                });
+                testFontY += 25;
+            }
+        }
+
         for (var t in testScores)
         {
             if (testScores.hasOwnProperty(t))
@@ -536,10 +566,10 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
     var textureManager = TextureManager.create(graphicsDevice, requestHandler);
 
     var fonts = {
-        regular: "avenirmedium",
+        regular: "avenirlight",
     };
 
-    globals.fontSizes = [8, 16, 32, 64];
+    globals.fontSizes = [8, 16, 32, 64, 128];
     globals.fonts = fonts;
     globals.mathDevice = mathDevice;
     globals.graphicsDevice = graphicsDevice;
@@ -624,6 +654,8 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
     benchmarkApp.intervalID = null;
 
     benchmarkApp.preloaded = false;
+
+    benchmarkApp.drawTestFonts = true; // Enable the debug drawing of the fonts on the score screen
 
     return benchmarkApp;
 };
