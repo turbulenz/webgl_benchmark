@@ -108,8 +108,6 @@ SYSTEM_INFO_MAPPING_WIN = {
 }
 
 RELEASE_FILES = [
-    "benchmark.canvas.js",
-    "benchmark.canvas.release.html",
     "mapping_table.json",
     "img/favicon.ico",
     "img/logo.png",
@@ -589,6 +587,9 @@ def copy_release():
         if dst_dir != "" and not path_exists(dst_dir):
             makedirs(dst_dir)
         shutil_copy(srcfile, dstfile)
+
+    shutil_copy("benchmark.public.canvas.release.html", normpath(path_join(STATIC_OUTPUT_PATH, "run.html")))
+    shutil_copy("benchmark.public.canvas.js", normpath(path_join(STATIC_OUTPUT_PATH, "benchmark.public.canvas.js")))
 
     shutil_copytree(normpath('staticmax'), path_join(STATIC_OUTPUT_PATH, 'staticmax'))
     shutil_copytree(path_join(CAPTURES_PATH, DEFAULT_CAPTURE_NAME), path_join(STATIC_OUTPUT_PATH, CAPTURES_PATH, DEFAULT_CAPTURE_NAME))
