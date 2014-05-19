@@ -4,5 +4,6 @@
 _build
 capture
 data
+static_page
 
 .idea

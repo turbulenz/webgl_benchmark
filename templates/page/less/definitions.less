@@ -1,0 +1,81 @@
+@phone-width: 640px;
+@pad-width: 768px;
+@tablet-width: 1280px;
+@desktop-width: 1281px;
+@min-desktop-width: 350px;
+@phone-portrait-breakpoint: 360px;
+
+@fullscreen-width: 407px;
+@wide-fullscreen-width: 475px;
+
+@base-unit: 1rem;
+
+html {
+    font-size: 3.75px;
+}
+
+@media (max-device-width: @phone-width) and (max-device-height: @phone-width) {
+    html {
+        font-size: 3.25px;
+    }
+}
+
+@media (min-device-width: @desktop-width) {
+    html {
+        font-size: 4px;
+    }
+}
+
+
+@base-unit: 1rem;
+@block-size: 17 * @base-unit;
+
+@footer-height: 10 * @base-unit;
+
+@font-size-small: 3 * @base-unit;
+@font-size-medium: 5 * @base-unit;
+@font-size-button: 5.5 * @base-unit;
+@font-size-small-heading: 3.5 * @base-unit;
+@font-size-large-heading: 19.5 * @base-unit;
+
+
+@page-bg: rgb(2, 58, 72);
+@light-bg: rgb(202, 212, 214);
+@light-button-bg: #fff;
+@light-button-bg-hover: rgb(202, 212, 214);
+@dark-bg: rgb(52, 89, 98);
+@dark-button-bg: rgba(255, 255, 255, 0.2);
+@dark-button-bg-hover: rgba(255, 255, 255, 0.25);
+@dark-bg-transparent: rgba(255, 255, 255, 0.2);
+@dark-bg-transparent-hover: rgb(52, 89, 98);
+
+@light-text: #fff;
+@dark-text: rgba(255, 255, 255, 0.4);
+@dark-button-text: #01303b;
+@light-button-text: #fff;
+
+@modal-transition-speed: 0.2s;
+
+@spacer-width-large: 8.5rem;
+@spacer-width-small: 5.5rem;
+@spacer-height-large: 7.5rem;
+@spacer-height-small: 5.5rem;
+
+@text-content-width: 187rem;
+
+@screenshot-width: 62rem;
+@screenshot-height: 36rem;
+@screenshot-spacer-width: 4.5rem;
+@screenshot-spacer-height: 2rem;
+@screenshot-border-width: 1rem;
+
+@screenshot-breakpoint: 900px;
+
+
+.light-typeface {
+    font-family: "AvenirNextLTW01-Regular", Helvetica, Arial, sans-serif;
+}
+
+.ultralight-typeface {
+    font-family: "AvenirNextLTW01-UltraLi", Helvetica, Arial, sans-serif;
+}

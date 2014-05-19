@@ -6,6 +6,7 @@
     <link rel="shortcut icon" href="img/favicon.ico">
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
     <script type="text/javascript" src="js/d3.v3/d3.v3.js"></script>
+    <script type="text/javascript" src="js/whichbrowser-js-min.js"></script>
     <style>
         #engine {
             background: #fff;
@@ -108,7 +109,7 @@
 
     <div id="engine">
         <div id="results"></div>
-        
+
         <canvas id="turbulenz_game_engine_canvas" moz-opaque="true" tabindex="1">
             Sorry, but your browser does not support WebGL or does not have it
             enabled.  To get a WebGL-enabled browser, please see:<br/>
@@ -175,6 +176,7 @@
 <script type="text/javascript" src="scripts/benchmarkapp.js"></script>
 <script type="text/javascript" src="scripts/benchmarkgraph.js"></script>
 <script type="text/javascript" src="scripts/loadingscreen.js"></script>
+<script type="text/javascript" src="scripts/resultsscreen.js"></script>
 <script type="text/javascript" src="scripts/playbackcontroller.js"></script>
 <script type="text/javascript" src="scripts/config.js"></script>
 <script type="text/javascript" src="scripts/querystring.js"></script>
@@ -196,7 +198,7 @@
       // Embedded code and startup code.
       // Supplied by 'tz_startup_code' variable.
       // ----------------------------------------
-      
+
 /*global TurbulenzEngine: false*/
 /*global BenchmarkApp: false*/
 

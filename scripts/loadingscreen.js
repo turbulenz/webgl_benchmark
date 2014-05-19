@@ -1,4 +1,6 @@
 // Copyright (c) 2009-2013 Turbulenz Limited
+/*exported BenchmarkLoadingScreen*/
+
 var BenchmarkLoadingScreen = (function () {
     function BenchmarkLoadingScreen() { }
     BenchmarkLoadingScreen.version = 1;
@@ -25,7 +27,6 @@ var BenchmarkLoadingScreen = (function () {
         this.simplefonts = simplefonts;
 
         var scale = 1.5;
-        var spacing = undefined;
         var horizontalAlign = simplefonts.textHorizontalAlign.CENTER;
         var verticalAlign = simplefonts.textVerticalAlign.MIDDLE;
         var fontStyle = "regular";
@@ -41,7 +42,6 @@ var BenchmarkLoadingScreen = (function () {
             b : v3Color[2],
 
             scale : scale,
-            spacing : spacing,
             alignment : horizontalAlign,
             valignment : verticalAlign,
             fontStyle : fontStyle
@@ -52,7 +52,7 @@ var BenchmarkLoadingScreen = (function () {
     BenchmarkLoadingScreen.prototype.loadAndSetTexture = function (graphicsDevice, requestHandler, mappingTable, name) {
         var that = this;
         this.checkTextureLoaded = true;
-        if(mappingTable) {
+        if (mappingTable) {
             var urlMapping = mappingTable.urlMapping;
             var assetPrefix = mappingTable.assetPrefix;
             requestHandler.request({
@@ -65,7 +65,7 @@ var BenchmarkLoadingScreen = (function () {
                     });
                 },
                 onload: function (t) {
-                    if(t) {
+                    if (t) {
                         that.setTexture(t);
                         that.textureLoaded = true;
                     }
@@ -76,7 +76,7 @@ var BenchmarkLoadingScreen = (function () {
     BenchmarkLoadingScreen.prototype.loadAndSetImage = function (graphicsDevice, requestHandler, mappingTable, name) {
         var that = this;
         this.checkImageLoaded = true;
-        if(mappingTable) {
+        if (mappingTable) {
             var urlMapping = mappingTable.urlMapping;
             var assetPrefix = mappingTable.assetPrefix;
             requestHandler.request({
@@ -84,12 +84,12 @@ var BenchmarkLoadingScreen = (function () {
                 requestFn: function textureRequestFn(src, onload) {
                     return graphicsDevice.createTexture({
                         src: src,
-                        mipmaps: false,
+                        mipmaps: true,
                         onload: onload
                     });
                 },
                 onload: function (t) {
-                    if(t) {
+                    if (t) {
                         that.setImage(t);
                         that.imageLoaded = true;
                     }
@@ -111,26 +111,26 @@ var BenchmarkLoadingScreen = (function () {
         var gd = this.gd;
         var screenWidth = gd.width;
         var screenHeight = gd.height;
-        if((screenWidth === 0) || (screenHeight === 0)) {
+        if ((screenWidth === 0) || (screenHeight === 0)) {
             return;
         }
 
         var writer;
         var primitive = gd.PRIMITIVE_TRIANGLE_STRIP;
         var backgroundMaterial;
-        if(0 < backgroundAlpha) {
+        if (0 < backgroundAlpha) {
             // TODO: Cache this.backgroundColor here, rather than below
             this.backgroundColor[3] = backgroundAlpha;
-            if(backgroundAlpha >= 1) {
+            if (backgroundAlpha >= 1) {
                 gd.clear(this.backgroundColor);
             } else {
                 gd.setTechnique(this.backgroundTechnique);
                 var backgroundColor = this.backgroundColor;
                 backgroundMaterial = this.backgroundMaterial;
-                backgroundMaterial['color'] = backgroundColor;
+                backgroundMaterial.color = backgroundColor;
                 gd.setTechniqueParameters(backgroundMaterial);
                 writer = gd.beginDraw(primitive, 4, this.posVertexFormats, this.posSemantics);
-                if(writer) {
+                if (writer) {
                     writer(-1, -1);
                     writer(1, -1);
                     writer(-1, 1);
@@ -157,18 +157,18 @@ var BenchmarkLoadingScreen = (function () {
         var screenHeightHalf;
         var screenRatio = (screenHeight / screenWidth);
         var scaledTextureHeightHalf, scaledTextureWidthHalf;
+        var clipSpace = this.clipSpace;
 
-        if(0 < textureWidthHalf && 0 < textureAlpha) {
+        if (0 < textureWidthHalf && 0 < textureAlpha) {
             var textureMaterial = this.textureMaterial;
             gd.setTechnique(this.textureTechnique);
-            var clipSpace = this.clipSpace;
             clipSpace[0] = xScale;
             clipSpace[1] = yScale;
-            textureMaterial['clipSpace'] = clipSpace;
-            textureMaterial['alpha'] = textureAlpha;
+            textureMaterial.clipSpace = clipSpace;
+            textureMaterial.alpha = textureAlpha;
             gd.setTechniqueParameters(textureMaterial);
             writer = gd.beginDraw(primitive, 4, this.textureVertexFormats, this.textureSemantics);
-            if(writer) {
+            if (writer) {
                 screenWidthHalf = centerx = (screenWidth * 0.5);
                 screenHeightHalf = centery = (screenHeight * 0.5);
 
@@ -199,17 +199,16 @@ var BenchmarkLoadingScreen = (function () {
                 writer = null;
             }
         }
-        if((progress !== null) && (0 < imageWidthHalf && 0 < textureAlpha)) {
+        if ((progress !== null) && (0 < imageWidthHalf && 0 < textureAlpha)) {
             var imageMaterial = this.imageMaterial;
             gd.setTechnique(this.textureTechnique);
-            var clipSpace = this.clipSpace;
             clipSpace[0] = xScale;
             clipSpace[1] = yScale;
-            imageMaterial['clipSpace'] = clipSpace;
-            imageMaterial['alpha'] = textureAlpha;
+            imageMaterial.clipSpace = clipSpace;
+            imageMaterial.alpha = textureAlpha;
             gd.setTechniqueParameters(imageMaterial);
             writer = gd.beginDraw(primitive, 4, this.textureVertexFormats, this.textureSemantics);
-            if(writer) {
+            if (writer) {
                 centerx = (screenWidth * 0.5);
                 centery = (screenHeight * 0.5);
 
@@ -226,10 +225,10 @@ var BenchmarkLoadingScreen = (function () {
                 writer = null;
             }
         }
-        if((progress !== null) && (backgroundAlpha > 0)) {
-            if(progress < 0) {
+        if ((progress !== null) && (backgroundAlpha > 0)) {
+            if (progress < 0) {
                 progress = 0;
-            } else if(progress > 1) {
+            } else if (progress > 1) {
                 progress = 1;
             }
             backgroundMaterial = this.backgroundMaterial;
@@ -242,10 +241,10 @@ var BenchmarkLoadingScreen = (function () {
             var halfBarHeight = 0.5 * this.barBackgroundHeight;
             var barBorderSize = this.barBorderSize;
             gd.setTechnique(this.backgroundTechnique);
-            backgroundMaterial['color'] = barBackgroundColor;
+            backgroundMaterial.color = barBackgroundColor;
             gd.setTechniqueParameters(backgroundMaterial);
             writer = gd.beginDraw(primitive, 4, this.posVertexFormats, this.posSemantics);
-            if(writer) {
+            if (writer) {
                 left = centerx - (0.5 * barBackgroundWidth);
                 right = left + barBackgroundWidth;
                 top = (centery - halfBarHeight);
@@ -255,12 +254,11 @@ var BenchmarkLoadingScreen = (function () {
                 writer((left * xScale) - 1, (bottom * yScale) + 1);
                 writer((right * xScale) - 1, (bottom * yScale) + 1);
                 gd.endDraw(writer);
-                writer = null;
             }
-            backgroundMaterial['color'] = barColor;
+            backgroundMaterial.color = barColor;
             gd.setTechniqueParameters(backgroundMaterial);
             writer = gd.beginDraw(primitive, 4, this.posVertexFormats, this.posSemantics);
-            if(writer) {
+            if (writer) {
                 left = left + barBorderSize;
                 right = left + ((barBackgroundWidth - (2 * barBorderSize)) * progress);
                 top = top + barBorderSize;
@@ -315,56 +313,56 @@ var BenchmarkLoadingScreen = (function () {
             'POSITION',
             'TEXCOORD0'
         ]);
-        f.checkFontLoaded = false;
+        f.checkFontLoaded = true;
         f.checkTextureLoaded = false;
         f.checkImageLoaded = false;
-        if(parameters) {
-            f.barBackgroundColor = md.v4Build(1, 1, 1, 0.2);
-            f.barColor = md.v4BuildOne();
-            f.barCenter = {
-                x: 0.5,
-                y: 0.5
-            };
-            f.barBorderSize = 0;
-            f.barBackgroundWidth = 544;
-            f.barBackgroundHeight = 2;
-            f.assetTracker = null;
-            f.progress = null;
-            if(parameters.backgroundColor) {
+        f.barBackgroundColor = md.v4Build(1, 1, 1, 0.2);
+        f.barColor = md.v4BuildOne();
+        f.barCenter = {
+            x: 0.5,
+            y: 0.5
+        };
+        f.barBorderSize = 0;
+        f.barBackgroundWidth = 544;
+        f.barBackgroundHeight = 2;
+        f.assetTracker = null;
+        f.progress = null;
+        if (parameters) {
+            if (parameters.backgroundColor) {
                 f.backgroundColor = parameters.backgroundColor;
             }
-            if(parameters.barBackgroundColor) {
+            if (parameters.barBackgroundColor) {
                 f.barBackgroundColor = parameters.barBackgroundColor;
             }
-            if(parameters.barColor) {
+            if (parameters.barColor) {
                 f.barColor = parameters.barColor;
             }
-            if(parameters.barCenter) {
+            if (parameters.barCenter) {
                 var percentage;
                 percentage = parameters.barCenter.x;
                 f.barCenter.x = (percentage > 1.0) ? 1.0 : ((percentage < 0.0) ? 0.0 : percentage);
                 percentage = parameters.barCenter.y;
                 f.barCenter.y = (percentage > 1.0) ? 1.0 : ((percentage < 0.0) ? 0.0 : percentage);
             }
-            if(parameters.barBorderSize) {
+            if (parameters.barBorderSize) {
                 f.barBorderSize = parameters.barBorderSize;
             }
-            if(parameters.barBackgroundWidth) {
+            if (parameters.barBackgroundWidth) {
                 f.barBackgroundWidth = parameters.barBackgroundWidth;
             }
-            if(parameters.barBackgroundHeight) {
+            if (parameters.barBackgroundHeight) {
                 f.barBackgroundHeight = parameters.barBackgroundHeight;
             }
-            if(parameters.assetTracker) {
+            if (parameters.assetTracker) {
                 f.assetTracker = parameters.assetTracker;
             }
-            if(parameters.progress) {
+            if (parameters.progress) {
                 f.progress = parameters.progress;
             }
-            if(parameters.simplefonts) {
+            if (parameters.simplefonts) {
                 f.simplefonts = parameters.simplefonts;
             }
-            if(parameters.checkFontLoaded) {
+            if (parameters.checkFontLoaded) {
                 f.checkFontLoaded = true;
             }
         }
@@ -468,7 +466,7 @@ var BenchmarkLoadingScreen = (function () {
             }
         };
         var shader = gd.createShader(shaderParams);
-        if(shader) {
+        if (shader) {
             f.backgroundTechnique = shader.getTechnique("background");
             f.textureTechnique = shader.getTechnique("texture");
             return f;
