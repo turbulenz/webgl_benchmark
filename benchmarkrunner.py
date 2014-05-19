@@ -218,7 +218,7 @@ def get_systeminfo(hardware_name):
 
         info("OS:%s: Looking for systeminfo.csv" % OS)
         systeminfo_filenames = []
-        for root, dirs, files in walk(hardware_dir):
+        for _, _, files in walk(hardware_dir):
             for name in files:
                 if name.lower().endswith('systeminfo.csv'):
                     info("Found systeminfo file: %s" % name)
@@ -262,7 +262,7 @@ def get_systeminfo(hardware_name):
             #TODO: Process totalMemory
             if fieldname == 'System Type':
                 processorArch = ''
-                windowSystemType = systeminfo_dict[fieldname].lower();
+                windowSystemType = systeminfo_dict[fieldname].lower()
                 if windowSystemType.find('x64') != -1:
                     processorArch = 'x64'
                 elif windowSystemType.find('x86'):
@@ -338,7 +338,7 @@ def generate_results_template(results_template_name=None, config_target=None, ha
 
     try:
         f = open(results_template_path, 'w')
-        base_template = json.dump(base_template, f)
+        json.dump(base_template, f)
         f.close()
     except IOError:
         raise Exception("Failed to write results template file: %s" % results_template_path)
@@ -503,13 +503,11 @@ def download_assets(config_name="default", max_connections=20, force_download=Fa
             paths.append(download_path)
 
     add_downloader('meta.json')
-    capture_files = 1
     for start_frame in xrange(0, NUM_FRAMES, NUM_FRAMES_BLOCK):
         block_postfix = '%d-%d' % (start_frame, start_frame + NUM_FRAMES_BLOCK - 1)
         add_downloader('resources-%s.json' % block_postfix)
         add_downloader('frames-%s.json' % block_postfix)
         add_downloader('data-%s.bin' % block_postfix)
-        capture_files += 3
 
     for (i, t) in enumerate(threads):
         t.daemon = True
@@ -532,7 +530,6 @@ def download_assets(config_name="default", max_connections=20, force_download=Fa
     output_staticmax_path = path_join(output_prefix, 'staticmax')
     mkdir(output_staticmax_path)
 
-    asset_files = 0
     for start_frame in xrange(0, NUM_FRAMES, NUM_FRAMES_BLOCK):
         block_postfix = '%d-%d' % (start_frame, start_frame + NUM_FRAMES_BLOCK - 1)
         with open(path_join(capture_output_path, 'resources-%s.json' % block_postfix)) as f:
@@ -547,7 +544,6 @@ def download_assets(config_name="default", max_connections=20, force_download=Fa
                             src = tex['src']
                             if src:
                                 add_downloader(src)
-                                asset_files += 1
 
                 if resources_data.has_key('videos'):
                     videos = resources_data['videos']
@@ -556,7 +552,6 @@ def download_assets(config_name="default", max_connections=20, force_download=Fa
                             src = video['src']
                             if src:
                                 add_downloader(src)
-                                asset_files += 1
 
     for (i, t) in enumerate(threads):
         t.daemon = True
@@ -732,9 +727,11 @@ def main():
     parser.add_argument("--force-download", action='store_true',
         help="download the capture date, even if the file(s) already exists")
     parser.add_argument("--browser-path", action='store', default=None,
-        help="the path to the browser binary to run. This must be used in conjunction with the --browser option in the case where the user wants to override the default browser path")
+        help="the path to the browser binary to run. This must be used in conjunction with the --browser option in " +
+             "the case where the user wants to override the default browser path")
     parser.add_argument("--browser-profile", action='store', default=None,
-        help="the name of the profile to launch the browser with if supported. On Firefox this is name of the profile. On Chrome this the profile directory.")
+        help="the name of the profile to launch the browser with if supported. On Firefox this is name of the" +
+             " profile. On Chrome this the profile directory.")
     parser.add_argument("--copy-release", action='store_true',
         help="copy the release build of the benchmark to the 'output' directory. This flag ignores other flags.")
 
@@ -776,8 +773,10 @@ def main():
 
     results_template_name = 'results_template-' + hardware_name_filename
 
-    generate_config(config_name=args.config, config_target=args.target, allow_querystring=True, results_template_name=results_template_name)
-    generate_results_template(results_template_name=results_template_name, config_target=args.target, hardware_name=hardware_name)
+    generate_config(config_name=args.config, config_target=args.target, allow_querystring=True,
+                    results_template_name=results_template_name)
+    generate_results_template(results_template_name=results_template_name, config_target=args.target,
+                              hardware_name=hardware_name)
     if args.target == 'offline':
         download_assets(config_name=args.config, force_download=args.force_download)
 
@@ -796,10 +795,13 @@ def main():
                     command_line_args = "--disable-web-security --allow-file-access-from-files --kiosk"
                 BROWSERRUNNER_TESTURL = "file://" + getcwd() + BROWSERRUNNER_TESTMODE
             else:
-                BROWSERRUNNER_TESTURL = "http://" + BROWSERRUNNER_DEVSERVER + BROWSERRUNNER_TESTURLPATH + BROWSERRUNNER_TESTMODE
+                BROWSERRUNNER_TESTURL = "http://" + BROWSERRUNNER_DEVSERVER + \
+                                        BROWSERRUNNER_TESTURLPATH + BROWSERRUNNER_TESTMODE
 
-            browser_runner = BrowserRunner(None, args.browser, browser_bin=args.browser_path, profile=args.browser_profile)
-            browser_runner.run(BROWSERRUNNER_TESTURL, timeout=BENCHMARK_TIMEOUT, command_line_args=command_line_args) # 5 minute timeout
+            browser_runner = BrowserRunner(None, args.browser, browser_bin=args.browser_path,
+                                           profile=args.browser_profile)
+            browser_runner.run(BROWSERRUNNER_TESTURL, timeout=BENCHMARK_TIMEOUT,
+                               command_line_args=command_line_args) # 5 minute timeout
         else:
             info("No-run called")
     except Exception as e:
