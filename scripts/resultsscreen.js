@@ -1,7 +1,6 @@
 // Copyright (c) 2009-2013 Turbulenz Limited
 
-/*global WhichBrowser */
-/*exported BenchmarkResultsScreen */
+/*exported BenchmarkResultsScreen*/
 
 var BenchmarkResultsScreen = (function ()
 {
@@ -224,6 +223,7 @@ var BenchmarkResultsScreen = (function ()
             var rendererInfo = ', ' + benchmarkData.playback.playWidth + 'x' + benchmarkData.playback.playHeight +
                 '\n' + 'Renderer: ' + benchmarkData.hardware.renderer;
 
+            var WhichBrowser = window.WhichBrowser;
             if (WhichBrowser)
             {
                 var wb = new WhichBrowser();
