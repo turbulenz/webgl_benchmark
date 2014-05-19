@@ -77,7 +77,7 @@ SimpleFontRenderer.prototype =
         var textVerticalAlign = this.textVerticalAlign;
 
         params.spacing    = (inputParams.spacing !== undefined) ? inputParams.spacing : 0;
-        params.alignment  = (inputParams.alignment !== undefined) ? inputParams.alignment: textHorizontalAlign.TOP;
+        params.alignment  = (inputParams.alignment !== undefined) ? inputParams.alignment: textHorizontalAlign.CENTER;
         params.valignment = (inputParams.valignment !== undefined) ? inputParams.valignment: textVerticalAlign.MIDDLE;
 
         md.v4BuildOne(params.color);
@@ -126,37 +126,37 @@ SimpleFontRenderer.prototype =
         if (align === textHorizontalAlign.LEFT)
         {
             //Left edge should be on location
-            rect[0] =   x;
-            rect[2] =   textDimensions.width;
+            rect[0] =   Math.floor(x);
+            rect[2] =   Math.ceil(textDimensions.width);
         }
         else if (align === textHorizontalAlign.RIGHT)
         {
             //Right edge should be on location
-            rect[0] =   x   -   textDimensions.width;
-            rect[2] =   textDimensions.width;
+            rect[0] =   Math.floor(x   -   textDimensions.width);
+            rect[2] =   Math.ceil(textDimensions.width);
         }
         else //textHorizontalAlign.CENTER
         {
             //Mid x should be on location.
-            rect[0] =   x   -   textDimensions.width * 0.5;
-            rect[2] =   textDimensions.width;
+            rect[0] =   Math.floor(x   -   textDimensions.width * 0.5);
+            rect[2] =   Math.ceil(textDimensions.width);
         }
 
         if (valign === textVerticalAlign.TOP)
         {
             //Top edge should be on location.
-            rect[1] =   y;
-            rect[3] =   textDimensions.height;
+            rect[1] =   Math.floor(y);
+            rect[3] =   Math.ceil(textDimensions.height);
         }
         else if (valign === textVerticalAlign.BOTTOM)
         {
-            rect[1] =   y   -   textDimensions.height;
-            rect[3] =   textDimensions.height;
+            rect[1] =   Math.floor(y   -   textDimensions.height);
+            rect[3] =   Math.ceil(textDimensions.height);
         }
         else //textVerticalAlign.MIDDLE
         {
-            rect[1] =   y   -   textDimensions.height * 0.5;
-            rect[3] =   textDimensions.height;
+            rect[1] =   Math.floor(y   -   textDimensions.height * 0.5);
+            rect[3] =   Math.ceil(textDimensions.height);
         }
         return  rect;
     },
@@ -228,7 +228,7 @@ SimpleFontRenderer.prototype =
         {
             var sizeProduct       = scale * pointSize;
             var powerOf2          = Math.log(sizeProduct) / Math.LN2;
-            pointSize             = Math.pow(2, Math.round(powerOf2));
+            pointSize             = Math.pow(2, Math.ceil(powerOf2));
 
             pointSize             = Math.max(pointSize, this.fontSizeMax);
             pointSize             = Math.min(pointSize, this.fontSizeMin);

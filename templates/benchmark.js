@@ -10,6 +10,7 @@
 /*{{ javascript("scripts/benchmarkapp.js") }}*/
 /*{{ javascript("scripts/benchmarkgraph.js") }}*/
 /*{{ javascript("scripts/loadingscreen.js") }}*/
+/*{{ javascript("scripts/resultsscreen.js") }}*/
 /*{{ javascript("scripts/playbackcontroller.js") }}*/
 /*{{ javascript("scripts/config.js") }}*/
 /*{{ javascript("scripts/querystring.js") }}*/

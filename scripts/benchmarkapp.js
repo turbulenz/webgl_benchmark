@@ -4,6 +4,7 @@
 
 /*global TurbulenzEngine: false*/
 /*global BenchmarkLoadingScreen: false*/
+/*global BenchmarkResultsScreen: false*/
 /*global PlaybackController: false*/
 /*global Config: false*/
 /*global BenchmarkGraph: false*/
@@ -233,15 +234,10 @@ BenchmarkApp.prototype =
                         that.displayResults();
                         return;
                     }
-                    if (!that.formattedScores)
-                    {
-                        that.formattedScores = that._formatScores(that.playbackController.getScores());
-                    }
                     if (graphicsDevice.beginFrame())
                     {
                         graphicsDevice.clear(that.loadingColor);
-                        that.loadingScreen.render(1, 1);
-                        that.renderResults();
+                        that.resultsScreen.render(1, 1);
                         graphicsDevice.endFrame();
                     }
                 }
@@ -283,7 +279,6 @@ BenchmarkApp.prototype =
             else if (that.preloaded && metaResponse)
             {
                 // Clear font and progress rendering
-                that.loadingScreen.simplefonts = null;
                 that.loadingScreen.progress = null;
 
                 TurbulenzEngine.clearInterval(that.intervalID);
@@ -299,147 +294,6 @@ BenchmarkApp.prototype =
         }
 
         this.intervalID = TurbulenzEngine.setInterval(loadingUpdate, 1000 / 60);
-    },
-
-    _formatScores : function benchmarkAppFormatScoresFn(testScores)
-    {
-        var scorePanelWrapX = 3;
-        var scorePanelWidth = 1000;
-        var scorePerPanelHeight = 100;
-        var simplefonts = this.simplefonts;
-        var horizontalAlign = simplefonts.textHorizontalAlign.CENTER;
-        var verticalAlign = simplefonts.textVerticalAlign.MIDDLE;
-        var formattedScores = [];
-        var testScore, scoreText, testScoreInt;
-        var index = 0;
-
-        if (this.drawTestFonts)
-        {
-            var testFontSizes = [0.25, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 8.0, 10.0, 16.0];
-            var testFontY = -(scorePerPanelHeight * 0.5);
-            var testFontSize, length = testFontSizes.length;
-            for (var i = 0; i < length; i += 1)
-            {
-                testFontSize = testFontSizes[i];
-                formattedScores.push({
-                    text: "Font " + testFontSize,
-                    fontParams: {
-                        x: 0,
-                        y: testFontY,
-
-                        r: 1.0,
-                        g: 1.0,
-                        b: 1.0,
-
-                        alignment : simplefonts.textHorizontalAlign.LEFT,
-                        valignment : simplefonts.textVerticalAlign.TOP,
-
-                        scale: testFontSize,
-                        fontStyle: "regular"
-                    }
-                });
-                testFontY += 25;
-            }
-        }
-
-        for (var t in testScores)
-        {
-            if (testScores.hasOwnProperty(t))
-            {
-                testScore = testScores[t];
-                testScoreInt = Math.floor(testScore.score);
-
-                scoreText = testScoreInt + "";
-                if (testScore.completeRatio === 0.0)
-                {
-                    scoreText = "Not started";
-                }
-
-                formattedScores.push({
-                    text: testScore.name,
-                    fontParams: {
-                        x: ((scorePanelWidth / scorePanelWrapX) * (index % scorePanelWrapX)) + (scorePanelWidth * 0.5 / scorePanelWrapX) - (scorePanelWidth * 0.5),
-                        y: (scorePerPanelHeight * Math.floor(index / scorePanelWrapX)) + (scorePerPanelHeight * 0.5) - (scorePerPanelHeight / 3),
-
-                        r: 1.0,
-                        g: 1.0,
-                        b: 1.0,
-
-                        alignment : horizontalAlign,
-                        valignment : verticalAlign,
-
-                        scale: 2.0,
-                        fontStyle: "regular"
-                    }
-                });
-
-                formattedScores.push({
-                    text: scoreText,
-                    fontParams: {
-                        x: ((scorePanelWidth / scorePanelWrapX) * (index % scorePanelWrapX)) + (scorePanelWidth * 0.5 / scorePanelWrapX) - (scorePanelWidth * 0.5),
-                        y: (scorePerPanelHeight * Math.floor(index / scorePanelWrapX)) + (scorePerPanelHeight * 0.5),
-
-                        r: 1.0,
-                        g: 1.0,
-                        b: 1.0,
-
-                        alignment : horizontalAlign,
-                        valignment : verticalAlign,
-
-                        scale: 3.0,
-                        fontStyle: "regular"
-                    }
-                });
-                if (!testScore.complete)
-                {
-                    formattedScores.push({
-                        text: "(Incomplete, Accuracy: " + Math.floor(testScore.completeRatio * 100) + "%)",
-                        fontParams: {
-                            x: ((scorePanelWidth / scorePanelWrapX) * (index % scorePanelWrapX)) + (scorePanelWidth * 0.5 / scorePanelWrapX) - (scorePanelWidth * 0.5),
-                            y: (scorePerPanelHeight * Math.floor(index / scorePanelWrapX)) + (scorePerPanelHeight * 0.5) + (scorePerPanelHeight / 3),
-
-                            r: 1.0,
-                            g: 1.0,
-                            b: 1.0,
-
-                            alignment : horizontalAlign,
-                            valignment : verticalAlign,
-
-                            scale: 1.0,
-                            fontStyle: "regular"
-                        }
-                    });
-                }
-
-                index += 1;
-            }
-        }
-        return formattedScores;
-    },
-
-    renderResults : function benchmarkAppRenderResultsFn()
-    {
-        var formattedScores = this.formattedScores;
-        var formattedScore;
-        var simplefonts = this.simplefonts;
-        var length = formattedScores.length;
-
-        var graphicsDevice = this.graphicsDevice;
-
-        var centerX = graphicsDevice.width / 2;
-        var centerY = graphicsDevice.height / 2;
-
-        var scorePanelTop = centerY - 200;
-        for (var i = 0; i < length; i += 1)
-        {
-            formattedScore = formattedScores[i];
-            formattedScore.fontParams.x += centerX;
-            formattedScore.fontParams.y += scorePanelTop;
-            simplefonts.drawFont(formattedScore.text, formattedScore.fontParams);
-            formattedScore.fontParams.x -= centerX;
-            formattedScore.fontParams.y -= scorePanelTop;
-        }
-        simplefonts.render();
     },
 
     displayResults : function benchmarkAppDisplayResultsFn()
@@ -556,20 +410,23 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
         multisample = gl.getParameter(gl.SAMPLES);
     }
 
-    var mathDevice = benchmarkApp.mathDevice = TurbulenzEngine.createMathDevice({});
+    var mathDevice = TurbulenzEngine.createMathDevice({});
+    var inputDevice = TurbulenzEngine.createInputDevice({});
 
     var requestHandlerParameters = {};
-    var requestHandler = benchmarkApp.requestHandler = RequestHandler.create(requestHandlerParameters);
+    var requestHandler = RequestHandler.create(requestHandlerParameters);
+    benchmarkApp.requestHandler = requestHandler;
 
     var shaderManager = ShaderManager.create(graphicsDevice, requestHandler);
     var fontManager = FontManager.create(graphicsDevice, requestHandler);
     var textureManager = TextureManager.create(graphicsDevice, requestHandler);
 
     var fonts = {
-        regular: "avenirlight",
+        light: "avenirlight",
+        regular: "avenirmedium"
     };
 
-    globals.fontSizes = [8, 16, 32, 64, 128];
+    globals.fontSizes = [8, 16, 32, 64];
     globals.fonts = fonts;
     globals.mathDevice = mathDevice;
     globals.graphicsDevice = graphicsDevice;
@@ -637,13 +494,17 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
                 benchmarkApp.loadingScreen.setSimpleFonts(simplefonts);
                 benchmarkApp.loadingScreen.loadAndSetTexture(graphicsDevice, requestHandler, mappingTable, "textures/bench-bg.dds");
                 benchmarkApp.loadingScreen.loadAndSetImage(graphicsDevice, requestHandler, mappingTable, "textures/loading_text_sprite.dds");
+
+                benchmarkApp.resultsScreen.loadAssets(graphicsDevice, requestHandler, mappingTable);
             }
         }
     });
     benchmarkApp.playbackController.multisample = multisample;
     benchmarkApp.playbackController.antialias = antialias;
 
-    benchmarkApp.loadingScreen = BenchmarkLoadingScreen.create(graphicsDevice, mathDevice, {progress: 0, checkFontLoaded: true});
+    benchmarkApp.loadingScreen = BenchmarkLoadingScreen.create(graphicsDevice, mathDevice);
+    benchmarkApp.resultsScreen = BenchmarkResultsScreen.create(graphicsDevice, mathDevice, inputDevice,
+        benchmarkApp.playbackController, simplefonts);
 
     benchmarkApp.resultsID = "results";
 
@@ -654,8 +515,6 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
     benchmarkApp.intervalID = null;
 
     benchmarkApp.preloaded = false;
-
-    benchmarkApp.drawTestFonts = true; // Enable the debug drawing of the fonts on the score screen
 
     return benchmarkApp;
 };
