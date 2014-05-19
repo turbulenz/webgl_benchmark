@@ -6,17 +6,19 @@ import json
 import re
 import csv
 import calendar
+import posixpath
 
 from sys import argv
 from argparse import ArgumentParser
 from glob import glob
-from os import getcwd, makedirs, walk
+from os import getcwd, makedirs, walk, curdir, pardir
 from os.path import join as path_join, exists as path_exists, abspath, dirname, normpath, relpath
+from os.path import splitdrive as path_splitdrive, split as path_split, commonprefix as path_commonprefix
 from json import load as json_load, dumps as json_dumps
 from threading import Thread, BoundedSemaphore
 from shutil import rmtree, copy as shutil_copy, copytree as shutil_copytree
 
-from urllib2 import urlopen, HTTPError, URLError
+from urllib2 import urlopen, HTTPError, URLError, unquote
 from gzip import GzipFile
 from socket import error as socket_error
 from time import sleep
@@ -32,6 +34,8 @@ from runner.utils import simple_config, sh, CalledProcessError
 
 import urlparse
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from SimpleHTTPServer import SimpleHTTPRequestHandler
+from SocketServer import TCPServer
 
 
 (PWD, OS, _) = simple_config()
@@ -584,10 +588,14 @@ def copy_release():
             makedirs(dst_dir)
         shutil_copy(srcfile, dstfile)
 
-    shutil_copytree(path_join(ASSETS_PATH, 'staticmax'), path_join(STATIC_OUTPUT_PATH, 'staticmax'))
+    shutil_copytree(normpath('staticmax'), path_join(STATIC_OUTPUT_PATH, 'staticmax'))
 
+class ServerOptions:
+    def __init__(self, port = 8070, static = False):
+        self.port = port
+        self.static = static
 
-def start_server(output_path):
+def start_server(output_path, server_options):
 
     # This is a hack to patch slow socket.getfqdn calls that
     # BaseHTTPServer (and its subclasses) make.
@@ -690,10 +698,46 @@ def start_server(output_path):
             self.end_headers()
             self.wfile.write("<html><head><title>%s</title></head><body></body></html>" % SERVERNAME)
 
+    STATIC_ROUTES = (
+        ['data', abspath(path_join(getcwd(), 'data'))],
+        ['', output_path]
+    )
+
+    class StaticHTTPRequestHandler(SimpleHTTPRequestHandler):
+
+        def translate_path(self, path):
+            root = getcwd()
+            for pattern, rootdir in STATIC_ROUTES:
+                if path.startswith(pattern):
+                    path = path[len(pattern):]
+                    root = rootdir
+                    break;
+
+            path = path.split('?',1)[0]
+            path = path.split('#',1)[0]
+            path = posixpath.normpath(unquote(path))
+            words = path.split('/')
+            words = filter(None, words)
+
+            path = root
+            for word in words:
+                drive, word = path_splitdrive(word)
+                head, word = path_split(word)
+                if word in (curdir, pardir):
+                    continue
+                path = path_join(path, word)
+
+            return path
+
     print "Starting capture server: %s" % SERVERNAME
     info("Running in directory: %s" % output_path)
     try:
-        server = HTTPServer(('', 8070), RequestsSaveHandler)
+        server_handler = RequestsSaveHandler
+        server_class = HTTPServer
+        if server_options.static:
+            server_handler = StaticHTTPRequestHandler
+            server_class = TCPServer
+        server = server_class(('', server_options.port), server_handler)
         def run_server_thread(server):
             server.serve_forever()
 
@@ -733,7 +777,9 @@ def main():
         help="the name of the profile to launch the browser with if supported. On Firefox this is name of the" +
              " profile. On Chrome this the profile directory.")
     parser.add_argument("--copy-release", action='store_true',
-        help="copy the release build of the benchmark to the 'output' directory. This flag ignores other flags.")
+        help="copy the release build of the benchmark to the '%s' directory." % STATIC_OUTPUT_PATH)
+    parser.add_argument("--release", action='store_true',
+        help="run the release build of the benchmark server in the '%s' directory." % STATIC_OUTPUT_PATH)
 
     args = parser.parse_args(argv[1:])
 
@@ -745,13 +791,21 @@ def main():
         basicConfig(level=WARNING)
 
     if args.copy_release:
-        info("Copying release files to 'output' directory")
+        info("Copying release files to '%s' directory" % STATIC_OUTPUT_PATH)
         copy_release()
-        return
+        if not args.server:
+            return
 
     if args.server:
         info("Starting server only mode")
-        server = start_server(abspath('.'))
+        serve_dir = abspath('.')
+        if args.release:
+            server_options = ServerOptions(port = 8000, static = True)
+            serve_dir = abspath(STATIC_OUTPUT_PATH)
+        else:
+            server_options = ServerOptions()
+
+        server = start_server(serve_dir, server_options)
         if not server:
             print 'Address 127.0.0.1:8070 already in use'
             return
