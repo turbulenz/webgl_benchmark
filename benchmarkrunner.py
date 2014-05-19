@@ -9,11 +9,12 @@ import calendar
 
 from sys import argv
 from argparse import ArgumentParser
+from glob import glob
 from os import getcwd, makedirs, walk
-from os.path import join as path_join, exists as path_exists, abspath, dirname, normpath
+from os.path import join as path_join, exists as path_exists, abspath, dirname, normpath, relpath
 from json import load as json_load, dumps as json_dumps
 from threading import Thread, BoundedSemaphore
-from shutil import rmtree, copy as shutil_copy
+from shutil import rmtree, copy as shutil_copy, copytree as shutil_copytree
 
 from urllib2 import urlopen, HTTPError, URLError
 from gzip import GzipFile
@@ -51,6 +52,9 @@ STREAM_MAPPING_PATH = "assets/config/stream_mapping.json"
 CAPTURES_PATH = "capture/"
 ASSETS_PATH = "capture/"
 OUTPUT_PATH = "output/"
+
+STATIC_TEMPLATE_PATH = "templates/page/"
+STATIC_OUTPUT_PATH = "static_page/"
 
 DEFAULT_SEQUENCE_NAME = "Story"
 DEFAULT_CAPTURE_NAME = "story_high_particles"
@@ -99,17 +103,29 @@ SYSTEM_INFO_MAPPING_WIN = {
     'Processor(s)': ['processor']
 }
 
-RELEASE_FILES = [   "benchmark.canvas.js",
-                    "benchmark.canvas.release.html",
-                    "mapping_table.json",
-                    "img/favicon.ico",
-                    "img/logo.png",
-                    "img/sidebar-item.png",
-                    "img/titlebar.png",
-                    "css/base_template.css",
-                    "assets/config/stream_mapping.json",
-                    "assets/config/templates/online/results_template-default.json",
-                    "js/d3.v3/d3.v3.js" ]
+RELEASE_FILES = [
+    "benchmark.canvas.js",
+    "benchmark.canvas.release.html",
+    "mapping_table.json",
+    "img/favicon.ico",
+    "img/logo.png",
+    "img/sidebar-item.png",
+    "img/titlebar.png",
+    "css/base_template.css",
+    "assets/config/stream_mapping.json",
+    "assets/config/templates/online/results_template-default.json",
+    "js/d3.v3/d3.v3.js"
+]
+
+RELEASE_PAGE_FILES = [
+    "favicon.ico",
+    "favicon.ico.gz",
+    "index.html",
+    "css/*.css",
+    "font/*",
+    "img/*",
+    "js/*"
+]
 
 def mkdir(path, verbose=True):
     if verbose:
@@ -553,18 +569,28 @@ def download_assets(config_name="default", max_connections=20, force_download=Fa
 
 def copy_release():
 
-    if path_exists(OUTPUT_PATH):
-        rmtree(OUTPUT_PATH)
+    if path_exists(STATIC_OUTPUT_PATH):
+        rmtree(STATIC_OUTPUT_PATH)
 
-    mkdir(OUTPUT_PATH)
+    for pattern in RELEASE_PAGE_FILES:
+        for f in glob(path_join(STATIC_TEMPLATE_PATH, pattern)):
+            srcfile = normpath(f)
+            dstfile = normpath(path_join(STATIC_OUTPUT_PATH, relpath(f, STATIC_TEMPLATE_PATH)))
+            dst_dir = dirname(dstfile)
+            if dst_dir != "" and not path_exists(dst_dir):
+                makedirs(dst_dir)
+            shutil_copy(srcfile, dstfile)
 
     for f in RELEASE_FILES:
         srcfile = normpath(f)
-        dstfile = normpath(path_join(OUTPUT_PATH, f))
+        dstfile = normpath(path_join(STATIC_OUTPUT_PATH, f))
         dst_dir = dirname(dstfile)
         if dst_dir != "" and not path_exists(dst_dir):
             makedirs(dst_dir)
         shutil_copy(srcfile, dstfile)
+
+    shutil_copytree(path_join(ASSETS_PATH, 'staticmax'), path_join(STATIC_OUTPUT_PATH, 'staticmax'))
+
 
 def start_server(output_path):
 
