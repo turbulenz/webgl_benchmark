@@ -136,6 +136,10 @@ PlaybackController.prototype =
         var stats, maxFrameMs, minFrameMs, maxDispatchMs, minDispatchMs;
         testsActive.length = 0;
 
+        var playbackGraphicsDevice = this.playbackGraphicsDevice;
+        var playWidth = playbackGraphicsDevice.playWidth;
+        var playHeight = playbackGraphicsDevice.playHeight;
+
         var i, length;
 
         var msPerFrame = this.msPerFrame;
@@ -154,6 +158,7 @@ PlaybackController.prototype =
                     {
                         stats.startTime = (new Date().getTime());
                         stats.frameCount = 1;
+                        stats.startPixels = (playWidth > 0 && playHeight > 0) ? playWidth * playHeight: 0;
                         testRange.testStart = TurbulenzEngine.getTime();
                         testRange.started = true;
                     }
@@ -265,6 +270,7 @@ PlaybackController.prototype =
         var testsData = this.testsData;
         var testRanges = this.testRanges;
         var testRange, startFrame, endFrame, incompleteTest, framesProcessed, testData;
+        var validTest, avgPixelsPerProcessedFrame, startPixels;
         var t, i, length;
 
         var frameRate = 60;
@@ -273,9 +279,10 @@ PlaybackController.prototype =
         var scorePerSecond = maxScore / 12; // 2500pts for every 12 seconds of test
 
         var scorePerFrame = (scorePerSecond) / frameRate;
-        var totalMs, baseScore, targetMs, testScore;
+        var totalMs, baseScore, targetMs, testScore, totalPixels, stats;
 
         var msPerFrame = this.msPerFrame;
+        var pixelsPerFrame = this.pixelsPerFrame;
         var ignoreFrame = this.ignoreFrame;
         var testScores = {};
         for (t in testRanges)
@@ -283,11 +290,22 @@ PlaybackController.prototype =
             if (testRanges.hasOwnProperty(t))
             {
                 totalMs = 0;
+                totalPixels = 0;
                 testRange = testRanges[t];
                 startFrame = testRange.range[0];
                 endFrame = testRange.range[1];
                 length = endFrame - startFrame;
                 incompleteTest = false;
+                validTest = true;
+                stats = testRange.stats;
+                if (testRange.started)
+                {
+                    startPixels = stats.startPixels;
+                }
+                else
+                {
+                    startPixels = 0;
+                }
 
                 baseScore = scorePerFrame * length;
 
@@ -295,17 +313,18 @@ PlaybackController.prototype =
 
                 for (i = startFrame; i <= endFrame; i += 1)
                 {
-                    if (ignoreFrame[i] === 0)
+                    if (msPerFrame[i] !== undefined)
                     {
-                        if (msPerFrame[i] !== undefined)
+                        if (ignoreFrame[i] === 0)
                         {
                             totalMs += msPerFrame[i];
+                            totalPixels += pixelsPerFrame[i];
                             framesProcessed += 1;
                         }
-                        else
-                        {
-                            incompleteTest = true;
-                        }
+                    }
+                    else
+                    {
+                        incompleteTest = true;
                     }
                 }
 
@@ -313,6 +332,10 @@ PlaybackController.prototype =
 
                 if (totalMs > 0)
                 {
+                    avgPixelsPerProcessedFrame = totalPixels / framesProcessed;
+                    // The benchmark test has been re-sized during playback
+                    validTest = validTest && (startPixels === avgPixelsPerProcessedFrame);
+
                     testScore = baseScore * (targetMs / totalMs);
                     // Round to the nearest 10 (reducing the impact of random variation on the score)
                     testScore = ((testScore / 1000).toFixed(2) * 1000);
@@ -337,7 +360,9 @@ PlaybackController.prototype =
                 {
                     testScores[t].complete = false;
                     testScores[t].completeRatio = framesProcessed / length;
+                    validTest = false;
                 }
+                testScores[t].valid = validTest;
 
                 length = testsData.length;
                 for (i = 0; i < length; i += 1)
@@ -365,6 +390,7 @@ PlaybackController.prototype =
             {
                 subTestObj = testSubTestDict[t];
                 testData = subTestObj.testData;
+                validTest = true;
 
                 length = subTestObj.subTestList.length;
                 for (i = 0; i < length; i += 1)
@@ -377,6 +403,7 @@ PlaybackController.prototype =
                         totalRatio += scoreObj.completeRatio;
                         totalScore += scoreObj.score;
                         incompleteTest = !scoreObj.complete || incompleteTest;
+                        validTest = validTest && scoreObj.valid;
                     }
                     else
                     {
@@ -389,7 +416,8 @@ PlaybackController.prototype =
                     complete: !incompleteTest,
                     totalTimeMs: totalMs,
                     score: totalScore,
-                    completeRatio: totalRatio / length
+                    completeRatio: totalRatio / length,
+                    valid: validTest && !incompleteTest
                 };
                 testData.score = scoreObj;
                 testScores[testData.name] = scoreObj;
@@ -700,6 +728,9 @@ PlaybackController.prototype =
                 playbackGraphicsDevice.play(this.relativeFrameIndex);
                 var dispatchTime = TurbulenzEngine.getTime() - frameStart;
 
+                var playWidth = playbackGraphicsDevice.playWidth;
+                var playHeight = playbackGraphicsDevice.playHeight;
+
                 this._postFrame(((this.currentGroupIndex * this.numFramesPerGroup) + this.relativeFrameIndex));
 
                 var frameTime;
@@ -773,8 +804,8 @@ PlaybackController.prototype =
                     var resolutionElement = elements.resolution;
                     if (resolutionElement)
                     {
-                        resolutionElement.textContent = this.playbackGraphicsDevice.playWidth.toString() + ' x ' +
-                            this.playbackGraphicsDevice.playHeight.toString();
+                        resolutionElement.textContent = playWidth.toString() + ' x ' +
+                            playHeight.toString();
                     }
 
                     var frameIndexDelta;
@@ -785,6 +816,7 @@ PlaybackController.prototype =
                         this.msPerFrame[this.msPerFrame.length] = frameTime;
                         this.msDispatchPerFrame[this.msDispatchPerFrame.length] = dispatchTime;
                         this.ignoreFrame[this.ignoreFrame.length] = ignorePrevFrame ? 1: 0;
+                        this.pixelsPerFrame[this.pixelsPerFrame.length] = (playWidth > 0 && playHeight > 0) ? playWidth * playHeight: 0;
                         if (ignorePrevFrame)
                         {
                             // Ignore the next frame too
@@ -857,8 +889,8 @@ PlaybackController.prototype =
                             var playbackConfig = this.playbackConfig;
                             playbackConfig.canvasWidth = graphicsDevice.width;
                             playbackConfig.canvasHeight = graphicsDevice.height;
-                            playbackConfig.playWidth = this.playbackGraphicsDevice.playWidth;
-                            playbackConfig.playHeight = this.playbackGraphicsDevice.playHeight;
+                            playbackConfig.playWidth = playWidth;
+                            playbackConfig.playHeight = playHeight;
                             playbackConfig.multisample = this.multisample;
                             playbackConfig.antialias = this.antialias;
                             playbackConfig.fixedFrameRate = this.fixedFrameRate;
@@ -972,11 +1004,13 @@ PlaybackController.prototype =
             msDispatchPerFrame: [],
             averageMsPerFrame: [],
             averageMsPerDispatch: [],
-            ignoreFrame: []
+            ignoreFrame: [],
+            pixelsPerFrame: []
         };
-        var timingDataCSV = 'msPerFrame,msDispatchPerFrame,averageMsPerFrame,averageMsPerDispatch,ignoreFrame\n';
+        var timingDataCSV = 'msPerFrame,msDispatchPerFrame,averageMsPerFrame,averageMsPerDispatch,ignoreFrame,pixelsPerFrame\n';
         var msPerFrame = this.msPerFrame;
         var ignoreFrame = this.ignoreFrame;
+        var pixelsPerFrame = this.pixelsPerFrame;
         if (msPerFrame.length > 0)
         {
             var msDispatchPerFrame = this.msDispatchPerFrame;
@@ -1051,6 +1085,7 @@ PlaybackController.prototype =
                                     averageFrameMs + ',' +
                                     averageDispatchMs + ',' +
                                     ignoreFrame[i] +
+                                    pixelsPerFrame[i] +
                                     '\n';
                 timingData.averageMsPerFrame.push(averageFrameMs);
                 timingData.averageMsPerDispatch.push(averageDispatchMs);
@@ -1069,6 +1104,7 @@ PlaybackController.prototype =
             timingData.msPerFrame = this.msPerFrame;
             timingData.msDispatchPerFrame = this.msDispatchPerFrame;
             timingData.ignoreFrame = this.ignoreFrame;
+            timingData.pixelsPerFrame = this.pixelsPerFrame;
 
             resultsData.timing = {
                 csv: timingDataCSV,
@@ -1078,6 +1114,7 @@ PlaybackController.prototype =
             this.msPerFrame = [];
             this.msDispatchPerFrame = [];
             this.ignoreFrame = [];
+            this.pixelsPerFrame = [];
 
             var metricsData = {};
             var metricsPerFrame = this.metricsPerFrame;
@@ -1526,6 +1563,7 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
     playbackController.msPerFrame = [];
     playbackController.msDispatchPerFrame = [];
     playbackController.ignoreFrame = [];
+    playbackController.pixelsPerFrame = [];
     playbackController.testRanges = {};
     playbackController.testsActive = [];
     playbackController.requestInit = false;
