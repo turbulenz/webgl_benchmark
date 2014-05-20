@@ -156,7 +156,7 @@ var BenchmarkResultsScreen = (function ()
 
     BenchmarkResultsScreen.prototype.onmouseup = function (button, x, y)
     {
-        var i = 0, inBox, box;
+        var i, inBox, box;
         var clickTarget = { priority: -100, onClick: function () {} };
         if (button === this.id.mouseCodes.BUTTON_0)
         {
@@ -174,24 +174,21 @@ var BenchmarkResultsScreen = (function ()
         }
     };
 
+    BenchmarkResultsScreen.prototype.onmouseover = function (x, y)
+    {
+        this.mouseX = x;
+        this.mouseY = y;
+    };
+
     BenchmarkResultsScreen.prototype.formatMeta = function ()
     {
         var that = this;
-
         if (!this.testScores.length)
         {
-            var testScores = this.playbackController.getScores();
-
-            for (var t in testScores)
-            {
-                if (testScores.hasOwnProperty(t))
-                {
-                    this.testScores.push(testScores[t]);
-                }
-            }
+            this.testScores = this.playbackController.getScores();
         }
 
-        if (!this.settingsString)
+        if (!this.settingsLines.length)
         {
             var benchmarkData = this.playbackController.processData().userData.config;
             var configString = "";
@@ -217,11 +214,11 @@ var BenchmarkResultsScreen = (function ()
                 configString = "";
             }
 
-            this.settingsString = configString;
-            this.browserConfig = "Fetching browser data...";
+            this.settingsLines = this.wrap(configString, this.fontParams.config, this.configBoxWidth);
+            this.browserLines = ["Fetching browser data..."];
 
             var rendererInfo = ', ' + benchmarkData.playback.playWidth + 'x' + benchmarkData.playback.playHeight +
-                '\n' + 'Renderer: ' + benchmarkData.hardware.renderer;
+                '\n' + 'Renderer: ' + (benchmarkData.hardware.renderer || 'Unknown');
 
             var WhichBrowser = window.WhichBrowser;
             if (WhichBrowser)
@@ -248,12 +245,12 @@ var BenchmarkResultsScreen = (function ()
                     {
                         content += ' ' + info.browser.version.value;
                     }
-                    that.browserConfig = content + rendererInfo;
+                    that.browserLines = that.wrap(content + rendererInfo, that.fontParams.config, that.configBoxWidth);
                 });
             }
             else
             {
-                that.browserConfig = "Unknown browser" + rendererInfo;
+                this.browserLines = this.wrap("Unknown browser" + rendererInfo, this.fontParams.config, this.configBoxWidth);
             }
         }
     };
@@ -352,8 +349,6 @@ var BenchmarkResultsScreen = (function ()
         }
 
         this.formatMeta();
-        var browserDataLines = this.wrap(this.browserConfig, this.fontParams.config, 600);
-        var runDataLines = this.wrap(this.settingsString, this.fontParams.config, 600);
 
         gd.clear(this.backgroundColor);
 
@@ -380,7 +375,7 @@ var BenchmarkResultsScreen = (function ()
         heights.push(this.textureParams.heading.diffuse.height + margin);
         heights.push((gridHeight * 2) + margin);
         fontParams = this.fontParams.config;
-        heights.push(((1 + browserDataLines.length + runDataLines.length) * (baseFontHeight * fontParams.scale)) + 40);
+        heights.push(((1 + this.browserLines.length + this.settingsLines.length) * (baseFontHeight * fontParams.scale)) + 40);
         heights.push(this.textureParams.buttons.diffuse.height);
 
         for (i = 0; i < heights.length; i += 1)
@@ -405,6 +400,10 @@ var BenchmarkResultsScreen = (function ()
                 top = yLocation;
                 bottom = top + (2 * gridHeight) - gutterWidth;
                 this.renderRectangle(this.hilightBackground, left, right, top, bottom);
+                this.infoHitbox.left = left;
+                this.infoHitbox.right = right;
+                this.infoHitbox.top = top;
+                this.infoHitbox.bottom = bottom;
                 top += gridHeight / 2;
             }
             else
@@ -439,11 +438,6 @@ var BenchmarkResultsScreen = (function ()
         if (this.textureParams.info)
         {
             this.renderImage(this.textureParams.info, centerx + 260, yLocation + (gridHeight / 2) + 20);
-
-            this.infoHitbox.left = centerx + 250;
-            this.infoHitbox.right = centerx + 270;
-            this.infoHitbox.top = yLocation + (gridHeight / 2) + 20;
-            this.infoHitbox.bottom = yLocation + (gridHeight / 2) + 40;
         }
         yLocation += heights.shift();
 
@@ -454,28 +448,17 @@ var BenchmarkResultsScreen = (function ()
         fontParams.y = yLocation + 10;
         this.simplefonts.drawFont("CONFIGURATION", fontParams);
         fontParams.y += (baseFontHeight * fontParams.scale) + 5;
-        this.simplefonts.drawFont(browserDataLines.join('\n'), fontParams);
-        fontParams.y += (browserDataLines.length * baseFontHeight * fontParams.scale) + 5;
-        this.simplefonts.drawFont(runDataLines.join('\n'), fontParams);
+        this.simplefonts.drawFont(this.browserLines.join('\n'), fontParams);
+        fontParams.y += (this.browserLines.length * baseFontHeight * fontParams.scale) + 5;
+        this.simplefonts.drawFont(this.settingsLines.join('\n'), fontParams);
         yLocation += heights.shift();
 
         if (this.textureParams.buttons)
         {
             this.renderImage(this.textureParams.buttons, centerx, yLocation);
-            this.twitterHitbox.left = centerx + 112;
-            this.twitterHitbox.right = centerx + 144;
-            this.twitterHitbox.top = yLocation;
-            this.twitterHitbox.bottom = yLocation + 32;
-
-            this.restartHitbox.left = centerx - 145;
-            this.restartHitbox.right = centerx + 145;
-            this.restartHitbox.top = yLocation + 60;
-            this.restartHitbox.bottom = yLocation + 128;
-
-            this.playHitbox.left = centerx - 145;
-            this.playHitbox.right = centerx + 145;
-            this.playHitbox.top = yLocation + 144;
-            this.playHitbox.bottom = yLocation + 210;
+            this.twitterHitbox.update(centerx, yLocation);
+            this.restartHitbox.update(centerx, yLocation);
+            this.playHitbox.update(centerx, yLocation);
         }
 
         this.simplefonts.render();
@@ -492,15 +475,8 @@ var BenchmarkResultsScreen = (function ()
                 this.renderImage(this.textureParams.modal, centerx,
                     centery - (this.textureParams.modal.diffuse.height / 2));
 
-                this.modalHitbox.left = centerx - this.modalHitbox.halfWidth;
-                this.modalHitbox.right = centerx + this.modalHitbox.halfWidth;
-                this.modalHitbox.top = centery - this.modalHitbox.halfHeight;
-                this.modalHitbox.bottom = centery + this.modalHitbox.halfHeight;
-
-                this.closeModalHitbox.left = centerx + 260;
-                this.closeModalHitbox.right = centerx + 290;
-                this.closeModalHitbox.top = centery - 160;
-                this.closeModalHitbox.bottom = centery - 130;
+                this.modalHitbox.update(centerx, centery);
+                this.closeModalHitbox.update(centerx, centery);
             }
 
             this.hitBoxes = [ this.modalBackgroundHitbox,
@@ -514,6 +490,49 @@ var BenchmarkResultsScreen = (function ()
                              this.restartHitbox,
                              this.infoHitbox];
         }
+
+        this.updateCursor();
+    };
+
+    BenchmarkResultsScreen.prototype.updateCursor = function ()
+    {
+        var inBox = false;
+        var clickTarget = { priority: -100, cursor: 'default' };
+        var element = TurbulenzEngine.canvas;
+        var x = this.mouseX;
+        var y = this.mouseY;
+        var i, box;
+
+        for (i = 0; i < this.hitBoxes.length; i += 1)
+        {
+            box = this.hitBoxes[i];
+            inBox = (x > box.left) && (x < box.right) && (y > box.top) && (y < box.bottom);
+            if (inBox && (box.priority > clickTarget.priority))
+            {
+                clickTarget = box;
+            }
+        }
+
+        if (element)
+        {
+            element.style.cursor = clickTarget.cursor;
+        }
+
+        if (this.renderHitboxes)
+        {
+            for (i = 0 ; i < this.hitBoxes.length; i += 1)
+            {
+                box = this.hitBoxes[i];
+                if (box !== clickTarget)
+                {
+                    this.renderRectangle(this.darkBackground, box.left, box.right, box.top, box.bottom);
+                }
+                else
+                {
+                    this.renderRectangle(this.debugBackground, box.left, box.right, box.top, box.bottom);
+                }
+            }
+        }
     };
 
     BenchmarkResultsScreen.create = function create(gd, md, id, playbackController, simplefonts)
@@ -524,6 +543,7 @@ var BenchmarkResultsScreen = (function ()
         f.id = id;
 
         id.addEventListener('mouseup', function (button, x, y) { f.onmouseup(button, x, y); });
+        id.addEventListener('mouseover', function (x, y) { f.onmouseover(x, y); });
 
         f.clipSpace = md.v4Build(1.0, 1.0, -1.0, 1.0);
 
@@ -545,9 +565,13 @@ var BenchmarkResultsScreen = (function ()
         f.hilightBackground = gd.createTechniqueParameters();
         f.hilightBackground.color = md.v4Build(0.0, 0.8, 0.8, 1.0);
 
+        f.debugBackground = gd.createTechniqueParameters();
+        f.debugBackground.color = md.v4Build(1.0, 0.0, 0.0, 0.5);
+        f.renderHitboxes = false;
+
         f.playbackController = playbackController;
-        f.settingsString = "";
-        f.browserConfig = "Unknown browser\nUnknown renderer";
+        f.settingsLines = [];
+        f.browserLines = ["Unknown browser", "Unknown renderer"];
         f.testScores = [];
 
         f.textureTechnique = null;
@@ -570,8 +594,11 @@ var BenchmarkResultsScreen = (function ()
         f.loadingAssets = 5;
 
         // UI FUNCTIONALITY
+        f.mouseX = 0;
+        f.mouseY = 0;
+        f.configBoxWidth = 600;
         f.renderModal = false;
-        var makeHitbox = function (priority, onClick, halfWidth, halfHeight)
+        var makeHitbox = function (priority, onClick, width, height, offsetx, offsety)
         {
             return {
                 priority: priority,
@@ -579,17 +606,26 @@ var BenchmarkResultsScreen = (function ()
                 bottom: 0,
                 left: 0,
                 right: 0,
-                halfWidth: halfWidth || 0,
-                halfHeight: halfHeight || 0,
-                onClick: onClick
+                onClick: onClick,
+                offsetx: offsetx || 0,
+                offsety: offsety || 0,
+                halfwidth: (width / 2) || 0,
+                height: height || 0,
+                cursor: 'pointer',
+                update: function (x, y)
+                {
+                    this.left = x + this.offsetx - this.halfwidth;
+                    this.right = this.left + (2 * this.halfwidth);
+                    this.top = y + this.offsety;
+                    this.bottom = this.top + this.height;
+                }
             };
         };
 
-        f.playHitbox = makeHitbox(1, function () { window.open('http://ga.me/games/polycraft', '_blank'); });
         f.twitterHitbox = makeHitbox(1, function ()
         {
             var width = 550;
-            var height = 270;
+            var height = 320;
             var left = window.screenLeft + ((window.outerWidth - width) / 2);
             var top = window.screenTop + ((window.outerHeight - height) / 2);
             var opts = 'status=1' +
@@ -599,15 +635,18 @@ var BenchmarkResultsScreen = (function ()
                 ',left=' + left;
 
             window.open('http://twitter.com/intent/tweet?' +
-                'text=' + encodeURIComponent('I got ' + Math.floor(f.testScores[4].score) + ' on polycraft.gl') +
-                '&url=' + encodeURIComponent('http://polycraft.gl') +
-                '&hashtags=' + encodeURIComponent('html5,webgl,turbulenz'), 'intent', opts);
-        });
-        f.restartHitbox = makeHitbox(1, function () { window.location.reload(); });
+                'text=' + encodeURIComponent('My device scored ' + Math.floor(f.testScores[4].score) + ' running the ' +
+                'polycraft.gl #webgl benchmark. Try it at http://polycraft.gl powered by @turbulenz') +
+                '&suggest=' + encodeURIComponent('turbulenz'), 'intent', opts);
+        }, 290, 32);
+        f.playHitbox = makeHitbox(1, function () { window.open('http://ga.me/games/polycraft', '_blank'); }, 290, 70, 0,
+            142);
+        f.restartHitbox = makeHitbox(1, function () { window.location.reload(); }, 290, 70, 0, 60);
         f.infoHitbox = makeHitbox(1, function () { f.renderModal = true; });
         f.modalBackgroundHitbox = makeHitbox(100, function () { f.renderModal = false; });
-        f.modalHitbox = makeHitbox(101, function () { }, 314, 180);
-        f.closeModalHitbox = makeHitbox(102, function () { f.renderModal = false; });
+        f.modalHitbox = makeHitbox(101, function () { }, 628, 360, 0, -180);
+        f.modalHitbox.cursor = 'default';
+        f.closeModalHitbox = makeHitbox(102, function () { f.renderModal = false; }, 30, 30, 275, -160);
         f.hitBoxes = [];
 
         //FONT RENDERING

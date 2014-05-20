@@ -7,8 +7,6 @@
 /*global UserDataManager: false*/
 /*global TurbulenzServices: false*/
 /*global Utilities: false*/
-/*global FontManager: false*/
-/*global ShaderManager: false*/
 
 function PlaybackController() {}
 
@@ -136,7 +134,7 @@ PlaybackController.prototype =
         var stats, maxFrameMs, minFrameMs, maxDispatchMs, minDispatchMs;
         testsActive.length = 0;
 
-        var i, length;
+        var i;
 
         var msPerFrame = this.msPerFrame;
         var msDispatchPerFrame = this.msDispatchPerFrame;
@@ -227,36 +225,63 @@ PlaybackController.prototype =
             }
         }
 
-        var textParameters = this.textParameters;
-        var font = this.font;
-        var rect = textParameters.rect;
-        if (!font)
+        if (this.simplefonts.hasLoaded())
         {
-            font = this.font = this.fontManager.get(this.fontName);
-        }
-        textParameters.scale = 1.0;
+            var gd = this.graphicsDevice;
+            gd.setScissor(0, 0, gd.width, gd.height);
+            gd.setViewport(0, 0, gd.width, gd.height);
 
-        var textTechniqueParameters = this.textTechniqueParameters;
-        var graphicsDevice = this.graphicsDevice;
-        graphicsDevice.setScissor(0, 0, graphicsDevice.width, graphicsDevice.height);
-        graphicsDevice.setViewport(0, 0, graphicsDevice.width, graphicsDevice.height);
-        graphicsDevice.setTechnique(this.textTechnique);
-        this.mathDevice.v4Build(2 / graphicsDevice.width, -2 / graphicsDevice.height,
-                                -1, 1,
-                                textTechniqueParameters.clipSpace);
-        graphicsDevice.setTechniqueParameters(textTechniqueParameters);
+            var pd = this.playbackGraphicsDevice;
+            var left = Math.max((gd.width - pd.playWidth) / 2, 0);
+            var bottom = Math.min(pd.playHeight + ((gd.height - pd.playHeight) / 2), gd.height);
 
-        length = testsActive.length;
-        var text, textDimensions;
-        for (i = 0; i < length; i += 1)
-        {
-            text = testsActive[i];
-            textDimensions = this.textDimensions = font.calculateTextDimensions(text, 1, 0, 0, this.textDimensions);
-            rect[0] = 10;
-            rect[1] = graphicsDevice.height - ((i + 1) * textDimensions.height) - 10;
-            rect[2] = textDimensions.width;
-            rect[3] = textDimensions.height;
-            font.drawTextRect(text, textParameters);
+            var fontParams = this.fontParams.heading;
+            fontParams.x = left + 20;
+            fontParams.y = bottom - 72;
+            if (!this.heading)
+            {
+                this.heading = 'POLYCRAFT.GL';
+                if (this.resultsTemplateData && this.resultsTemplateData.config.benchmark.version)
+                {
+                    this.heading += '\nVersion ' + this.resultsTemplateData.config.benchmark.version;
+                }
+            }
+            this.simplefonts.drawFont(this.heading, fontParams);
+
+            if (testsActive.length)
+            {
+                var postFix = '';
+                if (this.testsData.length)
+                {
+                    var testList = this.testSubTestDict[this.testsData[0].id].subTestList;
+                    var testCount = testList.length;
+                    for (i = 0 ; i < testCount; i += 1)
+                    {
+                        if (testRanges[testList[i].name].name === testsActive[0])
+                        {
+                            postFix = ' ( ' + (i + 1) + ' of ' + testCount + ' )';
+                            break;
+                        }
+                    }
+                }
+
+                fontParams = this.fontParams.text;
+                fontParams.x = left + 20;
+                fontParams.y = bottom - 55;
+                this.simplefonts.drawFont(testsActive[0].toUpperCase() + postFix, fontParams);
+            }
+
+            fontParams = this.fontParams.fps;
+            fontParams.x = left + 20;
+            fontParams.y = bottom - 20;
+            this.simplefonts.drawFont("" + Math.floor(this.fps), fontParams);
+
+            fontParams = this.fontParams.text;
+            fontParams.x = left + 54;
+            fontParams.y = bottom - 24;
+            this.simplefonts.drawFont("FPS", fontParams);
+
+            this.simplefonts.render();
         }
     },
 
@@ -274,10 +299,11 @@ PlaybackController.prototype =
 
         var scorePerFrame = (scorePerSecond) / frameRate;
         var totalMs, baseScore, targetMs, testScore;
+        var scoreObj;
 
         var msPerFrame = this.msPerFrame;
         var ignoreFrame = this.ignoreFrame;
-        var testScores = {};
+        this.testScores = {};
         for (t in testRanges)
         {
             if (testRanges.hasOwnProperty(t))
@@ -326,7 +352,7 @@ PlaybackController.prototype =
                     testScore = 0;
                 }
 
-                testScores[t] = {
+                scoreObj = {
                     name: testRange.name,
                     complete: true,
                     totalTimeMs: totalMs,
@@ -335,8 +361,8 @@ PlaybackController.prototype =
                 };
                 if (incompleteTest)
                 {
-                    testScores[t].complete = false;
-                    testScores[t].completeRatio = framesProcessed / length;
+                    scoreObj.complete = false;
+                    scoreObj.completeRatio = framesProcessed / length;
                 }
 
                 length = testsData.length;
@@ -345,7 +371,7 @@ PlaybackController.prototype =
                     testData = testsData[i];
                     if (testData.name === t)
                     {
-                        testData.score = testScores[t];
+                        testData.score = scoreObj;
                     }
                 }
             }
@@ -354,9 +380,9 @@ PlaybackController.prototype =
         // Process scores from subTests
         var subTestObj, subTestDataObj;
         var testSubTestDict = this.testSubTestDict;
-        var scoreObj;
         var totalScore = 0;
         var totalRatio = 0;
+        var perTestScores;
         totalMs = 0;
         incompleteTest = false;
         for (t in testSubTestDict)
@@ -365,6 +391,7 @@ PlaybackController.prototype =
             {
                 subTestObj = testSubTestDict[t];
                 testData = subTestObj.testData;
+                perTestScores = [];
 
                 length = subTestObj.subTestList.length;
                 for (i = 0; i < length; i += 1)
@@ -377,6 +404,7 @@ PlaybackController.prototype =
                         totalRatio += scoreObj.completeRatio;
                         totalScore += scoreObj.score;
                         incompleteTest = !scoreObj.complete || incompleteTest;
+                        perTestScores.push(scoreObj);
                     }
                     else
                     {
@@ -392,10 +420,10 @@ PlaybackController.prototype =
                     completeRatio: totalRatio / length
                 };
                 testData.score = scoreObj;
-                testScores[testData.name] = scoreObj;
+                perTestScores.push(scoreObj);
+                this.testScores[testData.name] = perTestScores;
             }
         }
-        this.testScores = testScores;
     },
 
     _processSequenceList: function playbackcontrollerProcessSequenceList(sequenceList)
@@ -618,7 +646,7 @@ PlaybackController.prototype =
 
     getLoadingProgress : function playbackcontrollerGetLoadingProgressFn()
     {
-        return (this.numCaptureDataLoaded + this.numAppResourcesLoaded) / (this.numCaptureData + this.numAppResources);
+        return this.numCaptureDataLoaded / this.numCaptureData;
     },
 
     pause : function playbackcontrollerPauseFn()
@@ -739,6 +767,8 @@ PlaybackController.prototype =
                     var recordingTime = (TurbulenzEngine.getTime() - this.playbackStart) / 1000;
                     var elements = this.elements;
 
+                    this.fps = this.framesRendered / recordingTime;
+
                     var averageFrameTimeElement = elements.averageFrameTime;
                     if (averageFrameTimeElement)
                     {
@@ -760,7 +790,7 @@ PlaybackController.prototype =
                     var averageFpsElement = elements.averageFps;
                     if (averageFpsElement)
                     {
-                        averageFpsElement.textContent = (this.framesRendered / recordingTime).toFixed(2);
+                        averageFpsElement.textContent = (this.fps).toFixed(2);
                     }
 
                     var frameNumberElement = elements.frameNumber;
@@ -1132,9 +1162,10 @@ PlaybackController.prototype =
         return this.resultsData;
     },
 
-    getScores : function playbackControllerGetScoresFn()
+    getScores : function playbackControllerGetScoresFn(testId)
     {
-        return this.testScores;
+        testId = testId || this.testsData[0].name;
+        return this.testScores[testId];
     },
 
     loadResults : function playbackControllerloadResultsFn(resultLoadedCallback)
@@ -1464,8 +1495,7 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
     var mathDevice = playbackController.mathDevice = params.mathDevice;
     var graphicsDevice = playbackController.graphicsDevice = params.graphicsDevice;
     var requestHandler = playbackController.requestHandler = params.requestHandler;
-    var shaderManager = playbackController.shaderManager = params.shaderManager || ShaderManager.create(graphicsDevice, requestHandler);
-    var fontManager = playbackController.fontManager = params.fontManager || FontManager.create(graphicsDevice, requestHandler);
+    var simplefonts = params.simplefonts;
     var elements = params.elements;
     playbackController.config = config;
 
@@ -1502,14 +1532,11 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
     playbackController.numCaptureData = 0;
     playbackController.numCaptureDataLoaded = 0;
 
-    playbackController.numAppResources = 0;
-    playbackController.numAppResourcesLoaded = 0;
-    playbackController.loadingAppResources = true;
-
     playbackController.previousFrameTime = 0;
     playbackController.atEnd = false;
 
     playbackController.elements = elements;
+    playbackController.fps = 0;
     playbackController.framesRenderedElement = elements.framesRendered;
     playbackController.timeElement = elements.time;
     playbackController.frameTimeElement = elements.frameTime;
@@ -1554,19 +1581,8 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
     playbackController.playbackConfig = {};
     playbackController.streamMeta = {};
     playbackController.sequenceList = [];
-    playbackController.fontName = "fonts/avenirmedium-32.fnt";
-    playbackController.fontShaderName = "shaders/font.cgfx";
-    playbackController.textTechnique = null;
-    playbackController.textTechniqueParameters = null;
-    playbackController.textTechniqueName = "font";
-    playbackController.textTechniqueParameters = graphicsDevice.createTechniqueParameters({
-        clipSpace : mathDevice.v4BuildZero(),
-        alphaRef : 0.01,
-        color : mathDevice.v4BuildOne()
-    });
-    playbackController.textParameters = {
-        rect: [0, 0, 10, 10]
-    };
+
+    playbackController.simplefonts = simplefonts;
 
     playbackController.resultsData = {};
     playbackController.dataProcessed = false;
@@ -1581,6 +1597,29 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
 
     playbackController.mappingTable = null;
     playbackController.mappingTableCallbackFn = params.mappingTableCallback;
+
+    playbackController.heading = '';
+    playbackController.fontParams = {
+        text: {
+            scale: 1,
+            fontStyle: "light",
+            valignment: simplefonts.textVerticalAlign.BOTTOM,
+            alignment: simplefonts.textHorizontalAlign.LEFT
+        },
+        fps: {
+            scale: 2,
+            spacing: 2,
+            fontStyle: "light",
+            valignment: simplefonts.textVerticalAlign.BOTTOM,
+            alignment: simplefonts.textHorizontalAlign.LEFT
+        },
+        heading: {
+            color: mathDevice.v4Build(1, 1, 1, 0.5),
+            scale: 1,
+            valignment: simplefonts.textVerticalAlign.BOTTOM,
+            alignment: simplefonts.textHorizontalAlign.LEFT
+        }
+    };
 
     var mappingTableErrorFn = function mappingTableErrorFn()
     {
@@ -1628,33 +1667,6 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
                 return;
             }
         }
-
-        fontManager.setPathRemapping(mappingTable.urlMapping, mappingTable.assetPrefix);
-        fontManager.load(playbackController.fontName, function onloadFn(/*font*/) {
-            playbackController.numAppResourcesLoaded += 1;
-
-            if (playbackController.numAppResourcesLoaded - playbackController.numAppResources === 0)
-            {
-                playbackController.loadingAppResources = false;
-            }
-        });
-        playbackController.numAppResources += fontManager.getNumPendingFonts();
-
-        shaderManager.setPathRemapping(mappingTable.urlMapping, mappingTable.assetPrefix);
-        shaderManager.load(playbackController.fontShaderName, function onLoadFn(shader) {
-            playbackController.numAppResourcesLoaded += 1;
-
-            if (shader)
-            {
-                playbackController.textTechnique = shader.getTechnique(playbackController.textTechniqueName);
-            }
-
-            if (playbackController.numAppResourcesLoaded - playbackController.numAppResources === 0)
-            {
-                playbackController.loadingAppResources = false;
-            }
-        });
-        playbackController.numAppResources += 1;
 
         var templateRequest = playbackController.prefixTemplatesURL + playbackController.config.resultsTemplate + '.json';
 

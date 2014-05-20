@@ -270,7 +270,7 @@ BenchmarkApp.prototype =
                 that.preloaded = that.loadingScreen.hasLoaded();
             }
 
-            if (that.preloaded && (playbackController.addingResources || playbackController.loadingResources || playbackController.loadingTemplates || playbackController.loadingAppResources))
+            if (that.preloaded && (playbackController.addingResources || playbackController.loadingResources || playbackController.loadingTemplates))
             {
                 playbackController.update();
                 var progress = playbackController.getLoadingProgress();
@@ -428,6 +428,7 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
 
     globals.fontSizes = [8, 16, 32, 64];
     globals.fonts = fonts;
+    globals.preload = true;
     globals.mathDevice = mathDevice;
     globals.graphicsDevice = graphicsDevice;
     globals.requestHandler = requestHandler;
@@ -486,10 +487,13 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
         prefixCaptureURL: prefixCaptureURL,
         prefixAssetURL: prefixAssetURL,
         prefixTemplatesURL: prefixTemplatesURL,
+        simplefonts: simplefonts,
         mappingTableCallback: function (mappingTable) {
             //TODO: Do mapping table loading in benchmarkapp. Now required globally.
             if (mappingTable)
             {
+                fontManager.setPathRemapping(mappingTable.urlMapping, mappingTable.assetPrefix);
+                shaderManager.setPathRemapping(mappingTable.urlMapping, mappingTable.assetPrefix);
                 simplefonts.preload();
                 benchmarkApp.loadingScreen.setSimpleFonts(simplefonts);
                 benchmarkApp.loadingScreen.loadAndSetTexture(graphicsDevice, requestHandler, mappingTable, "textures/bench-bg.dds");
