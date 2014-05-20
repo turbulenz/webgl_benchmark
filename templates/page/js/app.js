@@ -43,8 +43,8 @@ $(function () {
     });
 
 
-    // attach specific modal functions to screenshot-modals
 
+    // attach specific modal functions to screenshot-modals
     var $screenshotModal = $('#screenshot-modal');
     $('.screenshot').each(function (index, element) {
 
@@ -61,11 +61,47 @@ $(function () {
     });
 
 
-    // attach specific modal functions to info-modal
 
+    // attach specific modal functions to info-modal
     $('#read-more-link').click(function () {
         $('#info-modal')[0].showModal();
     });
+
+
+    var _gaq = window._gaq;
+
+    // add tracking functions for the page's links
+    $('.footer-links a').click(function (event) {
+        _gaq.push([ '_trackEvent', 'footerLinkClicked', $(event.currentTarget).attr('href') ]);
+    });
+
+    $('.screenshots a').click(function (event) {
+        var $target = $(event.currentTarget);
+        _gaq.push([ '_trackEvent', 'screenshotClicked', $target.css('background-image') ]);
+    });
+
+    $('#home-icon').click(function () {
+        _gaq.push([ '_trackEvent', 'homeIconClicked' ]);
+    });
+
+    $('#read-more-link').click(function () {
+        _gaq.push([ '_trackEvent', 'readMoreLinkClicked' ]);
+    });
+
+    $('#start-test').click(function () {
+        _gaq.push([ '_trackEvent', 'testStarted' ]);
+    });
+
+    $('#play-game').click(function () {
+        _gaq.push([ '_trackEvent', 'linkedToGame' ]);
+    });
+
+
+    // set up google analytics
+    _gaq.push([ '_setAccount', 'UA-51179324-1' ]);
+    _gaq.push([ '_setDomainName', window.location.origin ]);
+    _gaq.push([ '_trackPageview' ]);
+    _gaq.push([ '_trackEvent', 'referrer', document.referrer ]);
 
 });
 

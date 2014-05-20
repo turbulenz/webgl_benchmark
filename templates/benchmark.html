@@ -7,6 +7,24 @@
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
     <script type="text/javascript" src="js/d3.v3/d3.v3.js"></script>
     <script type="text/javascript" src="js/whichbrowser-js-min.js"></script>
+
+    <script type="text/javascript">
+        var _gaq = _gaq || [];
+        (function() {
+            var ga = document.createElement('script');
+            ga.type = 'text/javascript';
+            ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(ga, s);
+        })();
+        _gaq.push([ '_setAccount', 'UA-51179324-1' ]);
+        _gaq.push([ '_setDomainName', window.location.origin ]);
+        _gaq.push([ '_trackPageview' ]);
+        _gaq.push([ '_trackEvent', 'referrer', document.referrer ]);
+    </script>
+
     <style>
         #engine {
             background: #fff;

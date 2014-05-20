@@ -259,6 +259,7 @@ SimpleFontRenderer.prototype =
             }
         }
 
+        this.preloading = false;
         this.globals.shaderManager.load('shaders/font.cgfx');
     },
 
@@ -270,7 +271,7 @@ SimpleFontRenderer.prototype =
         var md = globals.mathDevice;
         var gd = globals.graphicsDevice;
 
-        if (fontManager.getNumPendingFonts() === 0 &&
+        if (!this.preloading && fontManager.getNumPendingFonts() === 0 &&
             shaderManager.getNumPendingShaders() === 0)
         {
             if (!this.technique2D)
@@ -400,6 +401,8 @@ SimpleFontRenderer.create = function simpleFontRendererCreateFn(globals)
 
     simpleFontRenderer.fontsList = globals.fonts || {};
     simpleFontRenderer.fonts = {};
+
+    simpleFontRenderer.preloading = !!globals.preload;
 
     // The standard set of sizes to request (sorted)
     var fontSizes = simpleFontRenderer.fontSizes = globals.fontSizes || [8, 16, 32, 64, 128];
