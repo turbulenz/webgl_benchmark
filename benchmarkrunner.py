@@ -7,11 +7,12 @@ import re
 import csv
 import calendar
 import posixpath
+import subprocess
 
-from sys import argv
+from sys import argv, executable
 from argparse import ArgumentParser
 from glob import glob
-from os import getcwd, makedirs, walk, curdir, pardir
+from os import getcwd, makedirs, walk, curdir, pardir, environ
 from os.path import join as path_join, exists as path_exists, abspath, dirname, normpath, relpath
 from os.path import splitdrive as path_splitdrive, split as path_split, commonprefix as path_commonprefix
 from json import load as json_load, dumps as json_dumps
@@ -40,7 +41,7 @@ from SocketServer import TCPServer
 
 (PWD, OS, _) = simple_config()
 
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 
 BROWSERRUNNER_DEVSERVER = "127.0.0.1:8070"
 BROWSERRUNNER_TESTURLPATH = "/#/play/webgl-benchmark"
@@ -771,8 +772,8 @@ def main():
         help="only run the server (for saving data files to disk)")
     parser.add_argument("--hardware-name", action='store', default='default',
         help="the name of the hardware to save in the results")
-    parser.add_argument("--no-run", action='store_true',
-        help="do not run the browser after the configuration step")
+    parser.add_argument("--browser-launch", action='store_false',
+        help="run the browser after the configuration step")
     parser.add_argument("--force-download", action='store_true',
         help="download the capture date, even if the file(s) already exists")
     parser.add_argument("--browser-path", action='store', default=None,
@@ -785,6 +786,10 @@ def main():
         help="copy the release build of the benchmark to the '%s' directory." % STATIC_OUTPUT_PATH)
     parser.add_argument("--release", action='store_true',
         help="run the release build of the benchmark server in the '%s' directory." % STATIC_OUTPUT_PATH)
+    parser.add_argument("--build", action='store_true',
+        help="build the benchmark using the Turbulenz build system. Requires (env)")
+    parser.add_argument("--clean", action='store_true',
+        help="clean the benchmark project using the Turbulenz build system. Requires (env)")
 
     args = parser.parse_args(argv[1:])
 
@@ -794,6 +799,38 @@ def main():
         basicConfig(level=INFO)
     else:
         basicConfig(level=WARNING)
+
+    python_path, _ = path_split(executable)
+    env_path = normpath(path_join(python_path, '..', '..'))
+
+    if args.build:
+        require_env = True
+    else:
+        require_env = False
+
+    if require_env:
+        virtual_env = environ.get('VIRTUAL_ENV', None)
+        if virtual_env:
+            active_env = True
+        else:
+            error("Command requires Turbulenz environment to be run")
+            return
+
+    if args.clean and active_env:
+        manage_py = abspath(path_join(env_path, 'manage.py'))
+        if path_exists(manage_py):
+            subprocess.call([executable, manage_py, 'apps-clean', getcwd()])
+        else:
+            error("Cannot find manage.py in Turbulenz environment")
+            return
+
+    if args.build and active_env:
+        manage_py = abspath(path_join(env_path, 'manage.py'))
+        if path_exists(manage_py):
+            subprocess.call([executable, manage_py, 'apps', getcwd()])
+        else:
+            error("Cannot find manage.py in Turbulenz environment")
+            return
 
     if args.copy_release:
         info("Copying release files to '%s' directory" % STATIC_OUTPUT_PATH)
@@ -844,12 +881,12 @@ def main():
 
     server = None
     try:
-        if not args.no_run:
+        if not args.browser_launch:
             warn("Browser will automatically close if benchmark takes longer than %d seconds to run" % BENCHMARK_TIMEOUT)
             command_line_args = None
 
             if args.target == 'offline':
-                server = start_server(abspath('.'))
+                server = start_server(abspath('.'), ServerOptions())
                 if args.browser == 'chrome':
                     command_line_args = "--disable-web-security --allow-file-access-from-files --kiosk"
                 BROWSERRUNNER_TESTURL = "file://" + getcwd() + BROWSERRUNNER_TESTMODE
@@ -862,7 +899,7 @@ def main():
             browser_runner.run(BROWSERRUNNER_TESTURL, timeout=BENCHMARK_TIMEOUT,
                                command_line_args=command_line_args) # 5 minute timeout
         else:
-            info("No-run called")
+            info("Browser launcher disabled")
     except Exception as e:
         # Catch exceptions to shutdown server correctly
         error(str(e))
