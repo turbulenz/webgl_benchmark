@@ -21,6 +21,19 @@
         <link type="image/x-icon" rel="shortcut icon" href="/favicon.ico">
         <link type="image/icon" rel="shortcut icon" href="/favicon.ico">
 
+        <script type="text/javascript">
+            var _gaq = _gaq || [];
+            (function() {
+                var ga = document.createElement('script');
+                ga.type = 'text/javascript';
+                ga.async = true;
+                ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+
+                var s = document.getElementsByTagName('script')[0];
+                s.parentNode.insertBefore(ga, s);
+            })();
+        </script>
+
         <script type="text/javascript" src="/js/jquery-1.11.1.min.js"></script>
         <script type="text/javascript" src="/js/app.js"></script>
 
@@ -36,7 +49,7 @@
         <div class="content-wrapper">
 
             <div class="header">
-                <a target="_blank" href="https://ga.me/">
+                <a id="home-icon" target="_blank" href="https://ga.me/">
                     <div class="home"><i class="nav-home-icon icon-tz-logo-gadotme"></i></div>
                 </a>
             </div>
