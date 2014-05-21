@@ -732,12 +732,8 @@ def start_server(output_path, server_options):
             info('GET request: %s' % self.path)
 
             if self.path == '/':
-                self.send_response(200)
-                self.send_header("Content-type", "text/html")
-                self.end_headers()
-                self.wfile.write("<html><head><title>%s</title></head><body></body></html>" % SERVERNAME)
-            else:
-                StaticHTTPRequestHandler.do_GET(self)
+                self.path = '/benchmark.canvas.debug.html'
+            StaticHTTPRequestHandler.do_GET(self)
 
     print "Starting capture server: %s" % SERVERNAME
     info("Running in directory: %s" % output_path)
