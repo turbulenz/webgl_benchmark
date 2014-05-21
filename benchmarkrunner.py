@@ -613,7 +613,38 @@ def start_server(output_path, server_options):
 
     BaseHTTPRequestHandler.address_string = _bare_address_string
 
-    class RequestsSaveHandler(BaseHTTPRequestHandler):
+    STATIC_ROUTES = (
+        ['data', abspath(path_join(getcwd(), 'data'))],
+        ['', output_path]
+    )
+
+    class StaticHTTPRequestHandler(SimpleHTTPRequestHandler):
+
+        def translate_path(self, path):
+            root = getcwd()
+            for pattern, rootdir in STATIC_ROUTES:
+                if path.startswith(pattern):
+                    path = path[len(pattern):]
+                    root = rootdir
+                    break;
+
+            path = path.split('?',1)[0]
+            path = path.split('#',1)[0]
+            path = posixpath.normpath(unquote(path))
+            words = path.split('/')
+            words = filter(None, words)
+
+            path = root
+            for word in words:
+                drive, word = path_splitdrive(word)
+                head, word = path_split(word)
+                if word in (curdir, pardir):
+                    continue
+                path = path_join(path, word)
+
+            return path
+
+    class RequestsSaveHandler(StaticHTTPRequestHandler):
 
         # Forced regex to include 'data' to avoid overwriting any files with the API
         local_save_regex = re_compile('/local/v1/save/([^/]+)/data/([^/]+)/(.*)')
@@ -699,41 +730,14 @@ def start_server(output_path, server_options):
         def do_GET(self):
             # Respond with a blank page
             info('GET request: %s' % self.path)
-            self.send_response(200)
-            self.send_header("Content-type", "text/html")
-            self.end_headers()
-            self.wfile.write("<html><head><title>%s</title></head><body></body></html>" % SERVERNAME)
 
-    STATIC_ROUTES = (
-        ['data', abspath(path_join(getcwd(), 'data'))],
-        ['', output_path]
-    )
-
-    class StaticHTTPRequestHandler(SimpleHTTPRequestHandler):
-
-        def translate_path(self, path):
-            root = getcwd()
-            for pattern, rootdir in STATIC_ROUTES:
-                if path.startswith(pattern):
-                    path = path[len(pattern):]
-                    root = rootdir
-                    break;
-
-            path = path.split('?',1)[0]
-            path = path.split('#',1)[0]
-            path = posixpath.normpath(unquote(path))
-            words = path.split('/')
-            words = filter(None, words)
-
-            path = root
-            for word in words:
-                drive, word = path_splitdrive(word)
-                head, word = path_split(word)
-                if word in (curdir, pardir):
-                    continue
-                path = path_join(path, word)
-
-            return path
+            if self.path == '/':
+                self.send_response(200)
+                self.send_header("Content-type", "text/html")
+                self.end_headers()
+                self.wfile.write("<html><head><title>%s</title></head><body></body></html>" % SERVERNAME)
+            else:
+                StaticHTTPRequestHandler.do_GET(self)
 
     print "Starting capture server: %s" % SERVERNAME
     info("Running in directory: %s" % output_path)
