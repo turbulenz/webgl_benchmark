@@ -35,9 +35,11 @@
         </script>
 
         <script type="text/javascript" src="/js/jquery-1.11.1.min.js"></script>
+        <script type="text/javascript" src="/js/whichbrowser-js-min.js"></script>
+        <script type="text/javascript" src="/js/d3.v3/d3.v3.js"></script>
         <script type="text/javascript" src="/js/app.js"></script>
 
-        <link rel="stylesheet" href="https://fast.fonts.com/cssapi/020ef3d2-0ae9-4e89-9be7-5bcfb4b2babd.css" async="true"/>
+        <link type="text/css" rel="stylesheet" href="http://fast.fonts.net/cssapi/6b442e13-de0c-494f-8668-c8e48ac3fea3.css"/>
         <link type="text/css" rel="stylesheet" href="/css/style.css">
 
     </head>
@@ -69,7 +71,7 @@
                     <a id="read-more-link" class="link-light" href="#">Read more</a>
                 </p>
 
-                <a id="start-test" href="/run.html"><div class="button button-light">START TEST</div></a><br>
+                <a id="start-test" href="#"><div class="button button-light">START TEST</div></a><br>
                 <a id="play-game" target="_blank" href="https://ga.me/state?slug=polycraft&play=true"><div class="button button-dark">PLAY POLYCRAFT</div></a>
             </div>
 
@@ -109,6 +111,104 @@
                         <li>Run the test multiple times to ensure consistent results</li>
                     </ul>
                 </div>
+            </div>
+
+            <div id="engine">
+
+                <canvas id="turbulenz_game_engine_canvas" moz-opaque="true"></canvas>
+
+                <script type="text/javascript">
+                    var canvasSupported = true;
+                    (function() {
+                        var contextNames = ["webgl", "experimental-webgl"];
+                        var context = null;
+                        var canvas = document.createElement('canvas');
+
+                        document.body.appendChild(canvas);
+
+                        for (var i = 0; i < contextNames.length; i += 1)
+                        {
+                            try {
+                                context = canvas.getContext(contextNames[i]);
+                            } catch (e) {}
+
+                            if (context) {
+                                break;
+                            }
+                        }
+                        if (!context)
+                        {
+                            canvasSupported = false;
+                            window.alert("Sorry, but your browser does not support WebGL or does not have it enabled.");
+                        }
+
+                        document.body.removeChild(canvas);
+                    }());
+                    var TurbulenzEngine = {};
+                </script>
+
+                <script type="text/javascript" src="/benchmark.canvas.js"></script>
+
+                <script type="text/javascript">
+                    window.startTest = function () {
+                        var appEntry = TurbulenzEngine.onload;
+                        var appShutdown = TurbulenzEngine.onunload;
+                        if (!appEntry)
+                        {
+                            window.alert("TurbulenzEngine.onload has not been set");
+                            return;
+                        }
+
+                        var canvas = document.getElementById('turbulenz_game_engine_canvas');
+                        var startCanvas = function startCanvasFn() {
+
+                            if (canvas.getContext && canvasSupported)
+                            {
+                                TurbulenzEngine = WebGLTurbulenzEngine.create({
+                                    canvas: canvas,
+                                    fillParent: true
+                                });
+
+                                if (!TurbulenzEngine)
+                                {
+                                    window.alert("Failed to init TurbulenzEngine (canvas)");
+                                    return;
+                                }
+
+                                TurbulenzEngine.onload = appEntry;
+                                TurbulenzEngine.onunload = appShutdown;
+                                appEntry();
+                            }
+                        };
+
+                        var previousOnBeforeUnload = window.onbeforeunload;
+                        window.onbeforeunload = function () {
+                            if (TurbulenzEngine.onunload)
+                            {
+                                TurbulenzEngine.onunload.call(this);
+                            }
+                            previousOnBeforeUnload.call(window);
+                        };
+
+                        $('#engine').addClass('active');
+
+                        startCanvas();
+
+                        var fullscreenFunction = canvas.requestFullscreen ||
+                                                 canvas.webkitRequestFullScreen ||
+                                                 canvas.webkitRequestFullscreen ||
+                                                 canvas.mozRequestFullScreen ||
+                                                 canvas.msRequestFullscreen;
+
+                        if (fullscreenFunction)
+                        {
+                            fullscreenFunction.call(canvas);
+                        }
+
+                    };
+
+                </script>
+
             </div>
 
         </div>

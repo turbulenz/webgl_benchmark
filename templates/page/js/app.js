@@ -68,9 +68,39 @@ $(function () {
     });
 
 
-    var _gaq = window._gaq;
+
+    // set up navigation
+    (function (window) {
+
+        // Split into key/value pairs
+        var params = {};
+        var query = window.location.search;
+
+        if (query)
+        {
+            query = query.substr(1).split("&");
+            var tmp;
+
+            // Convert the array of strings into an object
+            for (var i = 0, l = query.length; i < l; i += 1)
+            {
+                tmp = query[i].split('=');
+                params[tmp[0]] = tmp[1];
+            }
+
+            if (params.mode === 'run')
+            {
+                window.startTest();
+            }
+        }
+
+    }(window));
+
+
 
     // add tracking functions for the page's links
+    var _gaq = window._gaq;
+
     $('.footer-links a').click(function (event) {
         _gaq.push([ '_trackEvent', 'footerLinkClicked', $(event.currentTarget).attr('href') ]);
     });
@@ -90,6 +120,7 @@ $(function () {
 
     $('#start-test').click(function () {
         _gaq.push([ '_trackEvent', 'testStarted' ]);
+        window.startTest();
     });
 
     $('#play-game').click(function () {
