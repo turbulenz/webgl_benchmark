@@ -69,30 +69,28 @@ $(function () {
 
 
 
-    // set up navigation
+    // set up "navigation"
     (function (window) {
 
-        // Split into key/value pairs
-        var params = {};
-        var query = window.location.search;
-
-        if (query)
-        {
-            query = query.substr(1).split("&");
-            var tmp;
-
-            // Convert the array of strings into an object
-            for (var i = 0, l = query.length; i < l; i += 1)
-            {
-                tmp = query[i].split('=');
-                params[tmp[0]] = tmp[1];
-            }
-
-            if (params.mode === 'run')
+        var checkIfStart = function () {
+            if (window.location.hash === '#run')
             {
                 window.startTest();
+                return true;
             }
-        }
+            return false;
+        };
+
+        window.onhashchange = function () {
+
+            if (!checkIfStart() && window.onbeforeunload)
+            {
+                window.onbeforeunload.call(window);
+            }
+
+        };
+
+        checkIfStart();
 
     }(window));
 
@@ -118,8 +116,11 @@ $(function () {
         _gaq.push([ '_trackEvent', 'readMoreLinkClicked' ]);
     });
 
-    $('#start-test').click(function () {
+    $('#start-test').click(function (event) {
         _gaq.push([ '_trackEvent', 'testStarted' ]);
+        event.preventDefault();
+        event.stopPropagation();
+        window.location.hash = 'run';
         window.startTest();
     });
 

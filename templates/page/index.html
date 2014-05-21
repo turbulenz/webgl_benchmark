@@ -71,7 +71,7 @@
                     <a id="read-more-link" class="link-light" href="#">Read more</a>
                 </p>
 
-                <a id="start-test" href="#"><div class="button button-light">START TEST</div></a><br>
+                <a id="start-test" href="#run"><div class="button button-light">START TEST</div></a><br>
                 <a id="play-game" target="_blank" href="https://ga.me/state?slug=polycraft&play=true"><div class="button button-dark">PLAY POLYCRAFT</div></a>
             </div>
 
@@ -155,7 +155,7 @@
                         var appShutdown = TurbulenzEngine.onunload;
                         if (!appEntry)
                         {
-                            window.alert("TurbulenzEngine.onload has not been set");
+                            console.error("TurbulenzEngine.onload has not been set");
                             return;
                         }
 
@@ -171,7 +171,7 @@
 
                                 if (!TurbulenzEngine)
                                 {
-                                    window.alert("Failed to init TurbulenzEngine (canvas)");
+                                    console.error("Failed to init TurbulenzEngine (canvas)");
                                     return;
                                 }
 
@@ -181,13 +181,12 @@
                             }
                         };
 
-                        var previousOnBeforeUnload = window.onbeforeunload;
                         window.onbeforeunload = function () {
+                            $('#engine').removeClass('active');
                             if (TurbulenzEngine.onunload)
                             {
                                 TurbulenzEngine.onunload.call(this);
                             }
-                            previousOnBeforeUnload.call(window);
                         };
 
                         $('#engine').addClass('active');
@@ -195,14 +194,13 @@
                         startCanvas();
 
                         var fullscreenFunction = canvas.requestFullscreen ||
-                                                 canvas.webkitRequestFullScreen ||
                                                  canvas.webkitRequestFullscreen ||
                                                  canvas.mozRequestFullScreen ||
                                                  canvas.msRequestFullscreen;
 
                         if (fullscreenFunction)
                         {
-                            fullscreenFunction.call(canvas);
+                            fullscreenFunction.call(canvas, undefined);
                         }
 
                     };
