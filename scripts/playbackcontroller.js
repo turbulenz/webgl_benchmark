@@ -284,7 +284,7 @@ PlaybackController.prototype =
             fontParams = this.fontParams.text;
             fontParams.x = left + 54;
             fontParams.y = bottom - 24;
-            this.simplefonts.drawFont("FPS", fontParams);
+            this.simplefonts.drawFont("FPS" + (this.playResolution ? " @ " + this.playResolution: ""), fontParams);
 
             this.simplefonts.render();
         }
@@ -758,6 +758,10 @@ PlaybackController.prototype =
 
                 var playWidth = playbackGraphicsDevice.playWidth;
                 var playHeight = playbackGraphicsDevice.playHeight;
+                if (playWidth !== this.lastPlayWidth || playHeight !== this.lastPlayHeight)
+                {
+                    this.playResolution = playWidth + " x " + playHeight;
+                }
 
                 this._postFrame(((this.currentGroupIndex * this.numFramesPerGroup) + this.relativeFrameIndex));
 
@@ -1574,6 +1578,9 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
 
     playbackController.elements = elements;
     playbackController.fps = 0;
+    playbackController.playResolution = "";
+    playbackController.lastPlayWidth = 0;
+    playbackController.lastPlayHeight = 0;
     playbackController.framesRenderedElement = elements.framesRendered;
     playbackController.timeElement = elements.time;
     playbackController.frameTimeElement = elements.frameTime;
