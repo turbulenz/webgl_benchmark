@@ -443,3 +443,114 @@ a {
     }
 
 }
+
+.warning-page {
+    display: none;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    overflow: auto;
+
+    background: #68556b;
+    color: white;
+
+    text-align: center;
+    font-family: "AvenirNextLTW01-Regular", Helvetica, Arial, sans-serif;
+    font-size: 21pt;
+
+    z-index: 9998;
+    &.show {
+        display: block;
+    }
+
+    .contents {
+        width: 650px;
+        margin: auto;
+    }
+
+    .logo {
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+
+    .icon, a, p, h1, h2 {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .icon{
+        margin-top: 40px;
+    }
+
+    a, h1, h2 {
+        text-transform: uppercase;
+    }
+
+    p, h1 {
+        margin-bottom: 40px;
+    }
+
+    p {
+        font-size: 14pt;
+    }
+
+    h1 , h2{
+        font-size: 21pt;
+    }
+
+    a {
+        display: block;
+
+        width: 360px;
+        padding: 15px 20px;
+        margin-top: 20px;
+
+        color: white;
+        text-decoration: none;
+
+        font-size: 12pt;
+        font-family: "Avenir Next LT W01 Demi", Helvetica, Arial, sans-serif;
+    }
+    a:hover {
+        text-decoration: none;
+    }
+
+    a.get-chrome {
+        background-color: #e34039;
+    }
+    a.get-chrome:hover {
+        background-color: white;
+        color: #e34039;
+    }
+
+    a.get-firefox {
+        background-color: #f47c1b;
+    }
+    a.get-firefox:hover {
+        background-color: white;
+        color: #f47c1b;
+    }
+
+    a.get-ie {
+        background-color: #01caff;
+    }
+    a.get-ie:hover {
+        background-color: white;
+        color: #01caff;
+    }
+
+    a.about {
+        margin-top: 40px;
+        margin-bottom: 40px;
+        border: 2px solid white;
+    }
+    a.about:hover {
+        background-color: white;
+        color: #68556b;
+    }
+}
+
