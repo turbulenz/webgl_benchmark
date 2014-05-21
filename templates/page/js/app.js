@@ -55,7 +55,7 @@ $(function () {
         $(element).click(function () {
             $screenshotModal
                 .find('.modal-content')
-                .css('background-image', 'url("/img/screenshot-' + index + '-small.png")');
+                .css('background-image', 'url("/img/screenshot-' + index + '-large.jpg")');
             $screenshotModal[0].showModal();
         });
     });
