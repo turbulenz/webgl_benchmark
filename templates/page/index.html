@@ -34,6 +34,7 @@
             })();
         </script>
 
+        <script type="text/javascript" src="/js/modernizr.min.js"></script>
         <script type="text/javascript" src="/js/jquery-1.11.1.min.js"></script>
         <script type="text/javascript" src="/js/whichbrowser-js-min.js"></script>
         <script type="text/javascript" src="/js/d3.v3/d3.v3.js"></script>
@@ -46,7 +47,7 @@
 
     <body>
 
-        <noscript class="warning-page show">
+        <noscript class="warning show">
             <img class="logo" src="/img/gadotme-logo.png"/>
             <div class="contents">
                 <img class="icon" src="/img/gamebot-fume.png"/>
@@ -56,6 +57,17 @@
             </div>
         </noscript>
 
+        <div id="warning" class="warning">
+            <img class="logo" src="/img/gadotme-logo.png"/>
+            <div class="contents">
+                <img class="icon" src="/img/gamebot-fume.png"/>
+                <h1>Oh Nuts</h1>
+                <h2 id="warning-title"></h2>
+                <p id="warning-text"></p>
+                <div id="warning-custom"></div>
+                <a id="warning-link" class="about" href="#"></a>
+            </div>
+        </div>
 
         <div class="bg bg-pixelated"></div>
         <div class="bg bg-clear"></div>
@@ -130,32 +142,6 @@
                 <canvas id="turbulenz_game_engine_canvas" moz-opaque="true"></canvas>
 
                 <script type="text/javascript">
-                    var canvasSupported = true;
-                    (function() {
-                        var contextNames = ["webgl", "experimental-webgl"];
-                        var context = null;
-                        var canvas = document.createElement('canvas');
-
-                        document.body.appendChild(canvas);
-
-                        for (var i = 0; i < contextNames.length; i += 1)
-                        {
-                            try {
-                                context = canvas.getContext(contextNames[i]);
-                            } catch (e) {}
-
-                            if (context) {
-                                break;
-                            }
-                        }
-                        if (!context)
-                        {
-                            canvasSupported = false;
-                            window.alert("Sorry, but your browser does not support WebGL or does not have it enabled.");
-                        }
-
-                        document.body.removeChild(canvas);
-                    }());
                     var TurbulenzEngine = {};
                 </script>
 
@@ -174,23 +160,20 @@
                         var canvas = document.getElementById('turbulenz_game_engine_canvas');
                         var startCanvas = function startCanvasFn() {
 
-                            if (canvas.getContext && canvasSupported)
+                            TurbulenzEngine = WebGLTurbulenzEngine.create({
+                                canvas: canvas,
+                                fillParent: true
+                            });
+
+                            if (!TurbulenzEngine)
                             {
-                                TurbulenzEngine = WebGLTurbulenzEngine.create({
-                                    canvas: canvas,
-                                    fillParent: true
-                                });
-
-                                if (!TurbulenzEngine)
-                                {
-                                    console.error("Failed to init TurbulenzEngine (canvas)");
-                                    return;
-                                }
-
-                                TurbulenzEngine.onload = appEntry;
-                                TurbulenzEngine.onunload = appShutdown;
-                                appEntry();
+                                console.error("Failed to init TurbulenzEngine (canvas)");
+                                return;
                             }
+
+                            TurbulenzEngine.onload = appEntry;
+                            TurbulenzEngine.onunload = appShutdown;
+                            appEntry();
                         };
 
                         window.onbeforeunload = function () {

@@ -444,7 +444,7 @@ a {
 
 }
 
-.warning-page {
+.warning {
     display: none;
     position: absolute;
     top: 0;
@@ -457,8 +457,8 @@ a {
     background: #68556b;
     color: white;
 
+    .light-typeface;
     text-align: center;
-    font-family: "AvenirNextLTW01-Regular", Helvetica, Arial, sans-serif;
     font-size: 21pt;
 
     z-index: 9998;
@@ -499,21 +499,22 @@ a {
     }
 
     h1 , h2{
-        font-size: 21pt;
+        font-size: 7rem;
+        margin-bottom: 7rem;
     }
 
     a {
         display: block;
 
-        width: 360px;
+        width: 85rem;
         padding: 15px 20px;
         margin-top: 20px;
 
         color: white;
         text-decoration: none;
 
+        .light-typeface;
         font-size: 12pt;
-        font-family: "Avenir Next LT W01 Demi", Helvetica, Arial, sans-serif;
     }
     a:hover {
         text-decoration: none;
@@ -551,6 +552,27 @@ a {
     a.about:hover {
         background-color: white;
         color: #68556b;
+    }
+
+
+    .cantplay-get-link {
+        .light-typeface;
+        display: block;
+
+        padding: 3rem;
+        margin: 4rem auto 0 auto;
+
+        text-decoration: none;
+        text-transform: uppercase;
+    }
+    .cantplay-get-chrome {
+        background-color: #e34039;
+    }
+    .cantplay-get-firefox {
+        background-color: #f47c1b;
+    }
+    .cantplay-get-ie {
+        background-color: #01caff;
     }
 }
 

@@ -3,6 +3,84 @@
 
 $(function () {
 
+    var webGLEnabled = true;
+
+    // test for WebGL
+    (function (window) {
+
+        window.showError = function (params) {
+            var $warning = $('#warning');
+            $warning.find('#warning-title').html(params.title || '');
+            $warning.find('#warning-text').html(params.text || '');
+            $warning.find('#warning-custom').html(params.custom || '');
+
+            var $link = $warning.find('#warning-link');
+            $link.html(params.linkText || '');
+            $link.attr('href', params.linkHREF || '#');
+            $link.unbind('click');
+            if (params.linkFunction)
+            {
+                $link.bind('click', params.linkFunction);
+            }
+
+            $warning.show();
+        };
+
+        window.hideError = function () {
+            var $warning = $('#warning');
+            $warning.hide();
+
+            $warning.find('#warning-title').html('');
+            $warning.find('#warning-text').html('');
+            $warning.find('#warning-custom').html('');
+
+            var $link = $warning.find('#warning-link');
+            $link.html('');
+            $link.attr('href', '#');
+            $link.unbind('click');
+        };
+
+    }(window));
+
+
+    var showWebGLDisabledError = function () {
+        window.showError({
+            title: "Your current web browser is a bit<br/>behind the times. Let's get it up to date!",
+            text: "We need fancy new feature called WebGL to run our site in your browser. Don't worry though," +
+                  "almost all the modern browsers support it. Here's some links.",
+            custom: '<a class="cantplay-get-link cantplay-get-chrome" href="http://www.google.com/chrome" target="_blank">Get Google Chrome</a>' +
+                    '<a class="cantplay-get-link cantplay-get-firefox" href="http://www.mozilla.org/firefox" target="_blank">Get Mozilla Firefox</a>',
+            linkText: "Continue browsing anyway...",
+            linkFunction: window.hideError
+        });
+    };
+
+    // test for WebGL
+    (function (window) {
+        var modernizr = window.Modernizr;
+
+        var realWebGLTest = function () {
+            try {
+                return window.WebGLRenderingContext &&
+                        (window.document.createElement('canvas').getContext('webgl') ||
+                         window.document.createElement('canvas').getContext('experimental-webgl'));
+            } catch (e) {
+                return false;
+            }
+        };
+        modernizr.webgl = realWebGLTest();
+        modernizr.fullscreen = modernizr.fullscreen || !!window.document.msExitFullscreen;
+
+        if (!(modernizr.canvas && modernizr.webgl && (modernizr.audio || modernizr.webaudio)))
+        {
+            showWebGLDisabledError();
+            webGLEnabled = false;
+        }
+
+    }(window));
+
+
+
     // Attach show/hide-functions to modals
     $('.modal-container').each(function (index, element) {
 
@@ -73,7 +151,7 @@ $(function () {
     (function (window) {
 
         var checkIfStart = function () {
-            if (window.location.hash === '#run')
+            if (window.location.hash === '#run' && webGLEnabled)
             {
                 window.startTest();
                 return true;
@@ -120,8 +198,16 @@ $(function () {
         _gaq.push([ '_trackEvent', 'testStarted' ]);
         event.preventDefault();
         event.stopPropagation();
-        window.location.hash = 'run';
-        window.startTest();
+
+        if (webGLEnabled)
+        {
+            window.location.hash = 'run';
+            window.startTest();
+        }
+        else
+        {
+            showWebGLDisabledError();
+        }
     });
 
     $('#play-game').click(function () {
