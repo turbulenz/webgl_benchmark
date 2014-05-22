@@ -3,6 +3,84 @@
 
 $(function () {
 
+    var webGLEnabled = true;
+
+    // test for WebGL
+    (function (window) {
+
+        window.showError = function (params) {
+            var $warning = $('#warning');
+            $warning.find('#warning-title').html(params.title || '');
+            $warning.find('#warning-text').html(params.text || '');
+            $warning.find('#warning-custom').html(params.custom || '');
+
+            var $link = $warning.find('#warning-link');
+            $link.html(params.linkText || '');
+            $link.attr('href', params.linkHREF || '#');
+            $link.unbind('click');
+            if (params.linkFunction)
+            {
+                $link.bind('click', params.linkFunction);
+            }
+
+            $warning.show();
+        };
+
+        window.hideError = function () {
+            var $warning = $('#warning');
+            $warning.hide();
+
+            $warning.find('#warning-title').html('');
+            $warning.find('#warning-text').html('');
+            $warning.find('#warning-custom').html('');
+
+            var $link = $warning.find('#warning-link');
+            $link.html('');
+            $link.attr('href', '#');
+            $link.unbind('click');
+        };
+
+    }(window));
+
+
+    var showWebGLDisabledError = function () {
+        window.showError({
+            title: "Your current web browser is a bit<br/>behind the times. Let's get it up to date!",
+            text: "We need fancy new feature called WebGL to run our site in your browser. Don't worry though," +
+                  "almost all the modern browsers support it. Here's some links.",
+            custom: '<a class="cantplay-get-link cantplay-get-chrome" href="http://www.google.com/chrome" target="_blank">Get Google Chrome</a>' +
+                    '<a class="cantplay-get-link cantplay-get-firefox" href="http://www.mozilla.org/firefox" target="_blank">Get Mozilla Firefox</a>',
+            linkText: "Continue browsing anyway...",
+            linkFunction: window.hideError
+        });
+    };
+
+    // test for WebGL
+    (function (window) {
+        var modernizr = window.Modernizr;
+
+        var realWebGLTest = function () {
+            try {
+                return window.WebGLRenderingContext &&
+                        (window.document.createElement('canvas').getContext('webgl') ||
+                         window.document.createElement('canvas').getContext('experimental-webgl'));
+            } catch (e) {
+                return false;
+            }
+        };
+        modernizr.webgl = realWebGLTest();
+        modernizr.fullscreen = modernizr.fullscreen || !!window.document.msExitFullscreen;
+
+        if (!(modernizr.canvas && modernizr.webgl && (modernizr.audio || modernizr.webaudio)))
+        {
+            showWebGLDisabledError();
+            webGLEnabled = false;
+        }
+
+    }(window));
+
+
+
     // Attach show/hide-functions to modals
     $('.modal-container').each(function (index, element) {
 
@@ -55,7 +133,7 @@ $(function () {
         $(element).click(function () {
             $screenshotModal
                 .find('.modal-content')
-                .css('background-image', 'url("/img/screenshot-' + index + '-small.png")');
+                .css('background-image', 'url("/img/screenshot-' + index + '-large.jpg")');
             $screenshotModal[0].showModal();
         });
     });
@@ -69,30 +147,28 @@ $(function () {
 
 
 
-    // set up navigation
+    // set up "navigation"
     (function (window) {
 
-        // Split into key/value pairs
-        var params = {};
-        var query = window.location.search;
-
-        if (query)
-        {
-            query = query.substr(1).split("&");
-            var tmp;
-
-            // Convert the array of strings into an object
-            for (var i = 0, l = query.length; i < l; i += 1)
-            {
-                tmp = query[i].split('=');
-                params[tmp[0]] = tmp[1];
-            }
-
-            if (params.mode === 'run')
+        var checkIfStart = function () {
+            if (window.location.hash === '#run' && webGLEnabled)
             {
                 window.startTest();
+                return true;
             }
-        }
+            return false;
+        };
+
+        window.onhashchange = function () {
+
+            if (!checkIfStart() && window.onbeforeunload)
+            {
+                window.onbeforeunload.call(window);
+            }
+
+        };
+
+        checkIfStart();
 
     }(window));
 
@@ -118,9 +194,20 @@ $(function () {
         _gaq.push([ '_trackEvent', 'readMoreLinkClicked' ]);
     });
 
-    $('#start-test').click(function () {
+    $('#start-test').click(function (event) {
         _gaq.push([ '_trackEvent', 'testStarted' ]);
-        window.startTest();
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (webGLEnabled)
+        {
+            window.location.hash = 'run';
+            window.startTest();
+        }
+        else
+        {
+            showWebGLDisabledError();
+        }
     });
 
     $('#play-game').click(function () {

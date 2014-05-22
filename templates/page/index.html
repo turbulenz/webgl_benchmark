@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html class="no-js">
 
     <head prefix="fb: http://ogp.me/ns/fb# turbulenzdev: http://ogp.me/ns/fb/turbulenzdev#" xmlns:og="http://ogp.me/ns#" >
 
@@ -34,6 +34,7 @@
             })();
         </script>
 
+        <script type="text/javascript" src="/js/modernizr.min.js"></script>
         <script type="text/javascript" src="/js/jquery-1.11.1.min.js"></script>
         <script type="text/javascript" src="/js/whichbrowser-js-min.js"></script>
         <script type="text/javascript" src="/js/app.js"></script>
@@ -44,6 +45,29 @@
     </head>
 
     <body>
+
+        <noscript class="warning show">
+            <img class="logo" src="/img/gadotme-logo.png"/>
+            <div class="contents">
+                <img class="icon" src="/img/gamebot-fume.png"/>
+                <h1>Oh Nuts</h1>
+                <h2>JavaScript is disabled</h2>
+                <p>We need JavaScript enabled to run our fancy site in your browser. Please enable it, then refresh the page.</p>
+            </div>
+        </noscript>
+
+        <div id="warning" class="warning">
+            <img class="logo" src="/img/gadotme-logo.png"/>
+            <div class="contents">
+                <img class="icon" src="/img/gamebot-fume.png"/>
+                <h1>Oh Nuts</h1>
+                <h2 id="warning-title"></h2>
+                <p id="warning-text"></p>
+                <div id="warning-custom"></div>
+                <a id="warning-link" class="about" href="#"></a>
+            </div>
+        </div>
+
         <div class="bg bg-pixelated"></div>
         <div class="bg bg-clear"></div>
 
@@ -70,7 +94,7 @@
                     <a id="read-more-link" class="link-light" href="#">Read more</a>
                 </p>
 
-                <a id="start-test" href="#"><div class="button button-light">START TEST</div></a><br>
+                <a id="start-test" href="#run"><div class="button button-light">START TEST</div></a><br>
                 <a id="play-game" target="_blank" href="https://ga.me/state?slug=polycraft&play=true"><div class="button button-dark">PLAY POLYCRAFT</div></a>
             </div>
 
@@ -117,32 +141,6 @@
                 <canvas id="turbulenz_game_engine_canvas" moz-opaque="true"></canvas>
 
                 <script type="text/javascript">
-                    var canvasSupported = true;
-                    (function() {
-                        var contextNames = ["webgl", "experimental-webgl"];
-                        var context = null;
-                        var canvas = document.createElement('canvas');
-
-                        document.body.appendChild(canvas);
-
-                        for (var i = 0; i < contextNames.length; i += 1)
-                        {
-                            try {
-                                context = canvas.getContext(contextNames[i]);
-                            } catch (e) {}
-
-                            if (context) {
-                                break;
-                            }
-                        }
-                        if (!context)
-                        {
-                            canvasSupported = false;
-                            window.alert("Sorry, but your browser does not support WebGL or does not have it enabled.");
-                        }
-
-                        document.body.removeChild(canvas);
-                    }());
                     var TurbulenzEngine = {};
                 </script>
 
@@ -154,39 +152,35 @@
                         var appShutdown = TurbulenzEngine.onunload;
                         if (!appEntry)
                         {
-                            window.alert("TurbulenzEngine.onload has not been set");
+                            console.error("TurbulenzEngine.onload has not been set");
                             return;
                         }
 
                         var canvas = document.getElementById('turbulenz_game_engine_canvas');
                         var startCanvas = function startCanvasFn() {
 
-                            if (canvas.getContext && canvasSupported)
+                            TurbulenzEngine = WebGLTurbulenzEngine.create({
+                                canvas: canvas,
+                                fillParent: true
+                            });
+
+                            if (!TurbulenzEngine)
                             {
-                                TurbulenzEngine = WebGLTurbulenzEngine.create({
-                                    canvas: canvas,
-                                    fillParent: true
-                                });
-
-                                if (!TurbulenzEngine)
-                                {
-                                    window.alert("Failed to init TurbulenzEngine (canvas)");
-                                    return;
-                                }
-
-                                TurbulenzEngine.onload = appEntry;
-                                TurbulenzEngine.onunload = appShutdown;
-                                appEntry();
+                                console.error("Failed to init TurbulenzEngine (canvas)");
+                                return;
                             }
+
+                            TurbulenzEngine.onload = appEntry;
+                            TurbulenzEngine.onunload = appShutdown;
+                            appEntry();
                         };
 
-                        var previousOnBeforeUnload = window.onbeforeunload;
                         window.onbeforeunload = function () {
+                            $('#engine').removeClass('active');
                             if (TurbulenzEngine.onunload)
                             {
                                 TurbulenzEngine.onunload.call(this);
                             }
-                            previousOnBeforeUnload.call(window);
                         };
 
                         $('#engine').addClass('active');
@@ -194,14 +188,13 @@
                         startCanvas();
 
                         var fullscreenFunction = canvas.requestFullscreen ||
-                                                 canvas.webkitRequestFullScreen ||
                                                  canvas.webkitRequestFullscreen ||
                                                  canvas.mozRequestFullScreen ||
                                                  canvas.msRequestFullscreen;
 
                         if (fullscreenFunction)
                         {
-                            fullscreenFunction.call(canvas);
+                            fullscreenFunction.call(canvas, undefined);
                         }
 
                     };
