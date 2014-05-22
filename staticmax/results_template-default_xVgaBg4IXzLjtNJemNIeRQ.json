@@ -1,10 +1,10 @@
 {
-	"version": 0,
+	"version": 1,
 	"config": {
 		"benchmark": {
-			"name": "webgl_benchmark",
-			"version": "0.0.18",
-			"type": "online"
+			"name": "polycraft_gl",
+			"version": "1.0.0",
+			"type": "offline"
 		},
 		"hardware": {},
 		"browser": {},

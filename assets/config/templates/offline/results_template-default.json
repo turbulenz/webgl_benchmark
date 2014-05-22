@@ -1,1 +1,17 @@
-{"data": {"sequences": []}, "version": 0, "config": {"hardware": {}, "playback": {}, "benchmark": {"version": "0.0.18", "type": "offline", "name": "webgl_benchmark"}, "sequences": [], "browser": {}}}
+{
+	"version": 1,
+	"config": {
+		"benchmark": {
+			"name": "polycraft_gl",
+			"version": "1.0.0",
+			"type": "offline"
+		},
+		"hardware": {},
+		"browser": {},
+		"playback": {},
+		"sequences": []
+	},
+	"data": {
+		"sequences": []
+	}
+}

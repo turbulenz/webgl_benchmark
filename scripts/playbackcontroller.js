@@ -20,6 +20,12 @@ PlaybackController.prototype =
         this.prefixAssetURL = prefixAssetURL;
         this.prefixCaptureURL = prefixCaptureURL;
         this.prefixTemplatesURL = prefixTemplatesURL;
+        if (!prefixTemplatesURL)
+        {
+            // If no prefix is specified, then use the default path
+            this.prefixTemplatesURL = 'config/templates/' + this.config.mode + '/';
+        }
+
         this.testRanges = {};
         this.testSubTestDict = {};
         this.resultsData = {};
@@ -1718,7 +1724,10 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
             }
         }
 
-        var templateRequest = playbackController.prefixTemplatesURL + playbackController.config.resultsTemplate + '.json';
+        if (playbackController.mappingTableCallbackFn)
+        {
+            playbackController.mappingTableCallbackFn(mappingTable);
+        }
 
         function retryTemplateOnFail(responseText, status)
         {
@@ -1732,12 +1741,16 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
             }
         }
 
-        if (playbackController.mappingTableCallbackFn)
+        var templateRequest = playbackController.prefixTemplatesURL + playbackController.config.resultsTemplate + '.json';
+        if (playbackController.config.requestLocalTemplate)
         {
-            playbackController.mappingTableCallbackFn(mappingTable);
+            TurbulenzEngine.request(templateRequest, retryTemplateOnFail);
+        }
+        else
+        {
+            TurbulenzEngine.request(mappingTable.getURL(templateRequest), templateLoaded);
         }
 
-        TurbulenzEngine.request(templateRequest, retryTemplateOnFail);
     };
 
     var gameSessionCreated = function gameSessionCreatedFn(gameSession)

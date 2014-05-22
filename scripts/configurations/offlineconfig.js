@@ -12,28 +12,10 @@ OfflineConfig.create = function offlineCreateFn()
 {
     var config = BaseConfig.create();
 
-    var captureLookUp = config.captureLookUp;
-    captureLookUp['noshadows_norendertarget']          = 'capture/noshadows_norendertarget/';
-    captureLookUp['noshadows_rendertarget']            = 'capture/noshadows_rendertarget/';
-    captureLookUp['shadows_norendertarget']            = 'capture/shadows_norendertarget/';
-    captureLookUp['shadows_rendertarget']              = 'capture/shadows_rendertarget/';
-    captureLookUp['waves3_noshadows_norendertarget']   = 'capture/waves3_noshadows_norendertarget/';
-    captureLookUp['waves3_shadows_norendertarget']     = 'capture/waves3_shadows_norendertarget/';
-    captureLookUp['zoom_shadows_norendertarget']       = 'capture/zoom_shadows_norendertarget/';
-    captureLookUp['zoom2_shadows_tiltshift']           = 'capture/zoom2_shadows_tiltshift/';
-    captureLookUp['shadows_norendertarget2']           = 'capture/shadows_norendertarget2/';
-    captureLookUp['shadows_rendertarget2']             = 'capture/shadows_rendertarget2/';
-    captureLookUp['noshadows_rendertarget2']           = 'capture/noshadows_rendertarget2/';
-    captureLookUp['noshadows_norendertarget2']         = 'capture/noshadows_norendertarget2/';
-    captureLookUp['zoom2_shadows_norendertarget']      = 'capture/zoom2_shadows_norendertarget/';
-    captureLookUp['seige_shadows_norendertarget']      = 'capture/seige_shadows_norendertarget/';
-    captureLookUp['story_shadows_rendertarget']        = 'capture/story_shadows_rendertarget/';
-    captureLookUp['story_high']                        = 'capture/story_high/';
-    captureLookUp['stress_high']                       = 'capture/stress_high/';
-    captureLookUp['story_high_particles']              = 'capture/story_high_particles/';
-
+    config.mode = "offline";
+    config.captureLookUp.story_high_particles = 'capture/story_high_particles/537d6615/';
+    config.prefixTemplatesURL = 'assets/config/templates/' + config.mode + '/';
     config.prefixAssetURL = "capture/";
-    config.prefixTemplatesURL = "assets/config/templates/offline/";
 
     return config;
 };

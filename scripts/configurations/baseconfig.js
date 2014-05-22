@@ -7,8 +7,11 @@
 function BaseConfig() {}
 BaseConfig.prototype =
 {
+    // The mode the benchmark will run
+    mode: 'default',
+
     // The default stream to run on start
-    defaultCapture: 'story_shadows_rendertarget',
+    defaultCapture: 'story_high_particles',
 
     // The prefix URL to be added to any requests for capture data files
     prefixAssetURL: '',
@@ -18,20 +21,6 @@ BaseConfig.prototype =
 
     // The location of capture streams by path
     captureLookUp: {
-        'noshadows_norendertarget': 'capture/noshadows_norendertarget/',
-        'noshadows_rendertarget': 'capture/noshadows_rendertarget/',
-        'shadows_norendertarget': 'capture/shadows_norendertarget/',
-        'shadows_rendertarget': 'capture/shadows_rendertarget/',
-        'waves3_noshadows_norendertarget': 'capture/waves3_noshadows_norendertarget/',
-        'waves3_shadows_norendertarget': 'capture/waves3_shadows_norendertarget/',
-        'zoom_shadows_norendertarget': 'capture/zoom_shadows_norendertarget/',
-        'zoom2_shadows_tiltshift': 'capture/zoom2_shadows_tiltshift/',
-        'zoom_noshadows_norendertarget': 'capture/zoom_noshadows_norendertarget/',
-        'story_shadows_rendertarget': 'capture/story_shadows_rendertarget/',
-        'story_high': 'capture/story_high/',
-        'story_high_fxaa': 'capture/story_high_fxaa/',
-        'story_high_nofxaa': 'capture/story_high_nofxaa/',
-        'story_high_norendertarget': 'capture/story_high_norendertarget/',
         'story_high_particles': 'capture/story_high_particles'
     },
 
