@@ -225,7 +225,7 @@ var BenchmarkResultsScreen = (function ()
                     [data.postFxBloom, 'Bloom'],
                     [data.postFxFXAA, 'FxAA'],
                     [data.postFxColorization, 'Colorization'],
-                    [data.postFxTiltShift, 'TiltShiftt'],
+                    [data.postFxTiltShift, 'Tilt-shift'],
                     [data.postFxBlurScale !== 0, 'Blur']
                 ];
 
