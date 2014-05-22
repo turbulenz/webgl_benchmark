@@ -10,7 +10,6 @@
 /*global BenchmarkGraph: false*/
 /*global RequestHandler: false*/
 /*global Utilities: false*/
-/*global debug: false*/
 /*global FontManager: false*/
 /*global ShaderManager: false*/
 /*global TextureManager: false*/
@@ -20,12 +19,54 @@ function BenchmarkApp() {}
 
 BenchmarkApp.prototype =
 {
+    errorCodes: {
+        OK                      : 0,
+        META_REQUEST_FAILED     : 1,
+        META_FILE_MISSING       : 2,
+        META_PARSE_FAIL         : 3,
+        META_VERSION_INCOMPAT   : 4,
+        META_VERSION_MISSING    : 5,
+        STREAM_TEST_MISSING     : 6,
+        STREAM_ID_MISSING       : 7,
+        STREAM_PREFIX_MISSING   : 8
+    },
+
+    userErrorMsg: {
+        1: "The benchmark was unable to load at this time. Please try again later.",
+        2: "The benchmark was unable to load. If this issue persists please report it.",
+        3: "The benchmark data is corrupt. Please report this error.",
+        4: "This version of the benchmark is not compatible with the data. Please report this error.",
+        5: "The benchmark data is not recognized. Please report this error.",
+        6: "The benchmark data is corrupt. Please report this error.",
+        7: "The benchmark data is corrupt. Please report this error.",
+        8: "The benchmark configuration is corrupt. Please report this error"
+    },
+
+    consoleErrorMsg: {
+        1: "META_REQUEST_FAILED: Failed to load stream information",
+        2: "META_FILE_MISSING: The meta file request returned a 404",
+        3: "META_PARSE_FAIL: The meta file could not be parsed",
+        4: "META_VERSION_INCOMPAT: The version of the meta file loaded is incompatible with this benchmark",
+        5: "META_VERSION_MISSING: The version of the meta file is missing",
+        6: "STREAM_TEST_MISSING: Test cannot be found in the stream: ",
+        7: "STREAM_ID_MISSING: The stream ID cannot be found for default capture: ",
+        8: "STREAM_PREFIX_CAP_MISSING: The prefixCaptureURL cannot be found for default capture: "
+    },
+
     init : function benchmarkappInitFn()
     {
         var config = this.config;
         var that = this;
 
         var streamIDs = config.streamIDs || {};
+
+        // This version of the benchmark app understands streams with the following versions:
+        var supportedStreamMetaVersions = [0, 1];
+
+        var loadingErrorTitle = "Loading Error";
+        var loadingStatus = 0; //OK
+        var loadingErrorArgs = [];
+        var errorCodes = this.errorCodes;
 
         var metaResponse = false;
         var metaLoaded = function metaLoadedFn(responseText, status)
@@ -35,17 +76,28 @@ BenchmarkApp.prototype =
                 return;
             }
 
-            var streamMeta = null;
-            if (status === 200)
+            if (status !== 200)
             {
-                try
+                if (status === 404)
                 {
-                    streamMeta = JSON.parse(responseText);
+                    loadingStatus = errorCodes.META_FILE_MISSING;
                 }
-                catch (e)
+                else
                 {
-                    Utilities.error("Could not parse meta information");
+                    loadingStatus = errorCodes.META_REQUEST_FAILED;
                 }
+                return;
+            }
+
+            var streamMeta = null;
+            try
+            {
+                streamMeta = JSON.parse(responseText) || {};
+            }
+            catch (e)
+            {
+                loadingStatus = errorCodes.META_PARSE_FAIL;
+                return;
             }
 
             // Default benchmark behaviour
@@ -56,24 +108,43 @@ BenchmarkApp.prototype =
                 id: "0"
             };
 
-            if (streamMeta)
+            var streamMetaVersion = streamMeta.version;
+            if (streamMetaVersion === undefined)
             {
-                var streamMetaVersion = streamMeta.version;
-                debug.assert(streamMetaVersion === 0, "Stream meta is an unrecognized version");
-                var streamTests = streamMeta.tests;
-                if (!streamTests[test.name])
-                {
-                    Utilities.error("Test cannot be found in the stream: " + test.name);
-                }
+                loadingStatus = errorCodes.META_VERSION_MISSING;
+                return;
+            }
+            var length = supportedStreamMetaVersions.length;
+            var streamMetaSupported = false;
+            for (var i = 0; i < length; i += 1)
+            {
+                streamMetaSupported = streamMetaSupported || (streamMetaVersion === supportedStreamMetaVersions[i]);
+            }
+            if (!streamMetaSupported)
+            {
+                loadingStatus = errorCodes.META_VERSION_INCOMPAT;
+                return;
+            }
+            var streamTests = streamMeta.tests;
+            if (!streamTests || !streamTests[test.name])
+            {
+                loadingStatus = errorCodes.STREAM_TEST_MISSING;
+                loadingErrorArgs.push(test.name);
+                return;
             }
 
             var stream = {
                 name: config.defaultCapture,
                 meta: streamMeta,
                 tests: [test],
-                id: streamIDs[config.defaultCapture] //TODO: Enforce a streamID is present
+                id: streamIDs[config.defaultCapture]
             };
-
+            if (!stream.id)
+            {
+                loadingStatus = errorCodes.STREAM_ID_MISSING;
+                loadingErrorArgs.push(config.defaultCapture);
+                return;
+            }
 
             var sequenceList = [{
                 name: config.defaultSequenceName || "Default Sequence",
@@ -85,6 +156,13 @@ BenchmarkApp.prototype =
         };
 
         var prefixCaptureURL = config.captureLookUp[config.defaultCapture];
+        if (!prefixCaptureURL)
+        {
+            loadingStatus = errorCodes.STREAM_PREFIX_MISSING;
+            loadingErrorArgs.push(config.defaultCapture);
+            that.displayError(loadingErrorTitle, loadingStatus, loadingErrorArgs);
+            return;
+        }
 
         this.requestHandler.request({
             src: prefixCaptureURL + 'meta.json',
@@ -250,6 +328,13 @@ BenchmarkApp.prototype =
             var graphicsDevice = that.graphicsDevice;
             var playbackController = that.playbackController;
 
+            if (loadingStatus !== 0)
+            {
+                that.displayError(loadingErrorTitle, loadingStatus, loadingErrorArgs);
+                TurbulenzEngine.clearInterval(that.intervalID);
+                return;
+            }
+
             if (config.graphOnStart)
             {
                 if (that.playbackController.gameSession)
@@ -356,6 +441,58 @@ BenchmarkApp.prototype =
                 that.graph.addResult(resultData);
             }
         });
+    },
+
+    displayError : function benchmarkappDisplayErrorFn(errorTitle, errorCode, errorArgs)
+    {
+        if (this.graphicsDevice.fullscreen)
+        {
+            this.graphicsDevice.fullscreen = false;
+        }
+
+        var canvas = TurbulenzEngine.canvas;
+        if (canvas)
+        {
+            canvas.style.display = "none";
+        }
+
+        var userErrorMsg = this.userErrorMsg;
+        var consoleErrorMsg = this.consoleErrorMsg;
+
+        var userErrorDesc = userErrorMsg[errorCode];
+        var userErrorCode = "Error Code: " + errorCode;
+
+        var consoleErrorString = errorTitle + ': ' + consoleErrorMsg[errorCode];
+        if (errorArgs && errorArgs.length > 0)
+        {
+            consoleErrorString += errorArgs.toString();
+        }
+
+        var console = window.console;
+        if (console)
+        {
+            console.error(consoleErrorString);
+        }
+
+        // Developers only
+        var resultsElem = document.getElementById(this.resultsID);
+        if (resultsElem)
+        {
+            var div = document.createElement('div');
+            div.className = this.resultsID + '-title';
+            div.textContent = errorTitle;
+            resultsElem.appendChild(div);
+
+            div = document.createElement('div');
+            div.className = this.resultsID + '-text';
+            div.textContent = userErrorDesc;
+            resultsElem.appendChild(div);
+
+            div = document.createElement('div');
+            div.className = this.resultsID + '-custom';
+            div.textContent = userErrorCode;
+            resultsElem.appendChild(div);
+        }
     },
 
     shutdown : function benchmarkappShutdownFn()
