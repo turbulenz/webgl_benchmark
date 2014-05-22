@@ -944,6 +944,9 @@ def main():
             error("Cannot find manage.py in Turbulenz environment")
             return
 
+    if args.force_download and args.release:
+        download_assets(config_name=args.config, force_download=True)
+
     if args.copy_release:
         info("Copying release files to '%s' directory" % STATIC_OUTPUT_PATH)
         copy_release()
