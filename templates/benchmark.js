@@ -4,9 +4,7 @@
 /*{{ javascript("scripts/configurations/baseconfig.js") }}*/
 /*{{ javascript("scripts/configurations/onlineconfig.js") }}*/
 /*{{ javascript("scripts/configurations/offlineconfig.js") }}*/
-/*{% if not tz_development %}*/
 /*{{ javascript("scripts/configurations/staticconfig.js") }}*/
-/*{% endif %}*/
 
 /*{# benchmark files #}*/
 /*{{ javascript("scripts/benchmarkapp.js") }}*/
