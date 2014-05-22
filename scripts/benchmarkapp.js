@@ -327,6 +327,10 @@ BenchmarkApp.prototype =
                 }
                 requestAnimationFrame(update);
             }
+            else
+            {
+                that.shutdown();
+            }
         }
 
         function loadingUpdate()
@@ -337,7 +341,12 @@ BenchmarkApp.prototype =
             if (loadingStatus !== 0)
             {
                 that.displayError(loadingErrorTitle, loadingStatus, loadingErrorArgs);
-                TurbulenzEngine.clearInterval(that.intervalID);
+                that.shutdown();
+                return;
+            }
+            if (TurbulenzEngine.isUnloading())
+            {
+                that.shutdown();
                 return;
             }
 
