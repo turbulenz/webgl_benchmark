@@ -210,6 +210,11 @@ var BenchmarkResultsScreen = (function ()
             var browserString, browserLines;
             var i;
 
+            if (benchmarkData.benchmark && benchmarkData.benchmark.version)
+            {
+                this.versionString = ' ( v' + benchmarkData.benchmark.version + ' ) ';
+            }
+
             try
             {
                 data = benchmarkData.sequences[0].streams[0].meta.metaDataList[0];
@@ -471,7 +476,7 @@ var BenchmarkResultsScreen = (function ()
         fontParams = this.fontParams.config;
         fontParams.x = centerx;
         fontParams.y = yLocation + 10;
-        this.simplefonts.drawFont("CONFIGURATION", fontParams);
+        this.simplefonts.drawFont("CONFIGURATION" + this.versionString, fontParams);
         fontParams.y += (baseFontHeight * fontParams.scale) + 5;
         this.simplefonts.drawFont(this.browserText, fontParams);
         fontParams.y += (this.numBrowserLines * baseFontHeight * fontParams.scale) + 5;
@@ -607,6 +612,7 @@ var BenchmarkResultsScreen = (function ()
         f.numBrowserLines = 2;
         f.browserText = 'Unknown browser\nUnknown renderer';
         f.testScores = [];
+        f.versionString = '';
 
         f.textureTechnique = null;
         f.textureVertexFormats = [
