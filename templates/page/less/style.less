@@ -128,11 +128,16 @@ a {
 .content-wrapper {
     .display-flex;
     .flex-direction(column);
+    .flex-align-items(center);
 
     overflow: auto;
 
     .header, .footer, .content {
         .flex(0, 0, auto);
+    }
+
+    .header {
+        width: 100%;
     }
 
     .vertical-spacer {
@@ -145,12 +150,17 @@ a {
 
     margin: 0 auto;
     padding: 0 6rem;
+    width: 202rem;
+    max-width: 100%;
 
     text-align: center;
     color: @light-text;
 
+    word-break: break-word;
+
     h1 {
         .ultralight-typeface;
+        display: inline;
         font-size: @font-size-large-heading;
         height: @font-size-large-heading;
         margin-bottom: @spacer-height-small;
@@ -159,7 +169,6 @@ a {
     }
 
     h2, p {
-        max-width: @text-content-width;
         margin: 0 auto @spacer-height-large;
     }
 
@@ -212,22 +221,6 @@ a {
     }
 }
 
-@media (max-width: @screenshot-breakpoint) {
-    .screenshots {
-        .flex-direction(column);
-
-        li {
-            display: block;
-            margin-right: 0;
-
-            margin-bottom: @screenshot-spacer-height;
-            &:last-child {
-                margin-bottom: 0;
-            }
-        }
-    }
-}
-
 
 .home {
     display: inline-block;
@@ -254,6 +247,7 @@ a {
 
     display: inline-block;
     width: 95rem;
+    max-width: 100%;
     height: 16rem;
 
     letter-spacing: 3px;
@@ -576,3 +570,75 @@ a {
     }
 }
 
+
+
+html {
+    font-size: 3.75px;
+
+    @breakpoint1: unit(@content-width * 3.75, px);
+
+    @media (max-width: @breakpoint1) {
+        .screenshots {
+            .flex-direction(column);
+
+            li {
+                display: block;
+                margin-right: 0;
+
+                margin-bottom: @screenshot-spacer-height;
+                &:last-child {
+                    margin-bottom: 0;
+                }
+            }
+        }
+    }
+
+}
+
+@media (max-device-width: @phone-width) and (max-device-height: @phone-width) {
+    html {
+        font-size: 3.25px;
+
+        @breakpoint2: unit(@content-width * 3.25, px);
+
+        @media (max-width: @breakpoint2) {
+            .screenshots {
+                .flex-direction(column);
+
+                li {
+                    display: block;
+                    margin-right: 0;
+
+                    margin-bottom: @screenshot-spacer-height;
+                    &:last-child {
+                        margin-bottom: 0;
+                    }
+                }
+            }
+        }
+    }
+}
+
+@media (min-device-width: @desktop-width) {
+    html {
+        font-size: 4px;
+
+        @breakpoint3: unit(@content-width * 4, px);
+
+        @media (max-width: @breakpoint3) {
+            .screenshots {
+                .flex-direction(column);
+
+                li {
+                    display: block;
+                    margin-right: 0;
+
+                    margin-bottom: @screenshot-spacer-height;
+                    &:last-child {
+                        margin-bottom: 0;
+                    }
+                }
+            }
+        }
+    }
+}
