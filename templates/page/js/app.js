@@ -1,3 +1,6 @@
+/*
+ Copyright (c) 2014 Turbulenz Limited
+*/
 /*global $*/
 'use strict';
 
