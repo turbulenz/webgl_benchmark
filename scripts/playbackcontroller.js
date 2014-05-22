@@ -7,31 +7,25 @@
 /*global UserDataManager: false*/
 /*global TurbulenzServices: false*/
 /*global Utilities: false*/
+/*global debug: false*/
 
 function PlaybackController() {}
 
 PlaybackController.prototype =
 {
-
     init : function playbackcontrollerInitFn(prefixAssetURL, prefixCaptureURL, prefixTemplatesURL, sequenceList)
     {
+        var initStatus = this.errorCodes.OK;
+
         this.prefixAssetURL = prefixAssetURL;
         this.prefixCaptureURL = prefixCaptureURL;
         this.prefixTemplatesURL = prefixTemplatesURL;
         this.testRanges = {};
         this.testSubTestDict = {};
-        if (!sequenceList)
-        {
-            Utilities.log("Sequence information is required to playback");
-            return false;
-        }
-        if (!this._processSequenceList(sequenceList))
-        {
-            Utilities.log("Sequence information could not be processed");
-            return false;
-        }
         this.resultsData = {};
-        return true;
+
+        initStatus = this._processSequenceList(sequenceList);
+        return initStatus;
     },
 
     _processSubTests: function playbackcontrollerProcessSubTestsFn(subTests, tests, testID, testData)
@@ -459,76 +453,88 @@ PlaybackController.prototype =
         var sequence, stream, test, streamMeta, testMeta, stats, testData;
         var numTotalFrames, numFramesPerGroup, numGroups;
         var i, iLen, j, jLen, k, kLen;
+        if (!sequenceList)
+        {
+            return this.errorCodes.SEQUENCE_PARSE_FAIL;
+        }
         iLen = sequenceList.length;
         this.testsData = [];
+
+        if (iLen === 0)
+        {
+            return this.errorCodes.SEQUENCE_PARSE_FAIL;
+        }
 
         for (i = 0; i < iLen; i += 1)
         {
             sequence = sequenceList[i];
+            if (!sequence.streams || sequence.streams.length <= 0)
+            {
+                return this.errorCodes.SEQUENCE_PARSE_FAIL;
+            }
             jLen = sequence.streams.length;
             for (j = 0; j < jLen; j += 1)
             {
                 stream = sequence.streams[j];
                 streamMeta = stream.meta;
-                if (stream.meta && stream.id)
+                if (!streamMeta || streamMeta.version !== 1)
                 {
-                    this.streamMeta[stream.id] = stream.meta;
+                    // streamMeta version is not compatible
+                    return this.errorCodes.META_VERSION_INCOMPAT;
                 }
+                numTotalFrames = this.numTotalFrames = streamMeta.totalLength;
+                numFramesPerGroup = this.numFramesPerGroup = streamMeta.groupLength;
+                // Total groups for all stream data
+                numGroups = this.numGroups = Math.ceil(numTotalFrames / numFramesPerGroup);
 
-                if (streamMeta)
+                if (!stream.tests || stream.tests.length <= 0)
                 {
-                    numTotalFrames = this.numTotalFrames = streamMeta.totalLength;
-                    numFramesPerGroup = this.numFramesPerGroup = streamMeta.groupLength;
-                    // Total groups for all stream data
-                    numGroups = this.numGroups = Math.ceil(numTotalFrames / numFramesPerGroup);
+                    return this.errorCodes.SEQUENCE_PARSE_FAIL;
                 }
-
                 kLen = stream.tests.length;
                 for (k = 0; k < kLen; k += 1)
                 {
                     test = stream.tests[k];
-
-                    if (streamMeta && streamMeta.tests)
+                    testMeta = streamMeta.tests[test.name];
+                    if (!testMeta)
                     {
-                        testMeta = streamMeta.tests[test.name];
+                        // Test is no available in the stream
+                        return this.errorCodes.STREAM_TEST_MISSING;
+                    }
 
-                        stats = {};
-                        testData = {
-                            id: test.id,
-                            name: test.name,
-                            stats: stats
+                    stats = {};
+                    testData = {
+                        id: test.id,
+                        name: test.name,
+                        stats: stats
+                    };
+                    this.testsData.push(testData);
+
+                    if (testMeta.subTests)
+                    {
+                        this._processSubTests(testMeta.subTests, streamMeta.tests, test.id, testData);
+                    }
+                    else
+                    {
+                        this.testRanges[test.name] = {
+                            name: testMeta.name,
+                            range: [
+                                testMeta.startFrame,
+                                testMeta.endFrame ? testMeta.endFrame: testMeta.lastFrame
+                            ],
+                            stats: stats,
+                            started: false,
+                            ended: false
                         };
-                        this.testsData.push(testData);
-
-                        if (testMeta.subTests)
-                        {
-                            this._processSubTests(testMeta.subTests, streamMeta.tests, test.id, testData);
-                        }
-                        else
-                        {
-                            this.testRanges[test.name] = {
-                                name: testMeta.name,
-                                range: [
-                                    testMeta.startFrame,
-                                    testMeta.endFrame ? testMeta.endFrame: testMeta.lastFrame
-                                ],
-                                stats: stats,
-                                started: false,
-                                ended: false
-                            };
-                        }
                     }
 
-                    if (testMeta)
-                    {
-                        var testEndFrame = testMeta.endFrame ? testMeta.endFrame: testMeta.lastFrame;
-                        numGroups = this.numGroups = Math.ceil(testEndFrame / numFramesPerGroup) + this.additionalGroups;
-                    }
+                    var testEndFrame = testMeta.endFrame ? testMeta.endFrame: testMeta.lastFrame;
+                    numGroups = this.numGroups = Math.ceil(testEndFrame / numFramesPerGroup) + this.additionalGroups;
                 }
             }
         }
         this.sequenceList = sequenceList;
-        return true;
+        return this.errorCodes.OK;
     },
 
     _requestData : function playbackcontroller_requestDataFn(groupIndex)
@@ -974,9 +980,6 @@ PlaybackController.prototype =
             userDataResult.config.sequences = this.sequenceList;
             this.sequenceList = [];
         }
-
-        userDataResult.config.streams = this.streamMeta;
-        this.streamMeta = {};
 
         // Add data
         var framesData = {};
@@ -1538,6 +1541,9 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
     var requestHandler = playbackController.requestHandler = params.requestHandler;
     var simplefonts = params.simplefonts;
     var elements = params.elements;
+
+    playbackController.errorCodes = params.errorCodes;
+    debug.assert(!!playbackController.errorCodes, "Error codes from benchmark app required");
     playbackController.config = config;
 
     playbackController.playbackGraphicsDevice = PlaybackGraphicsDevice.create(graphicsDevice);
@@ -1624,7 +1630,6 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
     };
 
     playbackController.playbackConfig = {};
-    playbackController.streamMeta = {};
     playbackController.sequenceList = [];
 
     playbackController.simplefonts = simplefonts;

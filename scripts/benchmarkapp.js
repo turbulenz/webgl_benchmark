@@ -9,7 +9,6 @@
 /*global Config: false*/
 /*global BenchmarkGraph: false*/
 /*global RequestHandler: false*/
-/*global Utilities: false*/
 /*global FontManager: false*/
 /*global ShaderManager: false*/
 /*global TextureManager: false*/
@@ -28,7 +27,8 @@ BenchmarkApp.prototype =
         META_VERSION_MISSING    : 5,
         STREAM_TEST_MISSING     : 6,
         STREAM_ID_MISSING       : 7,
-        STREAM_PREFIX_MISSING   : 8
+        STREAM_PREFIX_MISSING   : 8,
+        SEQUENCE_PARSE_FAIL     : 9
     },
 
     userErrorMsg: {
@@ -39,7 +39,8 @@ BenchmarkApp.prototype =
         5: "The benchmark data is not recognized. Please report this error.",
         6: "The benchmark data is corrupt. Please report this error.",
         7: "The benchmark data is corrupt. Please report this error.",
-        8: "The benchmark configuration is corrupt. Please report this error"
+        8: "The benchmark configuration is corrupt. Please report this error",
+        9: "The benchmark configuration is corrupt. Please report this error"
     },
 
     consoleErrorMsg: {
@@ -50,7 +51,8 @@ BenchmarkApp.prototype =
         5: "META_VERSION_MISSING: The version of the meta file is missing",
         6: "STREAM_TEST_MISSING: Test cannot be found in the stream: ",
         7: "STREAM_ID_MISSING: The stream ID cannot be found for default capture: ",
-        8: "STREAM_PREFIX_CAP_MISSING: The prefixCaptureURL cannot be found for default capture: "
+        8: "STREAM_PREFIX_CAP_MISSING: The prefixCaptureURL cannot be found for default capture: ",
+        9: "SEQUENCE_PARSE_FAIL: The sequence to play cannot be read as expected"
     },
 
     init : function benchmarkappInitFn()
@@ -151,7 +153,7 @@ BenchmarkApp.prototype =
                 streams: [stream]
             }];
 
-            that.playbackController.init(config.prefixAssetURL, prefixCaptureURL, config.prefixTemplatesURL, sequenceList);
+            loadingStatus = that.playbackController.init(config.prefixAssetURL, prefixCaptureURL, config.prefixTemplatesURL, sequenceList);
             metaResponse = true;
         };
 
@@ -615,6 +617,7 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
     }
 
     benchmarkApp.playbackController = PlaybackController.create(config, {
+        errorCodes: benchmarkApp.errorCodes,
         graphicsDevice: graphicsDevice,
         mathDevice: mathDevice,
         requestHandler: requestHandler,
