@@ -483,10 +483,20 @@ BenchmarkApp.prototype =
             consoleErrorString += errorArgs.toString();
         }
 
-        var console = window.console;
-        if (console)
+
+        if (window.showError)
         {
-            console.error(consoleErrorString);
+            window.showError({
+                title: errorTitle,
+                text: userErrorDesc,
+                custom: '<p>' + userErrorCode + '</p>',
+                linkText: "Go back to the page",
+                linkFunction: window.hideError
+            });
+        }
+        else if (window.console)
+        {
+            window.console.error(consoleErrorString);
         }
 
         // Developers only
