@@ -670,8 +670,8 @@ PlaybackController.prototype =
 
     _isSupportedTemplate : function _isSupportedTemplateFn(template)
     {
-        // Only support version 0
-        return (template.version === 0);
+        // Only support version 1
+        return (template.version === 1);
     },
 
     loadAssets : function playbackcontrollerLoadAssetsFn()
