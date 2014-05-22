@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2013 Turbulenz Limited
+// Copyright (c) 2009-2014 Turbulenz Limited
 /*exported BenchmarkLoadingScreen*/
 
 var BenchmarkLoadingScreen = (function () {

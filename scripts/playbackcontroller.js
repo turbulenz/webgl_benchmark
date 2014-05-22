@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 Turbulenz Limited
 //
 // PlaybackController - class description
 //
@@ -808,13 +809,12 @@ PlaybackController.prototype =
                     {
                         this.averageFrameTime = this.newAverageFrameTime;
                         this.newAverageFrameTime = 0;
+                        this.fps = 1000 / this.averageFrameTime;
                     }
                     this.newAverageFrameTime += frameTime / 60.0;
 
                     var recordingTime = (TurbulenzEngine.getTime() - this.playbackStart) / 1000;
                     var elements = this.elements;
-
-                    this.fps = this.framesRendered / recordingTime;
 
                     var averageFrameTimeElement = elements.averageFrameTime;
                     if (averageFrameTimeElement)
@@ -976,7 +976,44 @@ PlaybackController.prototype =
         userDataResult.config.playback = this.playbackConfig;
         this.playbackConfig = {};
 
-        //TODO: Add browser config
+        userDataResult.config.browser = {
+            name: 'Unknown Browser',
+            version: {
+                value: ''
+            },
+            os: {
+                name: 'Unknown OS',
+                version: {
+                    value: ''
+                }
+            }
+        };
+        var WhichBrowser = window.WhichBrowser;
+        if (WhichBrowser)
+        {
+            var browser = userDataResult.config.browser;
+            var wb = new WhichBrowser();
+            wb.onReady(function (info)
+            {
+                if (info)
+                {
+                    var browserData = info.browser;
+                    var osData = info.os;
+                    if (browserData && browserData.name)
+                    {
+                        browser.name = browserData.name;
+                        if (browserData.version)
+                        {
+                            browser.version = browserData.version;
+                        }
+                    }
+                    if (osData && osData.name)
+                    {
+                        browser.os = osData;
+                    }
+                }
+            });
+        }
 
         //TODO: Add online hardware config
 

@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 Turbulenz Limited
 //
 // BenchmarkApp - The benchmarking application
 //
@@ -294,7 +295,6 @@ BenchmarkApp.prototype =
         {
             var graphicsDevice = that.graphicsDevice;
             if (!TurbulenzEngine.isUnloading()) {
-                that.playbackController.update();
                 if (abortElement && abortElement.disabled)
                 {
                     abortElement.disabled = false;
@@ -317,9 +317,13 @@ BenchmarkApp.prototype =
                     if (graphicsDevice.beginFrame())
                     {
                         graphicsDevice.clear(that.loadingColor);
-                        that.resultsScreen.render(1, 1);
+                        that.resultsScreen.render();
                         graphicsDevice.endFrame();
                     }
+                }
+                else
+                {
+                    that.playbackController.update();
                 }
                 requestAnimationFrame(update);
             }

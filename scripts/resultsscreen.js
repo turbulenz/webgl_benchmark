@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2013 Turbulenz Limited
+// Copyright (c) 2013-2014 Turbulenz Limited
 
 /*exported BenchmarkResultsScreen*/
 
@@ -32,6 +32,8 @@ var BenchmarkResultsScreen = (function ()
                         {
                             that.textureParams[name] = graphicsDevice.createTechniqueParameters();
                             that.textureParams[name].diffuse = texture;
+                            that.textureParams[name].clipSpace = that.clipSpace;
+                            that.textureParams[name].alpha = 1;
                             that.loadingAssets -= 1;
                         }
                     }
@@ -69,8 +71,6 @@ var BenchmarkResultsScreen = (function ()
         var uMin, vMin, uMax, vMax;
 
         gd.setTechnique(this.textureTechnique);
-        techniqueParams.clipSpace = this.clipSpace;
-        techniqueParams.alpha = 1;
         gd.setTechniqueParameters(techniqueParams);
 
         writer = gd.beginDraw(gd.PRIMITIVE_TRIANGLE_STRIP, 4, this.textureVertexFormats, this.textureSemantics);
@@ -115,8 +115,6 @@ var BenchmarkResultsScreen = (function ()
         var bottom = floor(y + image.height);
 
         gd.setTechnique(this.textureTechnique);
-        techniqueParams.clipSpace = this.clipSpace;
-        techniqueParams.alpha = 1;
         gd.setTechniqueParameters(techniqueParams);
         writer = gd.beginDraw(gd.PRIMITIVE_TRIANGLE_STRIP, 4, this.textureVertexFormats, this.textureSemantics);
 
@@ -141,7 +139,6 @@ var BenchmarkResultsScreen = (function ()
         var b = floor(bottom);
 
         gd.setTechnique(this.backgroundTechnique);
-        techniqueParams.clipSpace = this.clipSpace;
         gd.setTechniqueParameters(techniqueParams);
         writer = gd.beginDraw(gd.PRIMITIVE_TRIANGLE_STRIP, 4, this.posVertexFormats, this.posSemantics);
         if (writer)
@@ -157,7 +154,7 @@ var BenchmarkResultsScreen = (function ()
     BenchmarkResultsScreen.prototype.onmouseup = function (button, x, y)
     {
         var i, inBox, box;
-        var clickTarget = { priority: -100, onClick: function () {} };
+        var clickTarget = this.defaultClickTarget;
         if (button === this.id.mouseCodes.BUTTON_0)
         {
             for (i = 0; i < this.hitBoxes.length; i += 1)
@@ -180,6 +177,19 @@ var BenchmarkResultsScreen = (function ()
         this.mouseY = y;
     };
 
+    BenchmarkResultsScreen.prototype.onmousewheel = function (delta)
+    {
+        this.velocity += 30;
+        if (delta > 0)
+        {
+            this.direction = 1;
+        }
+        else
+        {
+            this.direction = -1;
+        }
+    };
+
     BenchmarkResultsScreen.prototype.formatMeta = function ()
     {
         var that = this;
@@ -188,70 +198,80 @@ var BenchmarkResultsScreen = (function ()
             this.testScores = this.playbackController.getScores();
         }
 
-        if (!this.settingsLines.length)
+        if (!this.numSettingsLines)
         {
             var benchmarkData = this.playbackController.processData().userData.config;
-            var configString = "";
-            var flagMap = {
-                'true': 'On',
-                'false': 'Off'
-            };
+            var browserData = benchmarkData.browser;
+            var osData = browserData.os;
+            var prefixWithComma = false;
             var data;
+            var options;
+            var settingsString, settingsLines;
+            var browserString, browserLines;
+            var i;
 
             try
             {
                 data = benchmarkData.sequences[0].streams[0].meta.metaDataList[0];
-                configString += "Render Target " + flagMap[data.renderTarget];
-                configString += ", Shadows " + flagMap[data.shadows];
-                configString += ", Bloom " + flagMap[data.postFxBloom];
-                configString += ", FxAA " + flagMap[data.postFxFXAA];
-                configString += ", Colorization " + flagMap[data.postFxColorization];
-                configString += ", TiltShift " + flagMap[data.postFxTiltShift];
-                configString += ", Blur " + flagMap[data.postFxBlurScale !== 0];
+                settingsString = "Enabled Settings: ";
+                options = [
+                    [data.renderTarget, 'Render Target'],
+                    [data.shadows, 'Shadows'],
+                    [data.postFxBloom, 'Bloom'],
+                    [data.postFxFXAA, 'FxAA'],
+                    [data.postFxColorization, 'Colorization'],
+                    [data.postFxTiltShift, 'TiltShiftt'],
+                    [data.postFxBlurScale !== 0, 'Blur']
+                ];
+
+                for (i = 0 ; i < options.length; i += 1)
+                {
+                    if (options[i][0])
+                    {
+                        if (prefixWithComma)
+                        {
+                            settingsString += ", ";
+                        }
+                        settingsString += options[i][1];
+                        prefixWithComma = true;
+                    }
+                }
             }
             catch (_)
             {
-                configString = "";
+                settingsString = "Setting info unavailable";
             }
 
-            this.settingsLines = this.wrap(configString, this.fontParams.config, this.configBoxWidth);
-            this.browserLines = ["Fetching browser data..."];
+            settingsLines = this.wrap(settingsString, this.fontParams.config, this.configBoxWidth);
+            this.numSettingsLines = settingsLines.length;
+            this.settingsText = settingsLines.join('\n');
+            this.numBrowserLines = 1;
+            this.browserText = 'Fetching browser data...';
 
-            var rendererInfo = ', ' + benchmarkData.playback.playWidth + 'x' + benchmarkData.playback.playHeight +
-                '\n' + 'Renderer: ' + (benchmarkData.hardware.renderer || 'Unknown');
+            browserString = osData.name;
 
-            var WhichBrowser = window.WhichBrowser;
-            if (WhichBrowser)
+            if (osData.version && osData.version.value)
             {
-                var wb = new WhichBrowser();
-                wb.onReady(function (info)
+                if (osData.version.alias)
                 {
-                    var content = info.os.name;
-
-                    if (info.os.version)
-                    {
-                        if (info.os.version.alias)
-                        {
-                            content += ' ' + info.os.version.alias;
-                        }
-                        else
-                        {
-                            content += ' ' + info.os.version.value;
-                        }
-                    }
-
-                    content += ', ' + info.browser.name;
-                    if (info.browser.version)
-                    {
-                        content += ' ' + info.browser.version.value;
-                    }
-                    that.browserLines = that.wrap(content + rendererInfo, that.fontParams.config, that.configBoxWidth);
-                });
+                    browserString += ' ' + osData.version.alias;
+                }
+                else
+                {
+                    browserString += ' ' + osData.version.value;
+                }
             }
-            else
+
+            browserString += ', ' + browserData.name;
+            if (browserData.version && browserData.version.value)
             {
-                this.browserLines = this.wrap("Unknown browser" + rendererInfo, this.fontParams.config, this.configBoxWidth);
+                browserString += ' ' + browserData.version.value;
             }
+            browserString += ', ' + benchmarkData.playback.playWidth + 'x' + benchmarkData.playback.playHeight + '\n';
+            browserString += 'Renderer: ' + (benchmarkData.hardware.renderer || 'Unknown');
+            browserLines = that.wrap(browserString, that.fontParams.config, that.configBoxWidth);
+            that.numBrowserLines = browserLines.length;
+            that.browserText = browserLines.join('\n');
         }
     };
 
@@ -358,7 +378,8 @@ var BenchmarkResultsScreen = (function ()
         var gridHeight = 108;
         var gutterWidth = 2;
 
-        var heights = [];
+        this.heights.length = 0;
+        var heights = this.heights;
         var totalHeight = 0;
         var yLocation;
         var baseFontHeight = 16;
@@ -375,7 +396,7 @@ var BenchmarkResultsScreen = (function ()
         heights.push(this.textureParams.heading.diffuse.height + margin);
         heights.push((gridHeight * 2) + margin);
         fontParams = this.fontParams.config;
-        heights.push(((1 + this.browserLines.length + this.settingsLines.length) * (baseFontHeight * fontParams.scale)) + 40);
+        heights.push(((1 + this.numBrowserLines + this.numSettingsLines) * (baseFontHeight * fontParams.scale)) + 40);
         heights.push(this.textureParams.buttons.diffuse.height);
 
         for (i = 0; i < heights.length; i += 1)
@@ -383,7 +404,11 @@ var BenchmarkResultsScreen = (function ()
             totalHeight += heights[i];
         }
 
-        yLocation = Math.max(centery - (totalHeight / 2), 0);
+        this.velocity = Math.floor(this.velocity * 0.9);
+        this.offset += this.velocity * this.direction;
+        this.offset = Math.min(Math.max(screenHeight - totalHeight, this.offset), 0);
+
+        yLocation = Math.max(centery - (totalHeight / 2), 0) + this.offset;
 
         if (this.textureParams.heading)
         {
@@ -421,7 +446,7 @@ var BenchmarkResultsScreen = (function ()
             }
             else
             {
-                testScore = {name: "Unknown test", score: 0};
+                testScore = this.defaultTestScore;
             }
 
             fontParams = this.fontParams.scoreHeading;
@@ -448,9 +473,9 @@ var BenchmarkResultsScreen = (function ()
         fontParams.y = yLocation + 10;
         this.simplefonts.drawFont("CONFIGURATION", fontParams);
         fontParams.y += (baseFontHeight * fontParams.scale) + 5;
-        this.simplefonts.drawFont(this.browserLines.join('\n'), fontParams);
-        fontParams.y += (this.browserLines.length * baseFontHeight * fontParams.scale) + 5;
-        this.simplefonts.drawFont(this.settingsLines.join('\n'), fontParams);
+        this.simplefonts.drawFont(this.browserText, fontParams);
+        fontParams.y += (this.numBrowserLines * baseFontHeight * fontParams.scale) + 5;
+        this.simplefonts.drawFont(this.settingsText, fontParams);
         yLocation += heights.shift();
 
         if (this.textureParams.buttons)
@@ -463,6 +488,7 @@ var BenchmarkResultsScreen = (function ()
 
         this.simplefonts.render();
 
+        this.hitBoxes.length = 0;
         if (this.renderModal)
         {
             this.renderRectangle(this.modalBackground, 0, screenWidth, 0, screenHeight);
@@ -479,16 +505,16 @@ var BenchmarkResultsScreen = (function ()
                 this.closeModalHitbox.update(centerx, centery);
             }
 
-            this.hitBoxes = [ this.modalBackgroundHitbox,
-                              this.modalHitbox,
-                              this.closeModalHitbox];
+            this.hitBoxes.push(this.modalBackgroundHitbox,
+                               this.modalHitbox,
+                               this.closeModalHitbox);
         }
         else
         {
-            this.hitBoxes = [this.playHitbox,
-                             this.twitterHitbox,
-                             this.restartHitbox,
-                             this.infoHitbox];
+            this.hitBoxes.push(this.playHitbox,
+                               this.twitterHitbox,
+                               this.restartHitbox,
+                               this.infoHitbox);
         }
 
         this.updateCursor();
@@ -497,7 +523,7 @@ var BenchmarkResultsScreen = (function ()
     BenchmarkResultsScreen.prototype.updateCursor = function ()
     {
         var inBox = false;
-        var clickTarget = { priority: -100, cursor: 'default' };
+        var clickTarget = this.defaultClickTarget;
         var element = TurbulenzEngine.canvas;
         var x = this.mouseX;
         var y = this.mouseY;
@@ -544,6 +570,7 @@ var BenchmarkResultsScreen = (function ()
 
         id.addEventListener('mouseup', function (button, x, y) { f.onmouseup(button, x, y); });
         id.addEventListener('mouseover', function (x, y) { f.onmouseover(x, y); });
+        id.addEventListener('mousewheel', function (delta) { f.onmousewheel(delta); });
 
         f.clipSpace = md.v4Build(1.0, 1.0, -1.0, 1.0);
 
@@ -558,20 +585,27 @@ var BenchmarkResultsScreen = (function ()
 
         f.lightBackground = gd.createTechniqueParameters();
         f.lightBackground.color = md.v4Build(1, 1, 1, 0.2);
+        f.lightBackground.clipSpace = f.clipSpace;
         f.modalBackground = gd.createTechniqueParameters();
         f.modalBackground.color = md.v4Build(0, 0, 0, 0.6);
+        f.modalBackground.clipSpace = f.clipSpace;
         f.darkBackground = gd.createTechniqueParameters();
         f.darkBackground.color = md.v4Build(0, 0, 0, 0.2);
+        f.darkBackground.clipSpace = f.clipSpace;
         f.hilightBackground = gd.createTechniqueParameters();
         f.hilightBackground.color = md.v4Build(0.0, 0.8, 0.8, 1.0);
+        f.hilightBackground.clipSpace = f.clipSpace;
 
         f.debugBackground = gd.createTechniqueParameters();
         f.debugBackground.color = md.v4Build(1.0, 0.0, 0.0, 0.5);
+        f.debugBackground.clipSpace = f.clipSpace;
         f.renderHitboxes = false;
 
         f.playbackController = playbackController;
-        f.settingsLines = [];
-        f.browserLines = ["Unknown browser", "Unknown renderer"];
+        f.numSettingsLines = 0;
+        f.settingsText = '';
+        f.numBrowserLines = 2;
+        f.browserText = 'Unknown browser\nUnknown renderer';
         f.testScores = [];
 
         f.textureTechnique = null;
@@ -596,8 +630,13 @@ var BenchmarkResultsScreen = (function ()
         // UI FUNCTIONALITY
         f.mouseX = 0;
         f.mouseY = 0;
+        f.offset = 0;
+        f.velocity = 0;
+        f.direction = 1;
         f.configBoxWidth = 600;
         f.renderModal = false;
+        f.heights = [];
+        f.defaultTestScore = {name: "Unknown test", score: 0};
         var makeHitbox = function (priority, onClick, width, height, offsetx, offsety)
         {
             return {
@@ -621,6 +660,9 @@ var BenchmarkResultsScreen = (function ()
                 }
             };
         };
+
+        f.defaultClickTarget = makeHitbox(-100, function () {});
+        f.defaultClickTarget.cursor = 'default';
 
         f.twitterHitbox = makeHitbox(1, function ()
         {
