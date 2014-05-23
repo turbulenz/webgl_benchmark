@@ -76,7 +76,6 @@ $(function () {
 
         if (!(modernizr.canvas && modernizr.webgl && (modernizr.audio || modernizr.webaudio)))
         {
-            showWebGLDisabledError();
             webGLEnabled = false;
         }
 
@@ -150,6 +149,20 @@ $(function () {
 
 
 
+    var checkWebGLAndStartTest = function () {
+        if (webGLEnabled)
+        {
+            window.location.hash = 'run';
+            window.startTest();
+        }
+        else
+        {
+            showWebGLDisabledError();
+        }
+    };
+
+
+
     // add tracking functions for the page's links
     var _gaq = window._gaq;
 
@@ -175,15 +188,7 @@ $(function () {
         event.preventDefault();
         event.stopPropagation();
 
-        if (webGLEnabled)
-        {
-            window.location.hash = 'run';
-            window.startTest();
-        }
-        else
-        {
-            showWebGLDisabledError();
-        }
+        checkWebGLAndStartTest();
     });
 
     $('#play-game').click(function () {
@@ -213,7 +218,7 @@ $(function () {
 
         if (window.location.hash === '#run' && webGLEnabled)
         {
-            window.startTest();
+            checkWebGLAndStartTest();
         }
 
     }(window));
