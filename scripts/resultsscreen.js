@@ -704,19 +704,16 @@ var BenchmarkResultsScreen = (function ()
         f.fontParams.scoreHeading = {
             scale: 1,
             spacing: 2,
-            fontStyle: "regular",
             valignment: simplefonts.textVerticalAlign.TOP
         };
 
         f.fontParams.scoreValue = {
             scale: 3,
-            fontStyle: "light",
             valignment: simplefonts.textVerticalAlign.TOP
         };
 
         f.fontParams.config = {
             scale: 1.5,
-            fontStyle: "light",
             valignment: simplefonts.textVerticalAlign.TOP
         };
 

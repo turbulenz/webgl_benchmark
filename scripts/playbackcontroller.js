@@ -1695,14 +1695,12 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
     playbackController.fontParams = {
         text: {
             scale: 1,
-            fontStyle: "light",
             valignment: simplefonts.textVerticalAlign.BOTTOM,
             alignment: simplefonts.textHorizontalAlign.LEFT
         },
         fps: {
             scale: 2,
             spacing: 2,
-            fontStyle: "light",
             valignment: simplefonts.textVerticalAlign.BOTTOM,
             alignment: simplefonts.textHorizontalAlign.LEFT
         },
