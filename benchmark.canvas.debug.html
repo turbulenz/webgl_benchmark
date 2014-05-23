@@ -110,7 +110,7 @@
 
     <div id="engine">
         <div id="results"></div>
-        
+
         <canvas id="turbulenz_game_engine_canvas" moz-opaque="true" tabindex="1">
             Sorry, but your browser does not support WebGL or does not have it
             enabled.  To get a WebGL-enabled browser, please see:<br/>
@@ -158,18 +158,18 @@
 <script type="text/javascript" src="jslib/aabbtree.js"></script>
 <script type="text/javascript" src="jslib/observer.js"></script>
 <script type="text/javascript" src="jslib/webgl/ddsloader.js"></script>
-<script type="text/javascript" src="jslib/webgl/graphicsdevice.js"></script>
-<script type="text/javascript" src="jslib/webgl/inputdevice.js"></script>
-<script type="text/javascript" src="jslib/webgl/mathdevice.js"></script>
 <script type="text/javascript" src="jslib/webgl/networkdevice.js"></script>
-<script type="text/javascript" src="jslib/webgl/physicsdevice.js"></script>
-<script type="text/javascript" src="jslib/webgl/sounddevice.js"></script>
-<script type="text/javascript" src="jslib/webgl/soundtarloader.js"></script>
-<script type="text/javascript" src="jslib/webgl/tarloader.js"></script>
-<script type="text/javascript" src="jslib/webgl/tgaloader.js"></script>
 <script type="text/javascript" src="jslib/webgl/touch.js"></script>
-<script type="text/javascript" src="jslib/webgl/touchevent.js"></script>
+<script type="text/javascript" src="jslib/webgl/tgaloader.js"></script>
+<script type="text/javascript" src="jslib/webgl/mathdevice.js"></script>
 <script type="text/javascript" src="jslib/webgl/turbulenzengine.js"></script>
+<script type="text/javascript" src="jslib/webgl/soundtarloader.js"></script>
+<script type="text/javascript" src="jslib/webgl/physicsdevice.js"></script>
+<script type="text/javascript" src="jslib/webgl/inputdevice.js"></script>
+<script type="text/javascript" src="jslib/webgl/tarloader.js"></script>
+<script type="text/javascript" src="jslib/webgl/touchevent.js"></script>
+<script type="text/javascript" src="jslib/webgl/graphicsdevice.js"></script>
+<script type="text/javascript" src="jslib/webgl/sounddevice.js"></script>
 <script type="text/javascript" src="scripts/configurations/baseconfig.js"></script>
 <script type="text/javascript" src="scripts/configurations/onlineconfig.js"></script>
 <script type="text/javascript" src="scripts/configurations/offlineconfig.js"></script>
@@ -199,7 +199,7 @@
       // Embedded code and startup code.
       // Supplied by 'tz_startup_code' variable.
       // ----------------------------------------
-      
+
 /*global TurbulenzEngine: false*/
 /*global BenchmarkApp: false*/
 
@@ -212,48 +212,57 @@ TurbulenzEngine.onload = function onloadFn() {
 };
 
         // Engine startup
-        window.onload = function ()
-        {
-            var appEntry = TurbulenzEngine.onload;
-            var appShutdown = TurbulenzEngine.onunload;
-            if (!appEntry) {
-                window.alert("TurbulenzEngine.onload has not been set");
-                return;
-            }
+        window.startTest = function () {
+                        var appEntry = TurbulenzEngine.onload;
+                        var appShutdown = TurbulenzEngine.onunload;
+                        if (!appEntry)
+                        {
+                            console.error('TurbulenzEngine.onload has not been set');
+                            return;
+                        }
 
-            var canvas =
-                document.getElementById('turbulenz_game_engine_canvas');
+                        var canvas = document.getElementById('turbulenz_game_engine_canvas');
+                        var startCanvas = function startCanvasFn() {
 
-            var startCanvas = function startCanvasFn()
-            {
-                if (canvas.getContext && canvasSupported)
-                {
-                    TurbulenzEngine = WebGLTurbulenzEngine.create({
-                        canvas: canvas,
-                        fillParent: true
-                    });
+                            TurbulenzEngine = WebGLTurbulenzEngine.create({
+                                canvas: canvas,
+                                fillParent: true
+                            });
 
-                    if (!TurbulenzEngine) {
-                        window.alert("Failed to init TurbulenzEngine (canvas)");
-                        return;
-                    }
+                            if (!TurbulenzEngine)
+                            {
+                                console.error('Failed to init TurbulenzEngine (canvas)');
+                                return;
+                            }
 
-                    TurbulenzEngine.onload = appEntry;
-                    TurbulenzEngine.onunload = appShutdown;
-                    appEntry()
-                }
-            }
+                            TurbulenzEngine.onload = appEntry;
+                            TurbulenzEngine.onunload = appShutdown;
+                            appEntry();
+                        };
 
-            var previousOnBeforeUnload = window.onbeforeunload;
-            window.onbeforeunload = function ()
-            {
-                if (TurbulenzEngine.onunload) {
-                    TurbulenzEngine.onunload.call(this);
-                }
-            };  // window.beforeunload
+                        window.onbeforeunload = function () {
+//                            $('#engine').removeClass('active');
+                            if (TurbulenzEngine.onunload)
+                            {
+                                TurbulenzEngine.onunload.call(this);
+                            }
+                        };
 
-            startCanvas();
-        };  // window.onload()
+//                        $('#engine').addClass('active');
+
+                        startCanvas();
+
+                        var fullscreenFunction = canvas.requestFullscreen ||
+                                                 canvas.webkitRequestFullscreen ||
+                                                 canvas.mozRequestFullScreen ||
+                                                 canvas.msRequestFullscreen;
+
+                        if (fullscreenFunction)
+                        {
+                            fullscreenFunction.call(canvas, undefined);
+                        }
+
+                    };
 
     </script>
 </body>

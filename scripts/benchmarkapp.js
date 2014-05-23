@@ -624,8 +624,7 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
     var textureManager = TextureManager.create(graphicsDevice, requestHandler);
 
     var fonts = {
-        light: "avenirlight",
-        regular: "avenirmedium"
+        regular: "opensans"
     };
 
     globals.fontSizes = [8, 16, 32, 64];
@@ -711,7 +710,7 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
 
     benchmarkApp.loadingScreen = BenchmarkLoadingScreen.create(graphicsDevice, mathDevice);
     benchmarkApp.resultsScreen = BenchmarkResultsScreen.create(graphicsDevice, mathDevice, inputDevice,
-        benchmarkApp.playbackController, simplefonts);
+        benchmarkApp.playbackController, simplefonts, benchmarkApp);
 
     benchmarkApp.resultsID = "results";
 

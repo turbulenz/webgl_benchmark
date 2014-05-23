@@ -76,7 +76,6 @@ $(function () {
 
         if (!(modernizr.canvas && modernizr.webgl && (modernizr.audio || modernizr.webaudio)))
         {
-            showWebGLDisabledError();
             webGLEnabled = false;
         }
 
@@ -150,30 +149,17 @@ $(function () {
 
 
 
-    // set up "navigation"
-    (function (window) {
-
-        var checkIfStart = function () {
-            if (window.location.hash === '#run' && webGLEnabled)
-            {
-                window.startTest();
-                return true;
-            }
-            return false;
-        };
-
-        window.onhashchange = function () {
-
-            if (!checkIfStart() && window.onbeforeunload)
-            {
-                window.onbeforeunload.call(window);
-            }
-
-        };
-
-        checkIfStart();
-
-    }(window));
+    var checkWebGLAndStartTest = function () {
+        if (webGLEnabled)
+        {
+            window.location.hash = 'run';
+            window.startTest();
+        }
+        else
+        {
+            showWebGLDisabledError();
+        }
+    };
 
 
 
@@ -202,15 +188,7 @@ $(function () {
         event.preventDefault();
         event.stopPropagation();
 
-        if (webGLEnabled)
-        {
-            window.location.hash = 'run';
-            window.startTest();
-        }
-        else
-        {
-            showWebGLDisabledError();
-        }
+        checkWebGLAndStartTest();
     });
 
     $('#play-game').click(function () {
@@ -223,6 +201,27 @@ $(function () {
     _gaq.push([ '_setDomainName', window.location.origin ]);
     _gaq.push([ '_trackPageview' ]);
     _gaq.push([ '_trackEvent', 'referrer', document.referrer ]);
+
+
+
+    // set up "navigation"
+    (function (window) {
+
+        window.onhashchange = function () {
+
+            if (window.location.hash !== '#run' && window.onbeforeunload)
+            {
+                window.onbeforeunload.call(window);
+            }
+
+        };
+
+        if (window.location.hash === '#run' && webGLEnabled)
+        {
+            checkWebGLAndStartTest();
+        }
+
+    }(window));
 
 });
 

@@ -1,5 +1,6 @@
 // Copyright (c) 2013-2014 Turbulenz Limited
 
+/*global TurbulenzEngine*/
 /*exported BenchmarkResultsScreen*/
 
 var BenchmarkResultsScreen = (function ()
@@ -689,7 +690,24 @@ var BenchmarkResultsScreen = (function ()
         }, 290, 32);
         f.playHitbox = makeHitbox(1, function () { window.open('http://ga.me/games/polycraft', '_blank'); }, 290, 70, 0,
             142);
-        f.restartHitbox = makeHitbox(1, function () { window.location.reload(); }, 290, 70, 0, 60);
+        f.restartHitbox = makeHitbox(1, function () {
+            if (window.startTest && window.onbeforeunload && !this.isRestarting)
+            {
+                this.isRestarting = true;
+                window.setTimeout(function () {
+
+                    window.onbeforeunload();
+                    window.setTimeout(function () {
+                        window.startTest();
+                    }, 200);
+
+                }, 0);
+            }
+            else
+            {
+                window.location.reload();
+            }
+        }, 290, 70, 0, 60);
         f.infoHitbox = makeHitbox(1, function () { f.renderModal = true; });
         f.modalBackgroundHitbox = makeHitbox(100, function () { f.renderModal = false; });
         f.modalHitbox = makeHitbox(101, function () { }, 628, 360, 0, -180);
@@ -704,19 +722,16 @@ var BenchmarkResultsScreen = (function ()
         f.fontParams.scoreHeading = {
             scale: 1,
             spacing: 2,
-            fontStyle: "regular",
             valignment: simplefonts.textVerticalAlign.TOP
         };
 
         f.fontParams.scoreValue = {
             scale: 3,
-            fontStyle: "light",
             valignment: simplefonts.textVerticalAlign.TOP
         };
 
         f.fontParams.config = {
             scale: 1.5,
-            fontStyle: "light",
             valignment: simplefonts.textVerticalAlign.TOP
         };
 
