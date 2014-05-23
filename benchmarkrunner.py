@@ -111,7 +111,7 @@ SYSTEM_INFO_MAPPING_WIN = {
 
 RELEASE_FILES = [
     "mapping_table.json",
-    "js/whichbrowser-js-min.js"
+    "js/whichbrowser-js-0.1.0-min.js"
 ]
 
 RELEASE_PAGE_FILES = [
