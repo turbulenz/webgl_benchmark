@@ -150,33 +150,6 @@ $(function () {
 
 
 
-    // set up "navigation"
-    (function (window) {
-
-        var checkIfStart = function () {
-            if (window.location.hash === '#run' && webGLEnabled)
-            {
-                window.startTest();
-                return true;
-            }
-            return false;
-        };
-
-        window.onhashchange = function () {
-
-            if (!checkIfStart() && window.onbeforeunload)
-            {
-                window.onbeforeunload.call(window);
-            }
-
-        };
-
-        checkIfStart();
-
-    }(window));
-
-
-
     // add tracking functions for the page's links
     var _gaq = window._gaq;
 
@@ -223,6 +196,27 @@ $(function () {
     _gaq.push([ '_setDomainName', window.location.origin ]);
     _gaq.push([ '_trackPageview' ]);
     _gaq.push([ '_trackEvent', 'referrer', document.referrer ]);
+
+
+
+    // set up "navigation"
+    (function (window) {
+
+        window.onhashchange = function () {
+
+            if (window.location.hash !== '#run' && window.onbeforeunload)
+            {
+                window.onbeforeunload.call(window);
+            }
+
+        };
+
+        if (window.location.hash === '#run' && webGLEnabled)
+        {
+            window.startTest();
+        }
+
+    }(window));
 
 });
 

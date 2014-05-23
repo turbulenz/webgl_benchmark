@@ -293,43 +293,47 @@ BenchmarkApp.prototype =
                                      window.mozRequestAnimationFrame);
         function update()
         {
-            var graphicsDevice = that.graphicsDevice;
-            if (!TurbulenzEngine.isUnloading()) {
+            if (TurbulenzEngine.isUnloading()) {
+                that.shutdown();
+            }
+            else
+            {
+                var graphicsDevice = that.graphicsDevice;
                 if (abortElement && abortElement.disabled)
                 {
                     abortElement.disabled = false;
                 }
-                if (that.playbackController.atEnd)
+
+                if (that.playbackController)
                 {
-                    if (saveElement && saveElement.disabled)
+                    if (that.playbackController.atEnd)
                     {
-                        saveElement.disabled = false;
+                        if (saveElement && saveElement.disabled)
+                        {
+                            saveElement.disabled = false;
+                        }
+                        if (downloadCSVElement && downloadCSVElement.disabled)
+                        {
+                            downloadCSVElement.disabled = false;
+                        }
+                        if (config.graphOnEnd)
+                        {
+                            that.displayResults();
+                            return;
+                        }
+                        if (graphicsDevice.beginFrame())
+                        {
+                            graphicsDevice.clear(that.loadingColor);
+                            that.resultsScreen.render();
+                            graphicsDevice.endFrame();
+                        }
                     }
-                    if (downloadCSVElement && downloadCSVElement.disabled)
+                    else
                     {
-                        downloadCSVElement.disabled = false;
+                        that.playbackController.update();
                     }
-                    if (config.graphOnEnd)
-                    {
-                        that.displayResults();
-                        return;
-                    }
-                    if (graphicsDevice.beginFrame())
-                    {
-                        graphicsDevice.clear(that.loadingColor);
-                        that.resultsScreen.render();
-                        graphicsDevice.endFrame();
-                    }
-                }
-                else
-                {
-                    that.playbackController.update();
                 }
                 requestAnimationFrame(update);
-            }
-            else
-            {
-                that.shutdown();
             }
         }
 
@@ -670,7 +674,7 @@ BenchmarkApp.create = function benchmarkAppCreateFn()
 
     benchmarkApp.loadingScreen = BenchmarkLoadingScreen.create(graphicsDevice, mathDevice);
     benchmarkApp.resultsScreen = BenchmarkResultsScreen.create(graphicsDevice, mathDevice, inputDevice,
-        benchmarkApp.playbackController, simplefonts);
+        benchmarkApp.playbackController, simplefonts, benchmarkApp);
 
     benchmarkApp.resultsID = "results";
 
