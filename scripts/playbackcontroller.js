@@ -25,6 +25,7 @@ PlaybackController.prototype =
         {
             // If no prefix is specified, then use the default path
             this.prefixTemplatesURL = 'config/templates/' + this.config.mode + '/';
+            this.requestLocalTemplate = false;
         }
 
         this.testRanges = {};
@@ -716,6 +717,12 @@ PlaybackController.prototype =
         var graphicsDevice = this.graphicsDevice;
         var playbackGraphicsDevice = this.playbackGraphicsDevice;
         var ignorePrevFrame = this.ignoreNextFrame;
+
+        if (this.mappingTableLoaded && !this.templateRequested)
+        {
+            this.requestTemplate();
+            this.templateRequested = true;
+        }
 
         if (!this.requestInit)
         {
@@ -1563,6 +1570,84 @@ PlaybackController.prototype =
         Utilities.ajax(params);
     },
 
+    requestTemplate : function playbackcontrollerRequestTemplateFn()
+    {
+        var that = this;
+        function templateLoaded(responseText, status)
+        {
+            if (responseText && status === 200)
+            {
+                try {
+                    var templateData = JSON.parse(responseText);
+                    if (!templateData)
+                    {
+                        that.loadingStatus = that.errorCodes.RESULT_TEMPLATE_EMPTY;
+                        that.resultsTemplateData = null;
+                        that.loadingTemplates = false;
+                        return;
+                    }
+                    if (!that._isSupportedTemplate(templateData))
+                    {
+                        that.loadingStatus = that.errorCodes.RESULT_TEMPLATE_INCOMPAT;
+                        that.resultsTemplateData = null;
+                        that.loadingTemplates = false;
+                        return;
+                    }
+                    that.resultsTemplateData = that._processTemplate(templateData);
+                    that.loadingTemplates = false;
+                }
+                catch (e)
+                {
+                    that.loadingStatus = that.errorCodes.RESULT_TEMPLATE_PARSE_FAIL;
+                    that.loadingErrorArgs.push(e);
+                    that.resultsTemplateData = null;
+                    that.loadingTemplates = false;
+                    return;
+                }
+            }
+            else
+            {
+                that.loadingStatus = that.errorCodes.RESULT_TEMPLATE_MISSING;
+                that.resultsTemplateData = null;
+                that.loadingTemplates = false;
+                return;
+            }
+        }
+
+        var templateRequest = that.prefixTemplatesURL + that.config.resultsTemplate + '.json';
+
+        function retryTemplateOnFail(responseText, status)
+        {
+            if (responseText && status === 200)
+            {
+                templateLoaded(responseText, status);
+            }
+            else
+            {
+                if (!that.mappingTable)
+                {
+                    that.loadingStatus = that.errorCodes.MAPPING_TABLE_MISSING;
+                    return;
+                }
+                TurbulenzEngine.request(that.mappingTable.getURL(templateRequest), templateLoaded);
+            }
+        }
+
+        if (this.requestLocalTemplate)
+        {
+            TurbulenzEngine.request(templateRequest, retryTemplateOnFail);
+        }
+        else
+        {
+            if (!that.mappingTable)
+            {
+                that.loadingStatus = that.errorCodes.MAPPING_TABLE_MISSING;
+                return;
+            }
+            TurbulenzEngine.request(that.mappingTable.getURL(templateRequest), templateLoaded);
+        }
+    },
+
     destroy : function playbackcontrollerDestroyFn()
     {
         this.playbackGraphicsDevice.destroy();
@@ -1599,6 +1684,8 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
     playbackController.prefixAssetURL = params.prefixAssetURL || null;
     playbackController.prefixCaptureURL = params.prefixCaptureURL || null;
     playbackController.prefixTemplatesURL = params.prefixTemplatesURL || null;
+    playbackController.requestLocalTemplate = true;
+    playbackController.templateRequested = false;
 
     var numTotalFrames = playbackController.numTotalFrames = config.numTotalFrames;
     var numFramesPerGroup = playbackController.numFramesPerGroup = config.numFramesPerGroup;
@@ -1651,6 +1738,10 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
     playbackController.testsActive = [];
     playbackController.requestInit = false;
 
+    // Status is OK unless and error occurs
+    playbackController.loadingStatus = playbackController.errorCodes.OK;
+    playbackController.loadingErrorArgs = [];
+
     if (config.outputMetrics)
     {
         playbackController.metricsPerFrame = [];
@@ -1690,6 +1781,7 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
 
     playbackController.mappingTable = null;
     playbackController.mappingTableCallbackFn = params.mappingTableCallback;
+    playbackController.mappingTableLoaded = false;
 
     playbackController.heading = '';
     playbackController.fontParams = {
@@ -1716,9 +1808,10 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
 
     var mappingTableErrorFn = function mappingTableErrorFn()
     {
-        window.alert("Mapping table is missing. Cannot save data.");
+        playbackController.loadingStatus = playbackController.errorCodes.MAPPING_TABLE_MISSING;
         playbackController.resultsTemplateData = null;
         playbackController.loadingTemplates = false;
+        playbackController.mappingTable = null;
 
         if (playbackController.mappingTableCallbackFn)
         {
@@ -1726,68 +1819,13 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
         }
     };
 
-    var mappingTableReceived = function mappingTableReceivedFn(mappingTable) {
-
-        function templateLoaded(responseText, status)
-        {
-            if (responseText && status === 200)
-            {
-                try {
-                    var templateData = JSON.parse(responseText);
-                    if (!templateData)
-                    {
-                        window.alert("Results template is empty. Cannot save data.");
-                        playbackController.resultsTemplateData = null;
-                    }
-                    else if (!playbackController._isSupportedTemplate(templateData))
-                    {
-                        window.alert("Results template is incompatible. Cannot save data.");
-                        playbackController.resultsTemplateData = null;
-                    }
-                    playbackController.resultsTemplateData = playbackController._processTemplate(templateData);
-                    playbackController.loadingTemplates = false;
-                }
-                catch (e)
-                {
-                    window.alert("Failed to parse results template: " + templateRequest + " with message: " + e);
-                }
-            }
-            else
-            {
-                window.alert("Results template is missing: " + templateRequest + ". Cannot save data.");
-                playbackController.resultsTemplateData = null;
-                playbackController.loadingTemplates = false;
-                return;
-            }
-        }
-
+    var mappingTableReceived = function mappingTableReceivedFn(mappingTable)
+    {
         if (playbackController.mappingTableCallbackFn)
         {
             playbackController.mappingTableCallbackFn(mappingTable);
         }
-
-        function retryTemplateOnFail(responseText, status)
-        {
-            if (responseText && status === 200)
-            {
-                templateLoaded(responseText, status);
-            }
-            else
-            {
-                TurbulenzEngine.request(mappingTable.getURL(templateRequest), templateLoaded);
-            }
-        }
-
-        var templateRequest = playbackController.prefixTemplatesURL + playbackController.config.resultsTemplate + '.json';
-        if (playbackController.config.requestLocalTemplate)
-        {
-            TurbulenzEngine.request(templateRequest, retryTemplateOnFail);
-        }
-        else
-        {
-            TurbulenzEngine.request(mappingTable.getURL(templateRequest), templateLoaded);
-        }
-
+        playbackController.mappingTableLoaded = true;
     };
 
     var gameSessionCreated = function gameSessionCreatedFn(gameSession)

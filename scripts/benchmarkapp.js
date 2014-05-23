@@ -20,28 +20,38 @@ function BenchmarkApp() {}
 BenchmarkApp.prototype =
 {
     errorCodes: {
-        OK                      : 0,
-        META_REQUEST_FAILED     : 1,
-        META_FILE_MISSING       : 2,
-        META_PARSE_FAIL         : 3,
-        META_VERSION_INCOMPAT   : 4,
-        META_VERSION_MISSING    : 5,
-        STREAM_TEST_MISSING     : 6,
-        STREAM_ID_MISSING       : 7,
-        STREAM_PREFIX_MISSING   : 8,
-        SEQUENCE_PARSE_FAIL     : 9
+        OK                          : 0,
+        META_REQUEST_FAILED         : 1,
+        META_FILE_MISSING           : 2,
+        META_PARSE_FAIL             : 3,
+        META_VERSION_INCOMPAT       : 4,
+        META_VERSION_MISSING        : 5,
+        STREAM_TEST_MISSING         : 6,
+        STREAM_ID_MISSING           : 7,
+        STREAM_PREFIX_MISSING       : 8,
+        SEQUENCE_PARSE_FAIL         : 9,
+        MAPPING_TABLE_MISSING       : 10,
+        RESULT_TEMPLATE_MISSING     : 11,
+        RESULT_TEMPLATE_INCOMPAT    : 12,
+        RESULT_TEMPLATE_EMPTY       : 13,
+        RESULT_TEMPLATE_PARSE_FAIL  : 14
     },
 
     userErrorMsg: {
         1: "The benchmark was unable to load at this time. Please try again later.",
         2: "The benchmark was unable to load. If this issue persists please report it.",
         3: "The benchmark data is corrupt. Please report this error.",
-        4: "This version of the benchmark is not compatible with the data. Please report this error.",
+        4: "The benchmark is not compatible with this version of the data. Please report this error.",
         5: "The benchmark data is not recognized. Please report this error.",
         6: "The benchmark data is corrupt. Please report this error.",
         7: "The benchmark data is corrupt. Please report this error.",
-        8: "The benchmark configuration is corrupt. Please report this error",
-        9: "The benchmark configuration is corrupt. Please report this error"
+        8: "The benchmark configuration is corrupt. Please report this error.",
+        9: "The benchmark configuration is corrupt. Please report this error.",
+        10: "The benchmark data is missing. Please report this error.",
+        11: "The benchmark configuration is corrupt. Please report this error.",
+        12: "The benchmark is not compatible with this version of the configuration. Please report this error.",
+        13: "The benchmark configuration is corrupt. Please report this error.",
+        14: "The benchmark configuration is corrupt. Please report this error.",
     },
 
     consoleErrorMsg: {
@@ -53,7 +63,12 @@ BenchmarkApp.prototype =
         6: "STREAM_TEST_MISSING: Test cannot be found in the stream: ",
         7: "STREAM_ID_MISSING: The stream ID cannot be found for default capture: ",
         8: "STREAM_PREFIX_CAP_MISSING: The prefixCaptureURL cannot be found for default capture: ",
-        9: "SEQUENCE_PARSE_FAIL: The sequence to play cannot be read as expected"
+        9: "SEQUENCE_PARSE_FAIL: The sequence to play cannot be read as expected",
+        10: "MAPPING_TABLE_MISSING: The mapping table cannot be found",
+        11: "RESULT_TEMPLATE_MISSING: The result template file cannot be found",
+        12: "RESULT_TEMPLATE_INCOMPAT: The version in the result template file is not compatible with the benchmark",
+        13: "RESULT_TEMPLATE_EMPTY: The result template file is empty",
+        14: "RESULT_TEMPLATE_PARSE_FAIL: The result template file failed to parse with the error: "
     },
 
     init : function benchmarkappInitFn()
@@ -295,35 +310,52 @@ BenchmarkApp.prototype =
         {
             var graphicsDevice = that.graphicsDevice;
             if (!TurbulenzEngine.isUnloading()) {
+                var playbackController = that.playbackController;
+                var errorCodes = that.errorCodes;
+
+                if (loadingStatus !== errorCodes.OK)
+                {
+                    that.displayError(loadingErrorTitle, loadingStatus, loadingErrorArgs);
+                    return;
+                }
+
+                if (playbackController && (playbackController.loadingStatus !== errorCodes.OK))
+                {
+                    that.displayError(loadingErrorTitle, playbackController.loadingStatus, playbackController.loadingErrorArgs);
+                    return;
+                }
                 if (abortElement && abortElement.disabled)
                 {
                     abortElement.disabled = false;
                 }
-                if (that.playbackController.atEnd)
+                if (playbackController)
                 {
-                    if (saveElement && saveElement.disabled)
+                    if (playbackController.atEnd)
                     {
-                        saveElement.disabled = false;
+                        if (saveElement && saveElement.disabled)
+                        {
+                            saveElement.disabled = false;
+                        }
+                        if (downloadCSVElement && downloadCSVElement.disabled)
+                        {
+                            downloadCSVElement.disabled = false;
+                        }
+                        if (config.graphOnEnd)
+                        {
+                            that.displayResults();
+                            return;
+                        }
+                        if (graphicsDevice.beginFrame())
+                        {
+                            graphicsDevice.clear(that.loadingColor);
+                            that.resultsScreen.render();
+                            graphicsDevice.endFrame();
+                        }
                     }
-                    if (downloadCSVElement && downloadCSVElement.disabled)
+                    else
                     {
-                        downloadCSVElement.disabled = false;
+                        playbackController.update();
                     }
-                    if (config.graphOnEnd)
-                    {
-                        that.displayResults();
-                        return;
-                    }
-                    if (graphicsDevice.beginFrame())
-                    {
-                        graphicsDevice.clear(that.loadingColor);
-                        that.resultsScreen.render();
-                        graphicsDevice.endFrame();
-                    }
-                }
-                else
-                {
-                    that.playbackController.update();
                 }
                 requestAnimationFrame(update);
             }
@@ -337,8 +369,9 @@ BenchmarkApp.prototype =
         {
             var graphicsDevice = that.graphicsDevice;
             var playbackController = that.playbackController;
+            var errorCodes = that.errorCodes;
 
-            if (loadingStatus !== 0)
+            if (loadingStatus !== errorCodes.OK)
             {
                 that.displayError(loadingErrorTitle, loadingStatus, loadingErrorArgs);
                 that.shutdown();
@@ -347,6 +380,13 @@ BenchmarkApp.prototype =
             if (TurbulenzEngine.isUnloading())
             {
                 that.shutdown();
+                return;
+            }
+
+            if (playbackController && (playbackController.loadingStatus !== errorCodes.OK))
+            {
+                that.displayError(loadingErrorTitle, playbackController.loadingStatus, playbackController.loadingErrorArgs);
+                TurbulenzEngine.clearInterval(that.intervalID);
                 return;
             }
 
