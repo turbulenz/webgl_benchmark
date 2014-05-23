@@ -119,7 +119,6 @@ RELEASE_PAGE_FILES = [
     "favicon.ico.gz",
     "index.html",
     "css/*.css",
-    "font/*",
     "img/*",
     "js/*"
 ]
