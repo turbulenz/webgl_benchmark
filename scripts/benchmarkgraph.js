@@ -4,6 +4,7 @@
 //
 
 /*global d3: false*/
+/*global console: false*/
 
 function BenchmarkGraph() {}
 
@@ -154,9 +155,9 @@ BenchmarkGraph.prototype =
         var resultData = this.graphData[index];
         var textArray = [];
 
-        function addConfig(name, config)
+        function addConfig(name, config, configName)
         {
-            var i, c, keys, indent;
+            var i, c, keys, indent, obj, str;
             textArray.push(name + ":");
             indent = "- ";
             keys = [];
@@ -177,6 +178,41 @@ BenchmarkGraph.prototype =
             keys.sort();
             for (i = 0; i < keys.length; i += 1)
             {
+                if (configName === 'browser')
+                {
+                    if (keys[i] === "os")
+                    {
+                        obj = config[keys[i]];
+                        str = obj.name;
+                        if (obj.version)
+                        {
+                            if (obj.version.alias)
+                            {
+                                str += " " + obj.version.alias;
+                            }
+                            else
+                            {
+                                str += " " + obj.version.value;
+                            }
+                        }
+                        textArray.push(indent + keys[i] + ": " + str);
+                        continue;
+                    }
+                    else if (keys[i] === "version")
+                    {
+                        obj = config[keys[i]];
+                        if (obj.alias)
+                        {
+                            str = obj.alias;
+                        }
+                        else
+                        {
+                            str = obj.value;
+                        }
+                        textArray.push(indent + keys[i] + ": " + str);
+                        continue;
+                    }
+                }
                 textArray.push(indent + keys[i] + ": " + config[keys[i]]);
             }
             textArray.push(" ");
@@ -184,6 +220,7 @@ BenchmarkGraph.prototype =
 
         addConfig("Hardware Config", resultData.config.hardware);
         addConfig("Playback Config", resultData.config.playback);
+        addConfig("Browser Config", resultData.config.browser, 'browser');
 
         return textArray;
     },
