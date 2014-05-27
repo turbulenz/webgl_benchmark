@@ -1,6 +1,6 @@
 // Copyright (c) 2013-2014 Turbulenz Limited
 //
-// PlaybackController - class description
+// PlaybackController - The class to manage the loading and playback of the stream
 //
 
 /*global TurbulenzEngine: false*/
@@ -33,6 +33,7 @@ PlaybackController.prototype =
         this.resultsData = {};
 
         initStatus = this._processSequenceList(sequenceList);
+        this.initialized = true;
         return initStatus;
     },
 
@@ -726,7 +727,7 @@ PlaybackController.prototype =
         var playbackGraphicsDevice = this.playbackGraphicsDevice;
         var ignorePrevFrame = this.ignoreNextFrame;
 
-        if (this.mappingTableLoaded && !this.templateRequested)
+        if (this.mappingTableLoaded && !this.templateRequested && this.initialized)
         {
             this.requestTemplate();
             this.templateRequested = true;
@@ -1852,6 +1853,6 @@ PlaybackController.create = function playbackControllerCreateFn(config, params)
     };
 
     playbackController.gameSession = TurbulenzServices.createGameSession(requestHandler, gameSessionCreated, gameSessionError);
-
+    playbackController.initialized = false;
     return playbackController;
 };
