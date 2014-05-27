@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Turbulenz Limited
+// Copyright (c) 2013-2014 Turbulenz Limited
 
 //
 // BaseConfig - The basic configuration of the app. The standard configuration to be run by all benchmarks. The configuration can be overridden.
