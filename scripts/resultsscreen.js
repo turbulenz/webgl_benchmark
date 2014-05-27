@@ -213,7 +213,7 @@ var BenchmarkResultsScreen = (function ()
 
             if (benchmarkData.benchmark && benchmarkData.benchmark.version)
             {
-                this.versionString = ' ( v' + benchmarkData.benchmark.version + ' ) ';
+                this.versionString = ' ( ' + (benchmarkData.benchmark.type ? benchmarkData.benchmark.type + ',': '') + ' v' + benchmarkData.benchmark.version + ' ) ';
             }
 
             try

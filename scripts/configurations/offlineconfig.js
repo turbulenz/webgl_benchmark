@@ -14,7 +14,7 @@ OfflineConfig.create = function offlineCreateFn()
 
     config.mode = "offline";
     config.captureLookUp.story_high_particles = 'capture/story_high_particles/537d6615/';
-    config.prefixTemplatesURL = 'assets/config/templates/' + config.mode + '/';
+    config.prefixTemplatesURL = 'assets/config/templates/';
     config.prefixAssetURL = "capture/";
 
     return config;

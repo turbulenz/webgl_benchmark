@@ -24,7 +24,7 @@ PlaybackController.prototype =
         if (!prefixTemplatesURL)
         {
             // If no prefix is specified, then use the default path
-            this.prefixTemplatesURL = 'config/templates/' + this.config.mode + '/';
+            this.prefixTemplatesURL = 'config/templates/';
             this.requestLocalTemplate = false;
         }
 
@@ -247,10 +247,19 @@ PlaybackController.prototype =
             fontParams.y = bottom - 72;
             if (!this.heading)
             {
-                this.heading = 'POLYCRAFT.GL';
-                if (this.resultsTemplateData && this.resultsTemplateData.config.benchmark.version)
+                if (this.resultsTemplateData)
                 {
-                    this.heading += '\nVersion ' + this.resultsTemplateData.config.benchmark.version;
+                    switch (this.resultsTemplateData.version)
+                    {
+                    case 2:
+                        var benchmarkConfig = this.resultsTemplateData.config.benchmark;
+                        this.heading = benchmarkConfig.name;
+                        this.heading += '\nVersion ' + benchmarkConfig.version;
+                        break;
+                    default: //version 1 && 0
+                        this.heading = 'POLYCRAFT.GL';
+                        this.heading += '\nVersion ' + this.resultsTemplateData.config.benchmark.version;
+                    }
                 }
             }
             this.simplefonts.drawFont(this.heading, fontParams);
@@ -672,8 +681,7 @@ PlaybackController.prototype =
 
     _isSupportedTemplate : function _isSupportedTemplateFn(template)
     {
-        // Only support version 1
-        return (template.version === 1);
+        return (template.version === 1) || (template.version === 2);
     },
 
     loadAssets : function playbackcontrollerLoadAssetsFn()

@@ -1,5 +1,4 @@
-- config/templates/online/results_template-default.json
-- config/templates/offline/results_template-default.json
+- config/templates/results_template-default.json
 - fonts/opensans-8.fnt
 - textures/opensans-8_0.dds
 - fonts/opensans-16.fnt
