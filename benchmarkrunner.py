@@ -1044,8 +1044,8 @@ def main():
             error("Cannot find manage.py in Turbulenz environment")
             return
 
-    if args.force_download and args.release:
-        download_assets(config_name=args.config, force_download=True)
+    if args.target == 'offline' or args.target == 'static':
+        download_assets(config_name=args.config, force_download=args.force_download)
 
     if args.copy_release:
         info("Copying release files to '%s' directory" % STATIC_OUTPUT_PATH)
@@ -1056,15 +1056,17 @@ def main():
     if args.server:
         info("Starting server only mode")
         serve_dir = abspath('.')
+        server_port = 8070
         if args.release:
-            server_options = ServerOptions(port = 8000, static = True)
+            server_port = 8000
+            server_options = ServerOptions(port = server_port, static = True)
             serve_dir = abspath(STATIC_OUTPUT_PATH)
         else:
-            server_options = ServerOptions()
+            server_options = ServerOptions(port = server_port)
 
         server = start_server(serve_dir, server_options)
         if not server:
-            print 'Address 127.0.0.1:8070 already in use'
+            print 'Address 127.0.0.1:%s already in use' % server_port
             return
         print 'Press enter to stop ...'
         try:
@@ -1073,9 +1075,6 @@ def main():
             pass
         server.shutdown()
         return
-
-    if args.target == 'offline':
-        download_assets(config_name=args.config, force_download=args.force_download)
 
     if args.browser != 'chrome':
         warn("Browser option: %s is untested. For a tested browser, use chrome." % args.browser)
