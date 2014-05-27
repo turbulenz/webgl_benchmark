@@ -627,10 +627,11 @@ class ChromeWindowsBrowserControl(WindowsBrowserControl):
                 os.path.join(homedrive, homepath, "Local Settings",
                              "Application Data")
 
+        chrome_path = '/Google/Chrome/Application/chrome.exe'
         browser_bin = browser_bin or \
-            localDataPath+'/Google/Chrome/Application/chrome.exe'
+            localDataPath + chrome_path
 
-        exe = check_exe(browser_bin)
+        exe = check_exe(browser_bin) or windows_get_program_path(chrome_path)
         if exe is None:
             raise Exception("no chrome executable at '%s'" % browser_bin)
 
