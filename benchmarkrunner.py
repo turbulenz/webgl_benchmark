@@ -589,26 +589,30 @@ def download_assets(config_name="default", max_connections=20, force_download=Fa
 
     for start_frame in xrange(0, NUM_FRAMES, NUM_FRAMES_BLOCK):
         block_postfix = '%d-%d' % (start_frame, start_frame + NUM_FRAMES_BLOCK - 1)
-        with open(path_join(capture_output_path, 'resources-%s.json' % block_postfix)) as f:
-            resources_data = json_load(f)
-            if resources_data.has_key('resources'):
-                resources_data = resources_data['resources']
+        resource_str = path_join(capture_output_path, 'resources-%s.json' % block_postfix)
+        try:
+            with open(resource_str) as f:
+                resources_data = json_load(f)
+                if resources_data.has_key('resources'):
+                    resources_data = resources_data['resources']
 
-                if resources_data.has_key('textures'):
-                    textures = resources_data['textures']
-                    for tex in textures.itervalues():
-                        if tex.has_key('src'):
-                            src = tex['src']
-                            if src:
-                                add_downloader(src)
+                    if resources_data.has_key('textures'):
+                        textures = resources_data['textures']
+                        for tex in textures.itervalues():
+                            if tex.has_key('src'):
+                                src = tex['src']
+                                if src:
+                                    add_downloader(src)
 
-                if resources_data.has_key('videos'):
-                    videos = resources_data['videos']
-                    for video in videos.itervalues():
-                        if video.has_key('src'):
-                            src = video['src']
-                            if src:
-                                add_downloader(src)
+                    if resources_data.has_key('videos'):
+                        videos = resources_data['videos']
+                        for video in videos.itervalues():
+                            if video.has_key('src'):
+                                src = video['src']
+                                if src:
+                                    add_downloader(src)
+        except IOError as e:
+            error('Failed processing assets for %s' % resource_str)
 
     for (i, t) in enumerate(threads):
         t.daemon = True
