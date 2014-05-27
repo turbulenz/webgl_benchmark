@@ -320,9 +320,10 @@ BenchmarkGraph.prototype =
             return;
         }
 
-        if (resultData.version !== 0)
+        if (resultData.version === undefined || (resultData.version > 2))
         {
             //TODO: Result data not supported
+            console.error("Data version not recognized: " + resultData.version);
             return;
         }
 
