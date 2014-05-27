@@ -29,6 +29,15 @@ set PYTHONPATH="C:\Python27\python.exe"
 if not exist %PYTHONPATH% goto EXIT_PYTHON_MISSING else goto RUN
 
 :RUN
+echo *******************************************************************************************************************
+echo WARNING: THIS SCRIPT WILL AUTOMATICALLY CONFIGURE AND RUN THE BENCHMARK
+echo WARNING: RUNNING THIS SCRIPT WILL CLOSE ALL INSTANCES OF THE BROWSER AND SET THE NATIVE RESOLUTION OF YOUR MACHINE
+echo WARNING: IF YOU WISH TO CONTINUE, PRESS ENTER. TO EXIT CLOSE THIS WINDOW.
+echo *******************************************************************************************************************
+pause
+echo Are you sure you wish to start?
+pause
+
 %PYTHONPATH% --version
 
 %QRES_PATH% /V /S > current_resolution.txt
@@ -42,7 +51,7 @@ set /p QRES_NEW_ARGS=<qres_run.txt
 
 echo Setting resolution: %RUN_RESOLUTION%
 %QRES_PATH% %QRES_NEW_ARGS%
-%PYTHONPATH% benchmarkrunner.py --target %TARGET% --config %CONFIG%
+%PYTHONPATH% benchmarkrunner.py --target %TARGET% --config %CONFIG% --browser-launch --browser-timeout=300
 %QRES_PATH% %QRES_CURRENT_ARGS%
 
 del qres_run.txt

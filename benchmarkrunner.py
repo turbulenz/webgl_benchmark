@@ -41,16 +41,12 @@ from SocketServer import TCPServer
 
 (PWD, OS, _) = simple_config()
 
-__version__ = '0.0.4'
+__version__ = '0.1.0'
 
 BENCHMARK_NAME_DEFAULT = 'WebGL Benchmark'
 BENCHMARK_ID_DEFAULT = 'webgl_benchmark'
 BENCHMARK_VERSION = '1.0.1'
 BENCHMARK_TYPE_DEFAULT = 'offline'
-
-BROWSERRUNNER_DEVSERVER = "127.0.0.1:8070"
-BROWSERRUNNER_TESTURLPATH = "/#/play/webgl-benchmark"
-BROWSERRUNNER_TESTMODE = '/benchmark.canvas.debug.html'
 
 # The name used by the server
 SERVERNAME = "WebGL Benchmark Server"
@@ -69,8 +65,6 @@ STATIC_OUTPUT_PATH = "static_page/"
 DEFAULT_SEQUENCE_NAME = "Story"
 DEFAULT_CAPTURE_NAME = "story_high_particles"
 DEFAULT_TEST_NAME = "story_flythrough_full"
-
-BENCHMARK_TIMEOUT = 300
 
 NUM_FRAMES = 3600
 NUM_FRAMES_BLOCK = 60
@@ -948,7 +942,7 @@ def main():
     parser.add_argument("--browser-profile", action='store', default=None,
         help="the name of the profile to launch the browser with if supported. On Firefox this is name of the" +
              " profile. On Chrome this the profile directory.")
-    parser.add_argument("--copy-release", action='store_true',
+    parser.add_argument("--copy", action='store_true',
         help="copy the release build of the benchmark to the '%s' directory." % STATIC_OUTPUT_PATH)
     parser.add_argument("--release", action='store_true',
         help="run the release build of the benchmark server in the '%s' directory." % STATIC_OUTPUT_PATH)
@@ -958,6 +952,10 @@ def main():
         help="clean the benchmark project using the Turbulenz build system. Requires (env)")
     parser.add_argument("--base-template-path", action='store', default=None,
         help="the path to the file to be used as the base results template. Defaults to generating the base template.")
+    parser.add_argument("--local", action='store_true', default=False,
+        help="assume turbulenz_local is the server")
+    parser.add_argument("--browser-timeout", type=int, default=0,
+        help="automatically close the browser after timeout (seconds)")
 
     args = parser.parse_args(argv[1:])
 
@@ -1047,16 +1045,15 @@ def main():
     if args.target == 'offline' or args.target == 'static':
         download_assets(config_name=args.config, force_download=args.force_download)
 
-    if args.copy_release:
+    if args.copy:
         info("Copying release files to '%s' directory" % STATIC_OUTPUT_PATH)
         copy_release()
-        if not args.server:
-            return
 
+    serve_dir = abspath('.')
+    server_port = 8070
     if args.server:
         info("Starting server only mode")
-        serve_dir = abspath('.')
-        server_port = 8070
+
         if args.release:
             server_port = 8000
             server_options = ServerOptions(port = server_port, static = True)
@@ -1076,28 +1073,52 @@ def main():
         server.shutdown()
         return
 
-    if args.browser != 'chrome':
-        warn("Browser option: %s is untested. For a tested browser, use chrome." % args.browser)
-
     server = None
     try:
         if not args.browser_launch:
-            warn("Browser will automatically close if benchmark takes longer than %d seconds to run" % BENCHMARK_TIMEOUT)
+            if args.browser != 'chrome':
+                warn("Browser option: %s is untested. For a tested browser, select chrome." % args.browser)
+            if args.browser_timeout > 0:
+                warn("Browser will automatically close if benchmark takes longer than %d seconds to run" % args.browser_timeout)
             command_line_args = None
 
-            if args.target == 'offline':
-                server = start_server(abspath('.'), ServerOptions())
-                if args.browser == 'chrome':
-                    command_line_args = "--disable-web-security --allow-file-access-from-files --kiosk"
-                BROWSERRUNNER_TESTURL = "file://" + getcwd() + BROWSERRUNNER_TESTMODE
-            else:
-                BROWSERRUNNER_TESTURL = "http://" + BROWSERRUNNER_DEVSERVER + \
-                                        BROWSERRUNNER_TESTURLPATH + BROWSERRUNNER_TESTMODE
+            runner_protocol = "http://"
+            runner_server = "127.0.0.1"
+            runner_port = ":8070"
+            runner_slug = ""
+            runner_html = ""
 
+            if args.local:
+                runner_protocol = "http://"
+                runner_server = "127.0.0.1"
+                runner_port = ":8070"
+                runner_slug = "/#/play/webgl-benchmark/"
+                runner_html = "benchmark.canvas.debug.html"
+            elif args.release:
+                runner_protocol = "http://"
+                runner_server = "127.0.0.1"
+                runner_port = ":8000"
+                runner_slug = "/#run"
+                runner_html = ""
+
+            # if args.release:
+            #     server_port = 8000
+            #     server_options = ServerOptions(port = server_port, static = True)
+            #     serve_dir = abspath(STATIC_OUTPUT_PATH)
+            # else:
+            #     server_options = ServerOptions(port = server_port)
+
+            # if not args.local:
+            #     server = start_server(serve_dir, server_options)
+            #     if not server:
+            #         error('Address 127.0.0.1:%s already in use' % server_port)
+            #         return
+
+            browser_runner_url = runner_protocol + runner_server + runner_port + runner_slug + runner_html
             browser_runner = BrowserRunner(None, args.browser, browser_bin=args.browser_path,
                                            profile=args.browser_profile)
-            browser_runner.run(BROWSERRUNNER_TESTURL, timeout=BENCHMARK_TIMEOUT,
-                               command_line_args=command_line_args) # 5 minute timeout
+            browser_runner.run(browser_runner_url, timeout=args.browser_timeout,
+                               command_line_args=command_line_args)
         else:
             info("Browser launcher disabled")
     except Exception as e:
