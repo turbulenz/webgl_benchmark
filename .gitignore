@@ -9,3 +9,5 @@ jslib/.mkdir
 jslib/webgl/.mkdir
 .idea
 assets/config/templates/*
+benchmark.canvas.js
+benchmark.canvas.release.html
