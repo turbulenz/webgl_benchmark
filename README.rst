@@ -411,16 +411,61 @@ For more advanced commands run:
     $ python benchmarkrunner.py --help
 
 
+Licensing
+=========
+
+The webgl_benchmark Github project is licensed under the conditions in the `LICENSE <LICENSE>`__ file.
 
 
+Contributing
+============
+
+Contributions are always encouraged whether they are small documentation tweaks, bug fixes or suggestions for larger
+changes. You can check the `issues <https://github.com/turbulenz/webgl_benchmark/issues>`__ first to see if anybody else
+is undertaking similar changes.
+
+If you'd like to contribute any changes simply fork the project on Github and send us a pull request or send a Git
+patch detailing the proposed changes.
+
+*Note*: by contributing code to the webgl_benchmark project in any form, including sending a pull request via Github,
+a code fragment or patch via private email or public discussion groups, you agree to release your code and assets data
+under the conditions in the `LICENSE <LICENSE>`__ file included in the source distribution.
+
+Links
+=====
+
+**Benchmark**
+
+| Polycraft.gl_
+| webgl_benchmark_
+| `webgl_benchmark Issue Tracker`_
+
+**Games**
+
+| GA.ME_
+| `Polycraft (Game)`_
+| `Wonderstruck Games`_
+
+**Turbulenz**
+
+| Turbulenz_
+| `Turbulenz Engine`_
+| `Turbulenz Engine Documentation`_
+| `Turbulenz Developer Hub`_
+
+
+.. _Turbulenz Developer Hub: https://hub.turbulenz.com/
 .. _Turbulenz SDK: https://hub.turbulenz.com/#downloads
 .. _benchmarkrunner.py: https://github.com/turbulenz/webgl_benchmark/blob/master/benchmarkrunner.py
 .. _Turbulenz local server: https://github.com/turbulenz/turbulenz_local
 .. _GA.ME: https://ga.me
 .. _turbulenz_engine: https://github.com/turbulenz/turbulenz_engine
 .. _Turbulenz Engine: https://github.com/turbulenz/turbulenz_engine
+.. _Turbulenz Engine Documentation: http://docs.turbulenz.com/
 .. _Turbulenz: http://biz.turbulenz.com
 .. _Wonderstruck Games: http://wonderstruckgames.com
 .. _Polycraft: http://polycraftgame.com
+.. _Polycraft (Game): https://ga.me/polycraft
 .. _Polycraft.gl: http://polycraft.gl
 .. _webgl_benchmark: https://github.com/turbulenz/webgl_benchmark
+.. _webgl_benchmark Issue Tracker: https://github.com/turbulenz/webgl_benchmark/issues
