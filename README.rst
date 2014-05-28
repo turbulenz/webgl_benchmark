@@ -411,6 +411,11 @@ For more advanced commands run:
     $ python benchmarkrunner.py --help
 
 
+Changelog
+=========
+
+The changelog for the webgl_benchmark can be found in the `changelog.rst <changelog.rst>`__ file
+
 Licensing
 =========
 
