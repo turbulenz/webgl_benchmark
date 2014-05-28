@@ -509,11 +509,13 @@ var BenchmarkResultsScreen = (function ()
 
                 this.modalHitbox.update(centerx, centery);
                 this.closeModalHitbox.update(centerx, centery);
+                this.whitepaperHitbox.update(centerx, centery);
             }
 
             this.hitBoxes.push(this.modalBackgroundHitbox,
                                this.modalHitbox,
-                               this.closeModalHitbox);
+                               this.closeModalHitbox,
+                               this.whitepaperHitbox);
         }
         else
         {
@@ -710,9 +712,10 @@ var BenchmarkResultsScreen = (function ()
         }, 290, 70, 0, 60);
         f.infoHitbox = makeHitbox(1, function () { f.renderModal = true; });
         f.modalBackgroundHitbox = makeHitbox(100, function () { f.renderModal = false; });
-        f.modalHitbox = makeHitbox(101, function () { }, 628, 360, 0, -180);
+        f.modalHitbox = makeHitbox(101, function () { }, 628, 480, 0, -240);
         f.modalHitbox.cursor = 'default';
-        f.closeModalHitbox = makeHitbox(102, function () { f.renderModal = false; }, 30, 30, 275, -160);
+        f.closeModalHitbox = makeHitbox(102, function () { f.renderModal = false; }, 30, 30, 275, -215);
+        f.whitepaperHitbox = makeHitbox(102, function () { window.open('https://github.com/turbulenz/webgl_benchmark', '_blank'); }, 240, 30, 115, 190);
         f.hitBoxes = [];
 
         //FONT RENDERING
