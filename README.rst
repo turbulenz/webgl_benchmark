@@ -6,7 +6,7 @@ About
 =====
 The goal of Polycraft.gl_ is to provide a game benchmark that demonstrates the use of WebGL for gaming in the browser. Unlike other benchmarks that focus on testing a specific API, the benchmark is designed to use a range of WebGL APIs used in gaming, making it more representative of a game created with web technologies.
 
-Polycraft.gl (the benchmark) uses the game Polycraft_,  a 3D real-time base building and tower defense game targetting platforms capable of supporting HTML5 technologies such as WebGL, Web Audio and Websockets, to provide the real-world content of textures, shaders and rendering method. The Polycraft game has been developed by `Wonderstruck Games`_, the in-house game development team at Turbulenz_, using the open source `Turbulenz Engine`_ and is available to play on `GA.ME`_. The experienced team at Wonderstruck/Turbulenz, whom collectively have worked on numerous console/PC titles at companies such as Lionhead, Criterion and EA have developed the benchmark as method of measuring the capabilities of browsers and hardware to deliver Polycraft and other games to a range of hardware such as mobiles, tablets, laptops and desktops.
+Polycraft.gl (the benchmark) uses the game Polycraft_, a 3D real-time base building and tower defense game targetting platforms capable of supporting HTML5 technologies such as WebGL, Web Audio and Websockets, to provide the real-world approach to rendering including the content of models, textures and shaders. The game Polycraft has been developed by `Wonderstruck Games`_, the in-house game development team at Turbulenz_, using the open source `Turbulenz Engine`_ and is available to play on `GA.ME`_. The experienced team at Wonderstruck/Turbulenz, whom collectively have worked on numerous console/PC titles at companies such as Lionhead, Criterion and EA have developed the benchmark as method of measuring the capabilities of browsers and hardware to deliver Polycraft and other games to a range of hardware such as mobiles, tablets, laptops and desktops.
 
 .. image:: https://github.com/turbulenz/webgl_benchmark/raw/master/docs/readme/mac-playing.jpg
 
@@ -15,12 +15,12 @@ The benchmark is built upon the open source Turbulenz Engine and the source code
 Benchmark Components
 ====================
 
-The benchmark is comprised two key components.
+The benchmark is comprised of two key components.
 
 - Polycraft.gl_ - An online benchmark hosted by Turbulenz for users to run the benchmark online.
 - webgl_benchmark_ - A repository of source code including tools to build and run the benchmark offline.
 
-The purpose of the benchmark is to compare performance of browsers and hardware by measuring the execution of content using WebGL and using the tools to measure the results. It is also to provide an online tool allowing users to understand their browser and hardware capabilities with respect to HTML5/WebGL games. Polycraft.gl is the 'online' benchmark. The source code in webgl_benchmark is the 'offline' benchmark.
+The purpose of the benchmark is to compare performance of browsers and hardware by measuring the execution of content using WebGL and using tools, such as graphing, to analyze the results. It is also to provide an online tool allowing users to understand their browser and hardware capabilities with respect to HTML5/WebGL games. Polycraft.gl is the 'online' benchmark. The source code in webgl_benchmark is the 'offline' benchmark.
 
 Offline
 -------
@@ -37,7 +37,7 @@ The offline benchmark is targeted at developers and advanced users who require t
 - The ability to set the native screen resolution (for use with fullscreen execution)
 - The ability to run custom browser builds (with features in development)
 - Filesystem access for the browser to save and compare output results via a local webserver.
-- The ability to running as the sole, dedicated page of the browser (disabling extensions, add-ons etc)
+- The ability to launch the browser process with a single page (disabling extensions, add-ons etc)
 
 Running the Offline Benchmark
 -----------------------------
@@ -54,15 +54,15 @@ Online
 
 .. image:: https://github.com/turbulenz/webgl_benchmark/raw/master/docs/readme/online.png
 
-The online benchmark is targeted at end-users who are interested in getting an overview of how their machine would fair using the benchmark. The purpose is to provide a simple to use tool allowing them to try the benchmark without needing to download and configure any software. Due to security and privacy restriction of browsers, the online version is only be able to gather a subset of information about the test browser and platform. This information is derived from the `User Agent <http://en.wikipedia.org/wiki/User_agent>`_ string and contains information such as:
+The online benchmark is targeted at end-users who are interested in getting an overview of how their machine would fare using the benchmark. The purpose is to provide a simple to use tool allowing them to try the benchmark without needing to download and configure any software. Due to security and privacy restriction of browsers, the online version is only be able to gather a subset of information about the test browser and platform. This information is derived from the `User Agent <http://en.wikipedia.org/wiki/User_agent>`_ string and contains information such as:
 
 - Browser version (e.g 27.0.1453.116)
 - OS (e.g. Windows NT 6.1; WOW64)
 
-The User Agent string also provides other information such as layout engine and information that can be used to help derive whether the machine is suspected to be a mobile, tablet or laptop/desktop. User Agent spoofing is common and hence the accuracy of the information cannot be guaranteed. With the help of browser detection libraries and additional information can be used to make a "good estimate".
+The User Agent string also provides other information such as layout engine and information that can be used to help derive whether the machine is suspected to be a mobile, tablet or laptop/desktop. User Agent spoofing is common and hence the accuracy of the information cannot be guaranteed. With the help of browser detection libraries and User Agent information can be used to make a "good estimate".
 
-For the purpose of ensuring content on the web is platform/hardware agnostic it is common practice to seperate the interface to a feature from the software/hardware that implements it. In the case of WebGL, only limited information is provided about the render that implements the standard. For example it is possible to detect that the WebGL context is WebGL version 1.0 based on OpenGL ES 2.0, but little information about how this is delivered to the user. This should stop content relying on implementation specific behavior.
-Some browsers also expose a WebGL extension called WEBGL_DEBUG_RENDERER_INFO, which it can be used to derive more detailed information about the render including vendor and the underlying hardware it is running on. For example on certain Windows machines it is possible to identify that the WebGL implementation is provided by the `ANGLE project <https://code.google.com/p/angleproject/>`_ which is using DirectX 9.
+For the purpose of ensuring that content on the web is platform/hardware agnostic it is common practice to separate the interface to a feature from the software/hardware that implements it. In the case of WebGL, only limited information is provided about the renderer that implements the standard. For example it is possible to detect that the WebGL context is WebGL version 1.0 based on OpenGL ES 2.0, but little information about how this is delivered to the user. This should stop content relying on implementation specific behavior.
+Some browsers also expose a WebGL extension called WEBGL_DEBUG_RENDERER_INFO, which it can be used to derive more detailed information about the render including vendor and the underlying hardware it is running on. For example on certain Windows machines it is possible to identify that the WebGL implementation is provided by the `ANGLE project <https://code.google.com/p/angleproject/>`_ running on top of Direct X.
 
 In the case of Polycraft.gl the platform and renderer information available is only used to inform the user what the configuration of the hardware was when the benchmark was run. It is not used to influence the behavior of the benchmark with the exception of detecting whether the user will be able to run the benchmark e.g. Is WebGL available to the browser? Are the required graphical capabilities available?
 
@@ -83,41 +83,41 @@ To make the benchmark representative of the game Polycraft, it runs a sequence o
 
 Polycraft is based around a shipwrecked survivor landing on a foreign island and teaming up with the local friendly “Wildling” population to build a base and defend it against the hordes of enemy “Feral Wildlings”. The game encompasses elements of base construction, resource gathering, strategy and battles. The story mode includes these gameplay components.
 
-When the benchmark starts, the story mode camera navigates the environment moving from one area of the map to the other demonstrating different visual effects visible within the game on its way. The stages of the story (referred to as "Tests") are designed to show more of a certain type of visual effect that occurs during gameplay. For example during the "Battle" test more particle effects for explosions, weapon fire are visible.
+When the benchmark starts, the story mode camera navigates the environment moving from one area of the map to the other demonstrating different visual effects visible within the game on its way. The stages of the story (referred to as "Tests") are designed to show more of a certain type of visual effect that occurs during gameplay. For example during the "Battle" test more particle effects for explosions and weapon fire are visible.
 
 **Introduction**
 
-The hero character intially starts alone on the beach next to a shipwreck. The test takes place at dawn where the sun is low in the sky, where the hero's dynamic shadow can be seen by the changing time of day. The camera then pans across the world revealing more geometry before resting at the hero's outpost. Very little geometry is visible initially so with the global effects applied this forms the baseline performance for the benchmark.
+The hero character initially starts alone on the beach next to a shipwreck. The test takes place at dawn where the sun is low in the sky, where the hero's dynamic shadow can be seen by the changing time of day. The camera then pans across the world revealing more geometry before resting at the hero's outpost. Very little geometry is visible initially so with the global effects applied this forms the baseline performance for the benchmark.
 
 **Battle**
 
-The hero standing at the outpost is involved in a battle defending the outpost from a wave of enemies. This visually includes defensive turrets, fortifications and a number of different enemy types each using different weapons and strategies to attack. The majority of visual content are the particles that make up the explosions, damage and projectile geometry. The scene itself is chaotic and these effects appear and disappear quickly demonstrating the updating of particles.
+The hero standing at the outpost is involved in a battle defending the outpost from a wave of enemies. This visually includes defensive turrets, fortifications and a number of different enemy types each using different weapons and strategies to attack. The majority of visual content is the particles that make up the explosions, damage and projectile geometry. The scene itself is chaotic and these effects appear and disappear quickly demonstrating the updating of particles.
 
 **Chopping Trees**
 
-The friendly wildings (know as lumberlings and wildlings) on the island collect resources for the player by chopping trees and mining stone. This involves rendering trees and stones at different levels of destruction. The resources that are dropped are unique to resource gathering. The test is set in an area of the map with an abundance of these resources. The trees themselves are hardware-skinned, sway gently and shake when chopped.
+The friendly wildings (known as lumberlings and stonelings) on the island collect resources for the player by chopping trees and mining stone. This involves rendering trees and stones at different levels of destruction. The resources that are dropped are unique to resource gathering. The test is set in an area of the map with an abundance of these resources. The trees themselves are hardware-skinned, sway gently and shake when chopped.
 
 **Base**
 
-The base constructed by the user contains buildings, wall defenses and additional visual items such as lamp posts, statues etc. Each entity contains geometry that casts shadows. As players progress through the game their base becomes more advanced. More building types, more geometry, more additional visual items. The base in the benchmark represents a reasonably complex base for players of a high level. Buildings also follow a level system that and become increasingly complex meshes with each level. The camera starts by panning across the base rendering as much of it as possible. As the scene fades to night, the hero pulls out his torch, a shadow-casting light that includes particle system with flames and smoke. As the hero moves his torch lights the geometry casting shadows as he goes.
+The base constructed by the user contains buildings, wall defenses and additional visual items such as lamp posts, statues etc. Each entity contains geometry that casts shadows. As players progress through the game their base becomes more advanced. More building types, more geometry, more additional visual items. The base in the benchmark represents a reasonably complex base for players of a high level. Buildings can be upgraded and have increasingly complex meshes the higher the level. The camera starts by panning across the base rendering as much of it as possible. As the scene fades to night, the hero pulls out his torch, a shadow-casting light that includes a particle system with flames and smoke. When the hero moves his torch lights the geometry casting shadows as he goes.
 
 Benchmark Investigation
 =======================
 In order to build polycraft.gl different methods for measuring benchmark performance were investigated. The browser environment has some complex behaviors making it difficult to accurately measure performance consistently and reliably. The findings of the investigation led the Turbulenz team to the benchmarking approach in polycraft.gl. The following are a selection of observations made whilst developing the benchmark:
 
-- The team were intially interested in measuring how long it would take a frame to execute. The multi-threaded behavior of the browser's renderer process and the compositing meant that this information is not easily accessible to the page running the benchmark. One attempt was to use gl.finish to force frame synchronization. This turned out to not be a reliable method and not consistent in all browsers (https://code.google.com/p/chromium/issues/detail?id=242210).
+- The team were initially interested in measuring how long it would take a frame to execute. The multi-threaded behavior of the browser's renderer process and the compositing meant that this information is not easily accessible to the page running the benchmark. One attempt was to use gl.finish to force frame synchronization. This turned out to not be a reliable method and is not consistent in all browsers (https://code.google.com/p/chromium/issues/detail?id=242210).
 
-- When initially looking to use hardware anti-aliasing, it was discovered that support varies between platform, browser and driver. Some hardware is black listed because of bugs (http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/) and could not be enabled even if capable. The benchmark opts to disabled hardware anti-aliasing by default relying on an implementation of FXAA that would be consitently run on all machines.
+- When initially looking to use hardware anti-aliasing, it was discovered that support varies between platform, browser and driver. Some hardware is black listed because of bugs (http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/) and could not be enabled even if capable. The benchmark opts to disabled hardware anti-aliasing by default relying on an implementation of FXAA that is run on all machines.
 
 - Although setting the resolution of the WebGL canvas element is possible, the page has no control over the native resolution of the machine. For this reason the online benchmark will inform the user of the resolution that content is being played back at, but makes no attempt to adjust it. The recommendation to users looking to compare scores is to have this resolution the same for each machine they are comparing. This is less of an issue for the offline benchmark, which has a benchmark runner script that attempts to set the native resolution on certain platforms before running the benchmark.
 
-- Using a fixed resolution render targets for rendering of the game produced more consistent timing results across different machines. This also meant that all hardware would have to process the same resolution of the game. By enabling a fullscreen effects that used the entire render target it meant the measurements on different machines were more meaningful.
+- Using fixed resolution render targets for rendering of the game produced more consistent timing results across different machines. This also meant that all hardware would have to process the same resolution of the game. By enabling fullscreen effects that used the entire render target it meant the measurements on different machines were more meaningful.
 
-- Having attempted to use multiple methods of controlling the rate at which frames were dispatched in JavaScript including using *setInterval* and *requestAnimationFrame*, the team concluded that requestAnimationFrame was the most reliable across the majority of the browsers because it is usually linked to the vertical sync of the screen. This has the downside that on many devices the frame rate is limited to 60fps. Investigation showed that having vsync enabled meant that different machines behaved more consistently each execution (setInterval skipped rendering frames in some browsers), so this option was chosen.
+- Having attempted to use multiple methods of controlling the rate at which frames were dispatched in JavaScript including using *setInterval* and *requestAnimationFrame*, the team concluded that requestAnimationFrame was the most reliable across the majority of the browsers because it is usually linked to the vertical sync of the screen. This has the downside that on many devices the frame rate is limited to 60fps. Investigation showed that having vsync enabled meant that different machines behaved more consistently each benchmark run (setInterval skipped rendering frames in some browsers), so this option was chosen.
 
-- The performance with and without vsync differed visible during testing (see vsync graphs). Although the benchmark can be configured to run with vsync disabled. Not all browsers were capable of disabling it (https://bugzilla.mozilla.org/show_bug.cgi?id=856427). Some browsers also exposed their interval scheduling behaviors, which was apparent by the 'banding' of frame times (see vsync graphs).
+- The performance with and without vsync differed visibly during testing (see vsync graphs). Although the benchmark can be configured to run with vsync disabled. Not all browsers were capable of disabling it (https://bugzilla.mozilla.org/show_bug.cgi?id=856427). Some browsers also exposed their interval scheduling behaviors, which was apparent by the 'banding' of frame times (see vsync graphs).
 
-- Garbage collection can occur at anytime and affects the frequency of the requestAnimationFrame interval. On some machines this is a small pause for a couple frames, but on others it can be much more significant. Controlling the time when memory is no longer referenced and reducing the construction and destruction of objects in memory is a way of reducing the impact, but ultimately it will need to happen at some point in time. The team concluded that it is a natural behavior of JavaScript and therefore should be visible in results.
+- Garbage collection can occur at any time and affects the frequency of the requestAnimationFrame interval. On some machines this is a small pause for a couple frames, but on others it can be much more significant. Controlling the time when memory is no longer referenced and reducing the construction and destruction of objects in memory is a way of reducing the impact, but ultimately it will need to happen at some point in time. The team concluded that it is a natural behavior of JavaScript and therefore should be visible in results.
 
 Investigation Graphs
 ====================
@@ -171,7 +171,7 @@ Render Target
 .. image:: https://github.com/turbulenz/webgl_benchmark/raw/master/docs/readme/graph/image01.png
     :alt: Without render target, average 34ms per frame
 
-No rendertarget (left) average 32ms per frame and with render target (right) average 34ms per frame running on the same hardware.
+No render target (left) average 32ms per frame and with render target (right) average 34ms per frame running on the same hardware.
 The graphs show that the use of a full-screen render target had only small variance on the same hardware at the same resolution.
 The use of a fixed size render target helped to ensure that all hardware would be rendering the same number of pixels.
 
@@ -180,7 +180,7 @@ Scoring Methodology
 
 The scoring system used for Polycraft.gl_ attempts to provide end-users with a summary of their browser/platform/hardware capability in a method that is easy to run and understand. The final score the benchmark provides is a sum of the score from each of the tests run in the benchmark. Each test has an equal score weighting. The benchmark score attempts to compare the machine to a theoretical machine that is able to play the benchmark at real-time at the intended resolution. If a machine is able to achieve this then it will be awarded the maximum score for that test. For example if the benchmark contains a gameplay recording at 60 frames per second and the machine is able to play the same frames back at 45 frames per second the machine will be awarded 3/4 of the score available.
 
-To measure how fast a machine can run the tests the benchmark measures from one point in a frame to the same point in the next frame. The benchmark has no visibility of whether or not the information it dispatched has been rendered so it relies on the frequency of the requestAnimationFrame callback to tell it whether it more frames can be dispatched. A machine that is unable to process WebGL commands at the rate at which they are dispatched will increase the time between frames which in turn will affect the score awarded.
+To measure how fast a machine can run the tests the benchmark measures from one point in a frame to the same point in the next frame. The benchmark has no visibility of whether or not the information it dispatched has been rendered so it relies on the frequency of the requestAnimationFrame callback to tell it whether more frames can be dispatched. A machine that is unable to process WebGL commands at the rate at which they are dispatched will increase the time between frames which in turn will affect the score awarded.
 
 
 Recommendations
@@ -212,8 +212,7 @@ In order to use the webgl_benchmark_ project offline. Developers require the fol
 * (Optional) `Turbulenz local server`_ - Required to save benchmark result files. The server is included as part of the turbulenz_engine_ repository or as a `python package <https://pypi.python.org/pypi/turbulenz_local>`_
 
 *Note*: The webgl_benchmark_ benchmark repository includes a basic server as part of the benchmarkrunner.py_ script.
-This server provides simple hosting of static files and saving of results to the machine it is hosted on.
-`Turbulenz local server`_ is a more advanced server designed to aid in the development of HTML5 games.
+This server provides simple hosting of static files and saving of results to the machine it is hosted on. The `Turbulenz local server`_ is a more advanced server designed to aid in the development of HTML5 games.
 
 Usage
 =====
@@ -271,7 +270,7 @@ The *online* version will request the benchmark data directly from where it is h
    - As `userdata <http://docs.turbulenz.com/turbulenz_services/userdata_api.html>`_ for the given user
    - In the *data/* directory of the webgl_benchmark_ project
 
-   If existing results have been saved by the user in userdata, those results will be viewable on the graph screen (See graphing_). The name of the user that is currently logged-in can be found on the main local server page.
+   If existing results have been saved by the user in userdata, those results will be viewable on the graph screen (See graphing_). The name of the user who is currently logged-in can be found on the main local server page.
 
 **Running from the benchmarkrunner.py server command**
 
@@ -311,7 +310,6 @@ If switching between targets, building_ is essential.
 *(Windows Only)*
 
 Double-click the "run.bat" batch file, which will set the resolution of the machine before running the benchmarkrunner script.
-Once the browser has closed the screen resolution will be restored.
 ::
     > run.bat
 
@@ -354,7 +352,7 @@ To build the benchmark:
 
     $ python benchmarkrunner.py --build
 
-This command will updated debug version of the benchmark with any changes and will generate the benchmark.canvas.js and benchmark.canvas.release.html files.
+This command will update the debug version of the benchmark with any changes and will generate the benchmark.canvas.js and benchmark.canvas.release.html files.
 
 4) To clean all the code and asset files for the benchmark run the command:
 
@@ -382,9 +380,9 @@ You might need to specify a browser profile to run when the benchmark launches i
 
 Examples::
 
-    $ python benchmarkrunner.py --browser firefox --browser-profile webgl_benchmark
+    $ python benchmarkrunner.py --browser-launch --browser firefox --browser-profile webgl_benchmark
 
-    $ python benchmarkrunner.py --browser chrome --browser-profile "Profile 3"
+    $ python benchmarkrunner.py --browser-launch --browser chrome --browser-profile "Profile 3"
 
 
 The browser-launch command can be used with a timeout that will force the browser to close after a given period of time.
@@ -400,7 +398,7 @@ Once the browser has been closed the benchmark runner will exit.
 Hardware Detection
 ------------------
 
-**(Windows Only)**
+**(Currently Windows Only)**
 
 In offline mode, when saving the results the browser can also save certain information about the hardware for later comparison.
 This information is collected by the benchmark runner and passed to the benchmark.
@@ -421,8 +419,8 @@ Graphing
 .. _graphing:
 
 The webgl_benchmark includes the ability to view the output of the test results in the form of a graph.
-Graphs are typically displayed at the end of the benchmark run instead of the *score screen*, but can also be launched at instead of the benchmark itself.
-The graphing tools allow developers to look at the per-frame output of the benchmark and analyse the output. There are two graphing options:
+Graphs are typically displayed at the end of the benchmark run instead of the *score screen*, but can also be launched instead of the benchmark itself.
+The graphing tools allow developers to look at the frame-by-frame output of the benchmark and analyse the output. There are two graphing options:
 
 * graphOnEnd - Setting this option to 'true' will replace the final score screen with the graphing tool. It will start by adding the test that was just running, then if run from the Turbulenz local server, any other results saved by the same user currently running the benchmark.
 
@@ -494,7 +492,7 @@ If you'd like to contribute any changes simply fork the project on Github and se
 patch detailing the proposed changes.
 
 *Note*: by contributing code to the webgl_benchmark project in any form, including sending a pull request via Github,
-a code fragment or patch via private email or public discussion groups, you agree to release your code and assets data
+a code fragment or patch via private email or public discussion groups, you agree to release your code and any assets data
 under the conditions in the `LICENSE <LICENSE>`__ file included in the source distribution.
 
 Links
