@@ -185,21 +185,30 @@ The benchmark can be run using any of the following:
 **Running from the Turbulenz local server**
 
 Hosting the project on the Turbulenz local server allows you to run any of the benchmark targets.
-The *online* version will request the benchmark data directly from where it is hosted online. The *offline* version requires the data to be downloaded before running. This will be done automatically by running the benchmarkrunner.py script with --target=offline:
+The *online* version will request the benchmark data directly from where it is hosted online. The *offline* version requires the data to be downloaded before running. This will be done automatically by running the benchmarkrunner.py. This step only needs to be done once per data stream:
 
 1) Install the local server (follow the steps for any of the following)
-    - `turbulenz_engine`_ repository
-    - `python package <https://pypi.python.org/pypi/turbulenz_local>`_
-    - `Turbulenz SDK`_
-2) Start the server
 
-3) Add the benchmark as project to the server via `<http://127.0.0.1:8070>`__. For local server usage see the `documentation <http://docs.turbulenz.com/local/user_guide.html#adding-an-existing-project>`_
+   - `turbulenz_engine`_ repository
+   - `python package <https://pypi.python.org/pypi/turbulenz_local>`_
+   - `Turbulenz SDK`_
 
-4) Play the "benchmark.canvas.debug.html". The default configuration will start playing.
+2) Run the following command to download the benchmark data:
 
-5) At the end of the benchmark the score will appear with the details of the configuration when the benchmark was run. These results can be saved in the form of a json file. When running from the Turbulenz local server the 'save' button will save the results in two locations:
-    - As `userdata <http://docs.turbulenz.com/turbulenz_services/userdata_api.html>`_ for the given user
-    - In the *data/* directory of the webgl_benchmark_ project
+::
+
+    $ python benchmarkrunner.py
+
+3) Start the server
+
+4) Add the benchmark as project to the server via `<http://127.0.0.1:8070>`__. For local server usage see the `documentation <http://docs.turbulenz.com/local/user_guide.html#adding-an-existing-project>`_
+
+5) Play the "benchmark.canvas.debug.html". The default configuration will start playing.
+
+6) At the end of the benchmark the score will appear with the details of the configuration when the benchmark was run. These results can be saved in the form of a json file. When running from the Turbulenz local server the 'save' button will save the results in two locations:
+
+   - As `userdata <http://docs.turbulenz.com/turbulenz_services/userdata_api.html>`_ for the given user
+   - In the *data/* directory of the webgl_benchmark_ project
 
    If existing results have been saved by the user in userdata, those results will be viewable on the graph screen (See graphing_). The name of the user that is currently logged-in can be found on the main local server page.
 
@@ -238,7 +247,7 @@ If switching between targets, building_ is essential.
 
 **Running using the run.bat command**
 
-*(WINDOWS ONLY)*
+*(Windows Only)*
 
 Double-click the "run.bat" batch file, which will set the resolution of the machine before running the benchmarkrunner script.
 Once the browser has closed the screen resolution will be restored.
@@ -258,9 +267,10 @@ The defaults can be overridden by calling:
 *Note*: The script will attempt to restore the previous resolution at the end of the benchmark. Make sure to close the browser correctly to trigger this.
 
 Advanced Usage
---------------
+==============
 
-**Building**
+Building
+--------
 
 .. _building:
 
@@ -291,11 +301,12 @@ This command will updated debug version of the benchmark with any changes and wi
 
     $ python benchmarkrunner.py --clean
 
-**Browser Options**
+Browser Options
+---------------
 
 The benchmark runner script can attempt to launch the browser with specific command line arguments.
-If your browser is installed to a different location than expected by the launcher, you can specify the path to the executable using the argument "--browser-path".
-Note that you also need to specify the "--browser" argument which tells the runner which browser the path is pointing to.
+If your browser is installed to a different location than expected by the launcher, you can specify the path to the executable using the argument --browser-path.
+Note that you also need to specify the --browser argument which tells the runner which browser the path is pointing to.
 
 Examples::
 
@@ -306,7 +317,7 @@ Examples::
     $ python benchmarkrunner.py --browser-launch --browser chrome --browser-path /Applications/Google\ Chrome\ Canary.app/Contents/MacOS/Google\ Chrome\ Canary
 
 
-You might need to specify a browser profile to run when the benchmark launches if you want the browser to load with certain options/add ons/extensions (This is essential in Firefox if you have multiple profiles). To launch a given profile by name use the "--browser-profile" argument. For Firefox this the name of the profile. For Chrome this is the profile directory name.
+You might need to specify a browser profile to run when the benchmark launches if you want the browser to load with certain options/add ons/extensions (This is essential in Firefox if you have multiple profiles). To launch a given profile by name use the --browser-profile argument. For Firefox this the name of the profile. For Chrome this is the profile directory name.
 
 Examples::
 
@@ -325,11 +336,14 @@ Example::
 In this example, the command will force the browser to close after 300 seconds (5 minutes).
 Once the browser has been closed the benchmark runner will exit.
 
-**Hardware Detection (Windows Only)**
+Hardware Detection
+------------------
+
+**(Windows Only)**
 
 In offline mode, when saving the results the browser can also save certain information about the hardware for later comparison.
 This information is collected by the benchmark runner and passed to the benchmark.
-Use the "--hardware-name" argument to specify the name of the hardware running the benchmark runner.
+Use the --hardware-name argument to specify the name of the hardware running the benchmark runner.
 This name will be used when saving the results, so it should identify the machine the benchmark was run on to compare with other hardware.
 
 Examples::
@@ -340,7 +354,8 @@ Examples::
 
     $ python benchmarkrunner.py --hardware-name "John's Netbook"
 
-**Graphing**
+Graphing
+--------
 
 .. _graphing:
 
@@ -354,14 +369,18 @@ The graphing tools allow developers to look at the per-frame output of the bench
 
 These options can be enabled by:
 
-* Modify the config to include the options:
-    - "config.graphOnEnd = true;"
-    - "config.graphOnStart = true;"
-* Run the benchmark with the query parameter (Only possible not running the --release version):
-    - "?graphOnEnd=True"
-    - "?graphOnStart=True"
+* Modify the *config.js* to include the options:
 
-**Static page**
+  - config.graphOnEnd = true;
+  - config.graphOnStart = true; (Turbulenz local server only)
+
+* Run the benchmark with the query parameter: (Turbulenz local server only)
+
+  - http://127.0.0.1:8070/#/play/webgl-benchmark/benchmark.canvas.debug.html?graphOnEnd=True
+  - http://127.0.0.1:8070/#/play/webgl-benchmark/benchmark.canvas.debug.html?graphOnStart=True
+
+Static page
+-----------
 
 .. _static:
 
@@ -381,6 +400,18 @@ This command will:
 
 To try the benchmark as it would appear online navigate to `<http://127.0.0.1:8000>`__.
 The release page can be modified by editing the files in *templates/page*.
+
+Help
+----
+
+For more advanced commands run:
+
+::
+
+    $ python benchmarkrunner.py --help
+
+
+
 
 .. _Turbulenz SDK: https://hub.turbulenz.com/#downloads
 .. _benchmarkrunner.py: https://github.com/turbulenz/webgl_benchmark/blob/master/benchmarkrunner.py
