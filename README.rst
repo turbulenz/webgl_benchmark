@@ -4,9 +4,9 @@ POLYCRAFT.GL
 
 About
 =====
-The goal of `Polycraft.gl <http://polycraft.gl>`_ is to provide a game benchmark that demonstrates the use of WebGL for gaming in the browser. Unlike other benchmarks that focus on testing a specific API, the benchmark is designed to use a range of WebGL APIs used in gaming, making it more representative of a game created with web technologies.
+The goal of Polycraft.gl_ is to provide a game benchmark that demonstrates the use of WebGL for gaming in the browser. Unlike other benchmarks that focus on testing a specific API, the benchmark is designed to use a range of WebGL APIs used in gaming, making it more representative of a game created with web technologies.
 
-Polycraft.gl (the benchmark) uses the game `Polycraft <http://polycraftgame.com/>`_,  a 3D real-time base building and tower defense game targetting platforms capable of supporting HTML5 technologies such as WebGL, Web Audio and Websockets, to provide the real-world content of textures, shaders and rendering method. The Polycraft game has been developed by `Wonderstruck Games <http://wonderstruckgames.com/>`_, the in-house game development team at `Turbulenz <http://biz.turbulenz.com>`_, using the open source `Turbulenz Engine <https://github.com/turbulenz/turbulenz_engine>`_ and is available to play on `GA.ME <https://ga.me>`_. The experienced team at Wonderstruck/Turbulenz, whom collectively have worked on numerous console/PC titles at companies such as Lionhead, Criterion and EA have developed the benchmark as method of measuring the capabilities of browsers and hardware to deliver Polycraft and other games to a range of hardware such as mobiles, tablets, laptops and desktops.
+Polycraft.gl (the benchmark) uses the game Polycraft_,  a 3D real-time base building and tower defense game targetting platforms capable of supporting HTML5 technologies such as WebGL, Web Audio and Websockets, to provide the real-world content of textures, shaders and rendering method. The Polycraft game has been developed by `Wonderstruck Games`_, the in-house game development team at Turbulenz_, using the open source `Turbulenz Engine`_ and is available to play on `GA.ME`_. The experienced team at Wonderstruck/Turbulenz, whom collectively have worked on numerous console/PC titles at companies such as Lionhead, Criterion and EA have developed the benchmark as method of measuring the capabilities of browsers and hardware to deliver Polycraft and other games to a range of hardware such as mobiles, tablets, laptops and desktops.
 
 The benchmark is built upon the open source Turbulenz Engine and the source code is available from the webgl_benchmark_ Github project, allowing the community to understand the methodology behind the benchmark and contribute to the development of the project. Turbulenz are the maintainers the project to keep it compatible with changes/additions to browsers and future hardware.
 
@@ -15,8 +15,8 @@ Benchmark Components
 
 The benchmark is comprised two key components.
 
-- **Polycraft.gl** - An online benchmark hosted by Turbulenz for users to run the benchmark online.
-- **webgl_benchmark** - A repository of source code including tools to build and run the benchmark offline.
+- Polycraft.gl_ - An online benchmark hosted by Turbulenz for users to run the benchmark online.
+- webgl_benchmark_ - A repository of source code including tools to build and run the benchmark offline.
 
 The purpose of the benchmark is to compare performance of browsers and hardware by measuring the execution of content using WebGL and using the tools to measure the results. It is also to provide an online tool allowing users to understand their browser and hardware capabilities with respect to HTML5/WebGL games. Polycraft.gl is the 'online' benchmark. The source code in webgl_benchmark is the 'offline' benchmark.
 
@@ -97,7 +97,7 @@ The friendly wildings (know as lumberlings and wildlings) on the island collect 
 The base constructed by the user contains buildings, wall defenses and additional visual items such as lamp posts, statues etc. Each entity contains geometry that casts shadows. As players progress through the game their base becomes more advanced. More building types, more geometry, more additional visual items. The base in the benchmark represents a reasonably complex base for players of a high level. Buildings also follow a level system that and become increasingly complex meshes with each level. The camera starts by panning across the base rendering as much of it as possible. As the scene fades to night, the hero pulls out his torch, a shadow-casting light that includes particle system with flames and smoke. As the hero moves his torch lights the geometry casting shadows as he goes.
 
 Benchmark Investigation
------------------------
+=======================
 In order to build polycraft.gl different methods for measuring benchmark performance were investigated. The browser environment has some complex behaviors making it difficult to accurately measure performance consistently and reliably. The findings of the investigation led the Turbulenz team to the benchmarking approach in polycraft.gl. The following are a selection of observations made whilst developing the benchmark:
 
 - The team were intially interested in measuring how long it would take a frame to execute. The multi-threaded behavior of the browser's renderer process and the compositing meant that this information is not easily accessible to the page running the benchmark. One attempt was to use gl.finish to force frame synchronization. This turned out to not be a reliable method and not consistent in all browsers (https://code.google.com/p/chromium/issues/detail?id=242210).
@@ -115,15 +115,15 @@ In order to build polycraft.gl different methods for measuring benchmark perform
 - Garbage collection can occur at anytime and affects the frequency of the requestAnimationFrame interval. On some machines this is a small pause for a couple frames, but on others it can be much more significant. Controlling the time when memory is no longer referenced and reducing the construction and destruction of objects in memory is a way of reducing the impact, but ultimately it will need to happen at some point in time. The team concluded that it is a natural behavior of JavaScript and therefore should be visible in results.
 
 Scoring Methodology
--------------------
+===================
 
-The scoring system used for polycraft.gl attempts to provide end-users with a summary of their browser/platform/hardware capability in a method that is easy to run and understand. The final score the benchmark provides is a sum of the score from each of the tests run in the benchmark. Each test has an equal score weighting. The benchmark score attempts to compare the machine to a theoretical machine that is able to play the benchmark at real-time at the intended resolution. If a machine is able to achieve this then it will be awarded the maximum score for that test. For example if the benchmark contains a gameplay recording at 60 frames per second and the machine is able to play the same frames back at 45 frames per second the machine will be awarded 3/4 of the score available.
+The scoring system used for Polycraft.gl_ attempts to provide end-users with a summary of their browser/platform/hardware capability in a method that is easy to run and understand. The final score the benchmark provides is a sum of the score from each of the tests run in the benchmark. Each test has an equal score weighting. The benchmark score attempts to compare the machine to a theoretical machine that is able to play the benchmark at real-time at the intended resolution. If a machine is able to achieve this then it will be awarded the maximum score for that test. For example if the benchmark contains a gameplay recording at 60 frames per second and the machine is able to play the same frames back at 45 frames per second the machine will be awarded 3/4 of the score available.
 
 To measure how fast a machine can run the tests the benchmark measures from one point in a frame to the same point in the next frame. The benchmark has no visibility of whether or not the information it dispatched has been rendered so it relies on the frequency of the requestAnimationFrame callback to tell it whether it more frames can be dispatched. A machine that is unable to process WebGL commands at the rate at which they are dispatched will increase the time between frames which in turn will affect the score awarded.
 
 
 Recommendations
----------------
+===============
 In order to run the benchmark in the most reliable way to generate comparable results our investigation has lead us to recommend the following approaches to achieving comparable scores.
 
 **Browser Comparisons**
@@ -142,5 +142,254 @@ In order to run the benchmark in the most reliable way to generate comparable re
 - Set the native screen resolution to be the same for both pieces of hardware and run the benchmark in fullscreen
 - When using the offline benchmark, gather the system information for the benchmark from an application that exposes more hardware details than the browser. For the online benchmark use the browser/platform detection via user agent where available.
 
+Requirements (Offline)
+======================
+In order to use the webgl_benchmark_ project offline. Developers require the following:
 
+* Python 2.7.x
+* (Optional) `Turbulenz Engine`_ environment - Required to re-build the project and generate custom configurations. The environment is included as part of the turbulenz_engine_ repository
+* (Optional) `Turbulenz local server`_ - Required to save benchmark result files. The server is included as part of the turbulenz_engine_ repository or as a `python package <https://pypi.python.org/pypi/turbulenz_local>`_
+
+*Note*: The webgl_benchmark_ benchmark repository includes a basic server as part of the benchmarkrunner.py_ script.
+This server provides simple hosting of static files and saving of results to the machine it is hosted on.
+`Turbulenz local server`_ is a more advanced server designed to aid in the development of HTML5 games.
+
+Usage
+=====
+
+The files required to run the benchmark in debug mode are included pre-built in the GitHub repository. To build the release version of the benchmark, see `building`_.
+Start by cloning/downloading the benchmark git repository.
+
+To play the benchmark you will need to:
+
+1) Start a server
+
+2) Open the benchmark in a browser
+
+3) Wait for the benchmark to finish
+
+4) Look at the score screen or graph screen (See `graphing`_ options)
+
+5) Save the results (Depends on server and launch options)
+
+The benchmark can be run using any of the following:
+
+* Manually by adding the project to the `Turbulenz local server`_ and playing from the server.
+
+* Manually by launching the benchmarkrunner.py script with the --server command and playing from the server.
+
+* Automatically using the benchmarkrunner.py script.
+
+* Automatically using the run.bat command (Windows Only).
+
+**Running from the Turbulenz local server**
+
+Hosting the project on the Turbulenz local server allows you to run any of the benchmark targets.
+The *online* version will request the benchmark data directly from where it is hosted online. The *offline* version requires the data to be downloaded before running. This will be done automatically by running the benchmarkrunner.py script with --target=offline:
+
+1) Install the local server (follow the steps for any of the following)
+    - `turbulenz_engine`_ repository
+    - `python package <https://pypi.python.org/pypi/turbulenz_local>`_
+    - `Turbulenz SDK`_
+2) Start the server
+
+3) Add the benchmark as project to the server via `<http://127.0.0.1:8070>`__. For local server usage see the `documentation <http://docs.turbulenz.com/local/user_guide.html#adding-an-existing-project>`_
+
+4) Play the "benchmark.canvas.debug.html". The default configuration will start playing.
+
+5) At the end of the benchmark the score will appear with the details of the configuration when the benchmark was run. These results can be saved in the form of a json file. When running from the Turbulenz local server the 'save' button will save the results in two locations:
+    - As `userdata <http://docs.turbulenz.com/turbulenz_services/userdata_api.html>`_ for the given user
+    - In the *data/* directory of the webgl_benchmark_ project
+
+   If existing results have been saved by the user in userdata, those results will be viewable on the graph screen (See graphing_). The name of the user that is currently logged-in can be found on the main local server page.
+
+**Running from the benchmarkrunner.py server command**
+
+The benchmarkrunner.py server command will launch a simple web server that can be used to serve the benchmark files. To run the benchmark:
+
+1) Run the following command to start the server:
+
+::
+
+    $ python benchmarkrunner.py --server
+
+2) Navigate to `<http://127.0.0.1:8070>`__ to run the benchmark
+
+3) Similar to the local server the benchmark results can be saved by pressing the 'save' button. The server will then save the results in the *data/* directory
+
+
+**Running using the benchmarkrunner.py browser-launch command**
+
+The benchmarkrunner.py server command will automatically launch a browser and navigate to the page where the benchmark is located. A server hosting the benchmark must already be running to use this option.
+
+*WARNING*: Make sure you have closed the target browser and saved any information before running this command as it will attempt to close any existing processes before launching:
+
+::
+
+    $ python benchmarkrunner.py --browser-launch
+
+    or
+
+    $ python benchmarkrunner.py --target TARGET --browser-launch
+
+The script will prepare the benchmark and launch the browser with any required arguments.
+The available options for TARGET are listed in the *benchmarkrunner --help* command.
+If switching between targets, building_ is essential.
+
+**Running using the run.bat command**
+
+*(WINDOWS ONLY)*
+
+Double-click the "run.bat" batch file, which will set the resolution of the machine before running the benchmarkrunner script.
+Once the browser has closed the screen resolution will be restored.
+::
+    > run.bat
+
+The script will use the defaults specified in:
+
+- assets/config/default_config.txt
+- assets/config/default_target.txt
+- assets/config/default_resolution.txt
+
+The defaults can be overridden by calling:
+::
+    > run.bat CONFIG TARGET
+
+*Note*: The script will attempt to restore the previous resolution at the end of the benchmark. Make sure to close the browser correctly to trigger this.
+
+Advanced Usage
+--------------
+
+**Building**
+
+.. _building:
+
+In order to use the release build of the benchmark or to generate the 'static' target the build system included in the open source turbulenz_engine_ is required.
+This allows developers to clean and build the project, assets and configurations of the benchmark.
+To build the benchmark:
+
+1) Install the turbulenz_engine_ following the instructions
+
+2) Activate the environment from the turbulenz_engine directory:
+
+::
+
+    $ source env/bin/activate - for bash and similar shells
+    > env\scripts\activate.bat - for Windows
+
+3) Run the benchmark command from the webgl_benchmark directory:
+
+::
+
+    $ python benchmarkrunner.py --build
+
+This command will updated debug version of the benchmark with any changes and will generate the benchmark.canvas.js and benchmark.canvas.release.html files.
+
+4) To clean all the code and asset files for the benchmark run the command:
+
+::
+
+    $ python benchmarkrunner.py --clean
+
+**Browser Options**
+
+The benchmark runner script can attempt to launch the browser with specific command line arguments.
+If your browser is installed to a different location than expected by the launcher, you can specify the path to the executable using the argument "--browser-path".
+Note that you also need to specify the "--browser" argument which tells the runner which browser the path is pointing to.
+
+Examples::
+
+    $ python benchmarkrunner.py --browser-launch --browser chrome --browser-path "C:\Users\USER_NAME\AppData\Local\Chromium\Application\chrome.exe"
+
+    $ python benchmarkrunner.py --browser-launch --browser chrome --browser-path "C:\Users\USER_NAME\AppData\Local\Google\Chrome SxS\Application\chrome.exe"
+
+    $ python benchmarkrunner.py --browser-launch --browser chrome --browser-path /Applications/Google\ Chrome\ Canary.app/Contents/MacOS/Google\ Chrome\ Canary
+
+
+You might need to specify a browser profile to run when the benchmark launches if you want the browser to load with certain options/add ons/extensions (This is essential in Firefox if you have multiple profiles). To launch a given profile by name use the "--browser-profile" argument. For Firefox this the name of the profile. For Chrome this is the profile directory name.
+
+Examples::
+
+    $ python benchmarkrunner.py --browser firefox --browser-profile webgl_benchmark
+
+    $ python benchmarkrunner.py --browser chrome --browser-profile "Profile 3"
+
+
+The browser-launch command can be used with a timeout that will force the browser to close after a given period of time.
+
+Example::
+
+    $ python benchmarkrunner.py --browser-launch --browser-timeout=300
+
+
+In this example, the command will force the browser to close after 300 seconds (5 minutes).
+Once the browser has been closed the benchmark runner will exit.
+
+**Hardware Detection (Windows Only)**
+
+In offline mode, when saving the results the browser can also save certain information about the hardware for later comparison.
+This information is collected by the benchmark runner and passed to the benchmark.
+Use the "--hardware-name" argument to specify the name of the hardware running the benchmark runner.
+This name will be used when saving the results, so it should identify the machine the benchmark was run on to compare with other hardware.
+
+Examples::
+
+    $ python benchmarkrunner.py --hardware-name "My Work Laptop"
+
+    $ python benchmarkrunner.py --hardware-name TestPC01-Win8
+
+    $ python benchmarkrunner.py --hardware-name "John's Netbook"
+
+**Graphing**
+
+.. _graphing:
+
+The webgl_benchmark includes the ability to view the output of the test results in the form of a graph.
+Graphs are typically displayed at the end of the benchmark run instead of the *score screen*, but can also be launched at instead of the benchmark itself.
+The graphing tools allow developers to look at the per-frame output of the benchmark and analyse the output. There are two graphing options:
+
+* graphOnEnd - Setting this option to 'true' will replace the final score screen with the graphing tool. It will start by adding the test that was just running, then if run from the Turbulenz local server, any other results saved by the same user currently running the benchmark.
+
+* graphOnStart - Setting this option to 'true' will start the graphing tool instead of the benchmark. Useful when you already have results to analyse. Again this option is only possible if there are results saved for the current user on the Turbulenz local server.
+
+These options can be enabled by:
+
+* Modify the config to include the options:
+    - "config.graphOnEnd = true;"
+    - "config.graphOnStart = true;"
+* Run the benchmark with the query parameter (Only possible not running the --release version):
+    - "?graphOnEnd=True"
+    - "?graphOnStart=True"
+
+**Static page**
+
+.. _static:
+
+Polycraft.gl_ is hosted on a static page, which can be generated by running the following command:
+
+::
+
+    $ python benchmarkrunner.py --clean --build --release --copy --server
+
+This command will:
+
+* Clean the project (Code and asset files)
+* Force the project to the 'static' target using the --release flag
+* Build the project release code and assets required for deployment
+* Copy the project to the 'static_page' directory
+* Run a static server with no saving features (on port 8000)
+
+To try the benchmark as it would appear online navigate to `<http://127.0.0.1:8000>`__.
+The release page can be modified by editing the files in *templates/page*.
+
+.. _Turbulenz SDK: https://hub.turbulenz.com/#downloads
+.. _benchmarkrunner.py: https://github.com/turbulenz/webgl_benchmark/blob/master/benchmarkrunner.py
+.. _Turbulenz local server: https://github.com/turbulenz/turbulenz_local
+.. _GA.ME: https://ga.me
+.. _turbulenz_engine: https://github.com/turbulenz/turbulenz_engine
+.. _Turbulenz Engine: https://github.com/turbulenz/turbulenz_engine
+.. _Turbulenz: http://biz.turbulenz.com
+.. _Wonderstruck Games: http://wonderstruckgames.com
+.. _Polycraft: http://polycraftgame.com
+.. _Polycraft.gl: http://polycraft.gl
 .. _webgl_benchmark: https://github.com/turbulenz/webgl_benchmark
