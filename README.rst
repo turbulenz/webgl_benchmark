@@ -8,6 +8,8 @@ The goal of Polycraft.gl_ is to provide a game benchmark that demonstrates the u
 
 Polycraft.gl (the benchmark) uses the game Polycraft_,  a 3D real-time base building and tower defense game targetting platforms capable of supporting HTML5 technologies such as WebGL, Web Audio and Websockets, to provide the real-world content of textures, shaders and rendering method. The Polycraft game has been developed by `Wonderstruck Games`_, the in-house game development team at Turbulenz_, using the open source `Turbulenz Engine`_ and is available to play on `GA.ME`_. The experienced team at Wonderstruck/Turbulenz, whom collectively have worked on numerous console/PC titles at companies such as Lionhead, Criterion and EA have developed the benchmark as method of measuring the capabilities of browsers and hardware to deliver Polycraft and other games to a range of hardware such as mobiles, tablets, laptops and desktops.
 
+.. image:: https://github.com/turbulenz/webgl_benchmark/raw/master/docs/readme/mac-playing.jpg
+
 The benchmark is built upon the open source Turbulenz Engine and the source code is available from the webgl_benchmark_ Github project, allowing the community to understand the methodology behind the benchmark and contribute to the development of the project. Turbulenz are the maintainers the project to keep it compatible with changes/additions to browsers and future hardware.
 
 Benchmark Components
@@ -49,6 +51,9 @@ To run the offline benchmark advanced users will need to:
 
 Online
 ------
+
+.. image:: https://github.com/turbulenz/webgl_benchmark/raw/master/docs/readme/online.png
+
 The online benchmark is targeted at end-users who are interested in getting an overview of how their machine would fair using the benchmark. The purpose is to provide a simple to use tool allowing them to try the benchmark without needing to download and configure any software. Due to security and privacy restriction of browsers, the online version is only be able to gather a subset of information about the test browser and platform. This information is derived from the `User Agent <http://en.wikipedia.org/wiki/User_agent>`_ string and contains information such as:
 
 - Browser version (e.g 27.0.1453.116)
@@ -113,6 +118,78 @@ In order to build polycraft.gl different methods for measuring benchmark perform
 - The performance with and without vsync differed visible during testing (see vsync graphs). Although the benchmark can be configured to run with vsync disabled. Not all browsers were capable of disabling it (https://bugzilla.mozilla.org/show_bug.cgi?id=856427). Some browsers also exposed their interval scheduling behaviors, which was apparent by the 'banding' of frame times (see vsync graphs).
 
 - Garbage collection can occur at anytime and affects the frequency of the requestAnimationFrame interval. On some machines this is a small pause for a couple frames, but on others it can be much more significant. Controlling the time when memory is no longer referenced and reducing the construction and destruction of objects in memory is a way of reducing the impact, but ultimately it will need to happen at some point in time. The team concluded that it is a natural behavior of JavaScript and therefore should be visible in results.
+
+Investigation Graphs
+====================
+
+Vsync
+-----
+
+.. image:: https://github.com/turbulenz/webgl_benchmark/raw/master/docs/readme/graph/image11.png
+    :height: 150px
+    :width: 200px
+    :alt: Macbook Pro 5.1, OSX 10.6.8, Chrome 27, vsync on
+
+.. image:: https://github.com/turbulenz/webgl_benchmark/raw/master/docs/readme/graph/image02.png
+    :height: 150px
+    :width: 200px
+    :alt: Macbook Pro 5.1, OSX 10.6.8, Chrome 27, vsync off
+
+Testing vsync on a Macbook Pro 5.1 running OSX 10.6.8 in Chrome 27 with the "Story mode benchmark" (without shadows).
+With vsync on (left) and vsync off (right).
+X-axis is number of frames through playback.
+Y-axis is milliseconds between frames.
+The graphs show the browser scheduling of requestAnimationFrame.
+
+.. image:: https://github.com/turbulenz/webgl_benchmark/raw/master/docs/readme/graph/image03.png
+    :height: 150px
+    :width: 200px
+    :alt: Windows 8, Chrome 28, vsync on
+
+.. image:: https://github.com/turbulenz/webgl_benchmark/raw/master/docs/readme/graph/image10.png
+    :height: 150px
+    :width: 200px
+    :alt: Windows 8, Chrome 28, vsync off
+
+Testing vsync on hardware running Windows 8 in Chrome 28 with the "Story mode benchmark (without shadows).
+With vsync on (left) and vsync off (right).
+X-axis is number of frames through playback.
+Y-axis is milliseconds between frames.
+The graphs show different behavior on different platforms.
+
+SetInterval
+-----------
+
+.. image:: https://github.com/turbulenz/webgl_benchmark/raw/master/docs/readme/graph/image04.png
+    :height: 150px
+    :width: 200px
+    :alt: setInterval(0), Chrome
+
+.. image:: https://github.com/turbulenz/webgl_benchmark/raw/master/docs/readme/graph/image09.png
+    :height: 150px
+    :width: 200px
+    :alt: setInterval(0), Safari
+
+On high spec machines (when vsync is still enabled) time between frames can drop below 16ms (60 fps) using setInterval(0).
+Chrome (left) and Safari (right).
+The graphs show that setInterval cannot be relied upon to update the rendering, especially between different browsers.
+
+Render Target
+-------------
+
+.. image:: https://github.com/turbulenz/webgl_benchmark/raw/master/docs/readme/graph/image07.png
+    :height: 150px
+    :width: 200px
+    :alt: With render target, average 32ms per frame
+
+.. image:: https://github.com/turbulenz/webgl_benchmark/raw/master/docs/readme/graph/image01.png
+    :height: 150px
+    :width: 200px
+    :alt: Without render target, average 34ms per frame
+
+No rendertarget (left) average 32ms per frame and with render target (right) average 34ms per frame running on the same hardware.
+The graphs show that the use of a full-screen render target had only small variance on the same hardware at the same resolution.
+The use of a fixed size render target helped to ensure that all hardware would be rendering the same number of pixels.
 
 Scoring Methodology
 ===================
