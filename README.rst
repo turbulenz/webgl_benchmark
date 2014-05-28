@@ -126,13 +126,11 @@ Vsync
 -----
 
 .. image:: https://github.com/turbulenz/webgl_benchmark/raw/master/docs/readme/graph/image11.png
-    :height: 150px
-    :width: 200px
+    :scale: 30%
     :alt: Macbook Pro 5.1, OSX 10.6.8, Chrome 27, vsync on
 
 .. image:: https://github.com/turbulenz/webgl_benchmark/raw/master/docs/readme/graph/image02.png
-    :height: 150px
-    :width: 200px
+    :scale: 30%
     :alt: Macbook Pro 5.1, OSX 10.6.8, Chrome 27, vsync off
 
 Testing vsync on a Macbook Pro 5.1 running OSX 10.6.8 in Chrome 27 with the "Story mode benchmark" (without shadows).
@@ -142,13 +140,11 @@ Y-axis is milliseconds between frames.
 The graphs show the browser scheduling of requestAnimationFrame.
 
 .. image:: https://github.com/turbulenz/webgl_benchmark/raw/master/docs/readme/graph/image03.png
-    :height: 150px
-    :width: 200px
+    :scale: 30%
     :alt: Windows 8, Chrome 28, vsync on
 
 .. image:: https://github.com/turbulenz/webgl_benchmark/raw/master/docs/readme/graph/image10.png
-    :height: 150px
-    :width: 200px
+    :scale: 30%
     :alt: Windows 8, Chrome 28, vsync off
 
 Testing vsync on hardware running Windows 8 in Chrome 28 with the "Story mode benchmark (without shadows).
@@ -161,13 +157,11 @@ SetInterval
 -----------
 
 .. image:: https://github.com/turbulenz/webgl_benchmark/raw/master/docs/readme/graph/image04.png
-    :height: 150px
-    :width: 200px
+    :scale: 30%
     :alt: setInterval(0), Chrome
 
 .. image:: https://github.com/turbulenz/webgl_benchmark/raw/master/docs/readme/graph/image09.png
-    :height: 150px
-    :width: 200px
+    :scale: 30%
     :alt: setInterval(0), Safari
 
 On high spec machines (when vsync is still enabled) time between frames can drop below 16ms (60 fps) using setInterval(0).
@@ -178,13 +172,11 @@ Render Target
 -------------
 
 .. image:: https://github.com/turbulenz/webgl_benchmark/raw/master/docs/readme/graph/image07.png
-    :height: 150px
-    :width: 200px
+    :scale: 30%
     :alt: With render target, average 32ms per frame
 
 .. image:: https://github.com/turbulenz/webgl_benchmark/raw/master/docs/readme/graph/image01.png
-    :height: 150px
-    :width: 200px
+    :scale: 30%
     :alt: Without render target, average 34ms per frame
 
 No rendertarget (left) average 32ms per frame and with render target (right) average 34ms per frame running on the same hardware.
