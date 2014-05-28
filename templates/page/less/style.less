@@ -90,8 +90,6 @@ a {
 
     &.link-light {
         color: @light-text;
-        text-decoration: underline;
-
         &:hover {
             color: @dark-text;
         }
@@ -325,6 +323,10 @@ a {
         .transform(translateX(-50%), translateY(-50%));
 
         .transition(opacity @modal-transition-speed ease-in);
+
+        a {
+            text-decoration: underline;
+        }
     }
 
     &.active {
