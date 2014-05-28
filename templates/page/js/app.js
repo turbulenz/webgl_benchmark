@@ -106,7 +106,6 @@ $(function () {
 
         $modalContent.click(function (event) {
             event.stopPropagation();
-            return false;
         });
 
         $element.find('.modal-close-button').click(element.hideModal);
