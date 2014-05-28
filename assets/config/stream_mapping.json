@@ -1,6 +1,6 @@
 {
-    "prefixAssetURL": "tzawsuser-benchmark.s3.amazonaws.com/",
-    "prefixCaptureURL": "tzawsuser-benchmark.s3.amazonaws.com/",
+    "prefixAssetURL": "webgl-benchmark.s3.amazonaws.com/",
+    "prefixCaptureURL": "webgl-benchmark.s3.amazonaws.com/",
     "captureLookUp":
     {
         "story_high_particles" : "537d6615"

@@ -13,8 +13,8 @@ OnlineConfig.create = function onlineCreateFn()
     var config = BaseConfig.create();
 
     config.mode = 'online';
-    config.captureLookUp.story_high_particles = '//tzawsuser-benchmark.s3.amazonaws.com/537d6615/';
-    config.prefixAssetURL = '//tzawsuser-benchmark.s3.amazonaws.com/';
+    config.captureLookUp.story_high_particles = '//webgl-benchmark.s3.amazonaws.com/537d6615/';
+    config.prefixAssetURL = '//webgl-benchmark.s3.amazonaws.com/';
     config.useSaveAPI = false;
 
     return config;
