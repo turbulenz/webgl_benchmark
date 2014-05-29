@@ -137,6 +137,7 @@ RELEASE_PAGE_FILES = [
     "favicon.ico",
     "favicon.ico.gz",
     "index.html",
+    "comingsoon.html",
     "css/*.css",
     "img/*",
     "js/*"

@@ -158,7 +158,7 @@ a {
 
     word-break: break-word;
 
-    h1 {
+    h1, {
         .ultralight-typeface;
         display: inline;
         font-size: @font-size-large-heading;
@@ -166,6 +166,12 @@ a {
         margin-bottom: @spacer-height-small;
 
         letter-spacing: 5px;
+    }
+
+    .coming-soon {
+        display: inline;
+        font-size: @font-size-large;
+        height: @font-size-large;
     }
 
     h2, p {
@@ -568,7 +574,7 @@ a {
 html {
     font-size: 3.75px;
 
-    @breakpoint1: unit(@content-width * 3.75, px);
+    @breakpoint1: unit((@content-width * 3.75), px);
 
     @media (max-width: @breakpoint1) {
         .screenshots {
@@ -592,7 +598,7 @@ html {
     html {
         font-size: 3.25px;
 
-        @breakpoint2: unit(@content-width * 3.25, px);
+        @breakpoint2: unit((@content-width * 3.25), px);
 
         @media (max-width: @breakpoint2) {
             .screenshots {
@@ -616,7 +622,7 @@ html {
     html {
         font-size: 4px;
 
-        @breakpoint3: unit(@content-width * 4, px);
+        @breakpoint3: unit((@content-width * 4), px);
 
         @media (max-width: @breakpoint3) {
             .screenshots {

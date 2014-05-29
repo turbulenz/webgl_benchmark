@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+
+    <head prefix="fb: http://ogp.me/ns/fb# turbulenzdev: http://ogp.me/ns/fb/turbulenzdev#" xmlns:og="http://ogp.me/ns#" >
+
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="keywords" content="">
+        <meta name="description" content="Polycraft.gl is an online benchmark application that measures the performance of your WebGL compatible device, powered by Polycraft and ga.me">
+        <meta name="author" content="Turbulenz Limited">
+
+        <meta property="og:type" content="turbulenzdev:game" />
+        <meta property="og:url" content="" />
+        <meta property="og:title" content="POLYCRAFT.GL" />
+        <meta property="og:image" content="" />
+        <meta property="og:image:width" content="0" />
+        <meta property="og:image:height" content="0" />
+
+        <meta property="og:description" content="POLYCRAFT.gl is an online benchmark application that measures the performance of your WebGL compatible device, powered by Polycraft and ga.me"/>
+
+        <title>POLYCRAFT.GL</title>
+        <link type="image/x-icon" rel="shortcut icon" href="/favicon.ico">
+        <link type="image/icon" rel="shortcut icon" href="/favicon.ico">
+
+        <script type="text/javascript">
+            var _gaq = _gaq || [];
+            (function() {
+                var ga = document.createElement('script');
+                ga.type = 'text/javascript';
+                ga.async = true;
+                ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+
+                var s = document.getElementsByTagName('script')[0];
+                s.parentNode.insertBefore(ga, s);
+            })();
+        </script>
+
+        <script type="text/javascript" src="/js/modernizr-2.8.2.custom.min.js"></script>
+        <script type="text/javascript" src="/js/jquery-1.11.1.min.js"></script>
+        <script type="text/javascript" src="/js/whichbrowser-js-0.1.0-min.js"></script>
+        <script type="text/javascript" src="/js/app.js"></script>
+
+        <link type="text/css" rel="stylesheet" href="http://fast.fonts.net/cssapi/6b442e13-de0c-494f-8668-c8e48ac3fea3.css"/>
+        <link type="text/css" rel="stylesheet" href="/css/style.css">
+
+    </head>
+
+    <body>
+
+        <noscript class="warning show">
+            <img class="logo" src="/img/gadotme-logo-purple.png"/>
+            <div class="contents">
+                <img class="icon" src="/img/gamebot-fume.png"/>
+                <h1>Oh Nuts</h1>
+                <h2>JavaScript is disabled</h2>
+                <p>We need JavaScript enabled to run our fancy site in your browser. Please enable it, then refresh the page.</p>
+            </div>
+        </noscript>
+
+        <div id="warning" class="warning">
+            <img class="logo" src="/img/gadotme-logo-purple.png"/>
+            <div class="contents">
+                <img class="icon" src="/img/gamebot-fume.png"/>
+                <h1>Oh Nuts</h1>
+                <h2 id="warning-title"></h2>
+                <p id="warning-text"></p>
+                <div id="warning-custom"></div>
+                <a id="warning-link" class="about" href="#"></a>
+            </div>
+        </div>
+
+        <div class="bg bg-pixelated"></div>
+        <div class="bg bg-clear"></div>
+
+        <div class="content-wrapper">
+
+            <div class="header">
+                <a id="home-icon" target="_blank" href="https://ga.me/">
+                    <div class="home"></div>
+                </a>
+            </div>
+
+            <div class="vertical-spacer"></div>
+
+            <div class="content">
+                <h1>POLYCRAFT.GL</h1>
+                <h2>POWERED BY POLYCRAFT AND GA.ME</h2>
+                <ul class="screenshots">
+                    <li><a class="screenshot" href="#"></a></li>
+                    <li><a class="screenshot" href="#"></a></li>
+                    <li><a class="screenshot" href="#"></a></li>
+                </ul>
+                <p>
+                    Polycraft.gl is an online benchmark application that measures the performance of your WebGL compatible device, powered by Polycraft and ga.me.
+                </p>
+
+                <p class="coming-soon">COMING SOON</p>
+            </div>
+
+            <div class="vertical-spacer"></div>
+
+            <div class="footer">
+                <ul class="footer-links">
+                    <li><a target="_blank" href="https://ga.me/">ga.me</a></li>
+                    <li><a target="_blank" href="http://biz.turbulenz.com/developers">Developers</a></li>
+                    <li><a target="_blank" href="http://news.turbulenz.com/">News</a></li>
+                    <li><a target="_blank" href="http://biz.turbulenz.com/careers">Careers</a></li>
+                    <li><a target="_blank" href="http://biz.turbulenz.com/turbulenz">About</a></li>
+                    <li><a target="_blank" href="http://biz.turbulenz.com/contact">Contact</a></li>
+                    <li><a target="_blank" href="http://biz.turbulenz.com/">&copy;&nbsp;2014&nbsp;Turbulenz</a></li>
+                </ul>
+            </div>
+
+            <div id="screenshot-modal" class="modal-container">
+                <div id="screenshot-modal-content" class="modal-content">
+                    <span class="modal-close-button icon-tz-nav-close"></span>
+                </div>
+            </div>
+
+            <div id="info-modal" class="modal-container">
+                <div class="modal-content">
+                    <span class="modal-close-button icon-tz-nav-close"></span>
+                    <h2>ABOUT POLYCRAFT.GL</h2>
+                    <p>WebGL enables graphically rich games and applications on the web without the need for plug-ins. Polycraft.gl is designed to test the capability of your hardware to deliver the latest WebGL games by running a series of tests and giving your system an overall score. The benchmark itself is powered by the game "<a target="_blank" class="link-light" href="https://ga.me/games/polycraft">Polycraft</a>" developed by <a target="_blank" class="link-light" href="http://wonderstruckgames.com/">Wonderstruck Games</a>, using the <a target="_blank" class="link-light" href="https://github.com/turbulenz/turbulenz_engine">Turbulenz Engine</a> and available to play on <a target="_blank" class="link-light" href="https://ga.me/">GA.ME</a>. The tests are representative of the gameplay found in Polycraft and will demonstrate how your browser and hardware will perform graphically for a typical WebGL game.</p>
+                    <p>Once you press start, the benchmark will load directly in the page and run through a sequence of tests. This process will take a couple of minutes, but could take up to 15 minutes, depending on your system.</p>
+                    <p>It is important for the accuracy of the benchmark that you follow these recommendations:</p>
+                    <ul>
+                        <li>You will need a browser that supports WebGL, such as Google Chrome or Mozilla Firefox.</li>
+                        <li>Close any other running applications before running the test.</li>
+                        <li>Close any other browser tabs, windows and extensions before running the test.</li>
+                        <li>Run the benchmark page fullscreen, where possible.</li>
+                        <li>Run on a single monitor, disable any additional monitors, where possible.</li>
+                        <li>Run the test multiple times to ensure consistent results.</li>
+                        <li>When comparing hardware, make sure you use the same operating system and browser (with the same browser version, e.g. Google Chrome 34).</li>
+                        <li>The resolution the benchmark runs at can affect the final score. When comparing hardware, make sure the benchmark is run at the same resolution.</li>
+                        <li>Avoid changing the screen size or switching between tabs or windows as this will affect the test results.</li>
+                    </ul>
+                    <br>
+                    <p>Once you have configured your system, sit back and enjoy the journey through the world of Polycraft.</p>
+                    <p>The source code for Polycraft.gl can be found as part of the <a target="_blank" class="link-light" href="https://github.com/turbulenz/webgl_benchmark">webgl_benchmark</a> project on Github. If you find an issue with Polycraft.gl please submit it via the webgl_benchmark <a target="_blank" class="link-light" href="https://github.com/turbulenz/webgl_benchmark/issues">issue tracker</a>. If would like to know more or help contribute to the development of the project please see the webgl_benchmark <a target="_blank" class="link-light" href="https://github.com/turbulenz/webgl_benchmark">readme</a></p>
+                </div>
+            </div>
+
+            <div id="engine">
+
+                <canvas id="turbulenz_game_engine_canvas" moz-opaque="true"></canvas>
+
+                <script type="text/javascript">
+                    var TurbulenzEngine = {};
+                </script>
+
+                <script type="text/javascript" src="/benchmark.canvas.js"></script>
+
+                <script type="text/javascript">
+                    window.startTest = function () {
+                        var appEntry = TurbulenzEngine.onload;
+                        var appShutdown = TurbulenzEngine.onunload;
+                        if (!appEntry)
+                        {
+                            console.error('TurbulenzEngine.onload has not been set');
+                            return;
+                        }
+
+                        var canvas = document.getElementById('turbulenz_game_engine_canvas');
+                        var startCanvas = function startCanvasFn() {
+
+                            TurbulenzEngine = WebGLTurbulenzEngine.create({
+                                canvas: canvas,
+                                fillParent: true
+                            });
+
+                            if (!TurbulenzEngine)
+                            {
+                                console.error('Failed to init TurbulenzEngine (canvas)');
+                                return;
+                            }
+
+                            TurbulenzEngine.onload = appEntry;
+                            TurbulenzEngine.onunload = appShutdown;
+                            appEntry();
+                        };
+
+                        window.onbeforeunload = function () {
+                            $('#engine').removeClass('active');
+                            if (TurbulenzEngine.onunload)
+                            {
+                                TurbulenzEngine.onunload.call(this);
+                            }
+                        };
+
+                        $('#engine').addClass('active');
+
+                        startCanvas();
+
+                        var fullscreenFunction = canvas.requestFullscreen ||
+                                                 canvas.webkitRequestFullscreen ||
+                                                 canvas.mozRequestFullScreen ||
+                                                 canvas.msRequestFullscreen;
+
+                        if (fullscreenFunction)
+                        {
+                            fullscreenFunction.call(canvas, undefined);
+                        }
+
+                    };
+
+                </script>
+
+            </div>
+
+        </div>
+
+    </body>
+
+</html>
