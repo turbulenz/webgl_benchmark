@@ -4977,3 +4977,75 @@ VMath.arrayConstructor = VMathArrayConstructor;
 if (TurbulenzEngine.hasOwnProperty('VMath')) {
     TurbulenzEngine.VMath = VMath;
 }
+
+var _tz_techniqueParameterBufferCreate = function techniqueParameterBufferCreateFn(params) {
+    var tpbProto = this.tpbProto;
+    if (!tpbProto) {
+        var tpbProtoConstructor = function () {
+            this.map = function techniqueParameterBufferMap(offset, numFloats) {
+                if (offset === undefined) {
+                    offset = 0;
+                }
+                var buffer = this;
+                if (numFloats === undefined) {
+                    numFloats = this.length;
+                }
+                function techniqueParameterBufferWriter() {
+                    var numArguments = arguments.length;
+                    for (var a = 0; a < numArguments; a += 1) {
+                        var value = arguments[a];
+                        if (typeof value === 'number') {
+                            buffer[offset] = value;
+                            offset += 1;
+                        } else {
+                            buffer.setData(value, offset, value.length);
+                            offset += value.length;
+                        }
+                    }
+                }
+                return techniqueParameterBufferWriter;
+            };
+
+            /* tslint:disable:no-empty */
+            this.unmap = function techniqueParameterBufferUnmap(writer) {
+            };
+
+            /* tslint:enable:no-empty */
+            this.setData = function techniqueParameterBufferSetData(data, offset, numValues) {
+                if (offset === undefined) {
+                    offset = 0;
+                }
+                if (numValues === undefined) {
+                    numValues = this.length;
+                }
+                for (var n = 0; n < numValues; n += 1, offset += 1) {
+                    this[offset] = data[n];
+                }
+            };
+
+            Object.defineProperty(this, "data", {
+                get: function techniqueParameterBufferDataGet() {
+                    return this;
+                },
+                enumerable: true
+            });
+
+            Object.defineProperty(this, "numFloats", {
+                get: function techniqueParameterBufferDataGet() {
+                    return this.length;
+                },
+                enumerable: true
+            });
+        };
+        tpbProtoConstructor.prototype = Float32Array.prototype;
+        this.tpbProto = tpbProto = new tpbProtoConstructor();
+    }
+
+    var tpb = new Float32Array(params.numFloats);
+    tpb.__proto__ = tpbProto;
+    return (tpb);
+};
+
+if (typeof TurbulenzEngine !== 'undefined' && TurbulenzEngine.hasOwnProperty('_createTechniqueParameterBuffer')) {
+    TurbulenzEngine._createTechniqueParameterBuffer = _tz_techniqueParameterBufferCreate;
+}

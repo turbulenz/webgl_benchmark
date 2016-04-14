@@ -3426,56 +3426,6 @@ var WebGLTechniqueParameters = (function () {
 })();
 
 //
-// TechniqueParameterBuffer
-//
-var techniqueParameterBufferCreate = function techniqueParameterBufferCreateFn(params) {
-    if (Float32Array.prototype.map === undefined) {
-        Float32Array.prototype.map = function techniqueParameterBufferMap(offset, numFloats) {
-            if (offset === undefined) {
-                offset = 0;
-            }
-            var buffer = this;
-            if (numFloats === undefined) {
-                numFloats = this.length;
-            }
-            function techniqueParameterBufferWriter() {
-                var numArguments = arguments.length;
-                for (var a = 0; a < numArguments; a += 1) {
-                    var value = arguments[a];
-                    if (typeof value === 'number') {
-                        buffer[offset] = value;
-                        offset += 1;
-                    } else {
-                        buffer.setData(value, offset, value.length);
-                        offset += value.length;
-                    }
-                }
-            }
-            return techniqueParameterBufferWriter;
-        };
-
-        /* tslint:disable:no-empty */
-        Float32Array.prototype.unmap = function techniqueParameterBufferUnmap(writer) {
-        };
-
-        /* tslint:enable:no-empty */
-        Float32Array.prototype.setData = function techniqueParameterBufferSetData(data, offset, numValues) {
-            if (offset === undefined) {
-                offset = 0;
-            }
-            if (numValues === undefined) {
-                numValues = this.length;
-            }
-            for (var n = 0; n < numValues; n += 1, offset += 1) {
-                this[offset] = data[n];
-            }
-        };
-    }
-
-    return new Float32Array(params.numFloats);
-};
-
-//
 // WebGLDrawParameters
 //
 var WebGLDrawParameters = (function () {
@@ -4742,9 +4692,7 @@ var WebGLGraphicsDevice = (function () {
     };
 
     WebGLGraphicsDevice.prototype.createTechniqueParameterBuffer = function (params) {
-        // TOOD: We're returning a float array, which doesn't have all
-        // the proprties that are expected.
-        return techniqueParameterBufferCreate(params);
+        return _tz_techniqueParameterBufferCreate(params);
     };
 
     WebGLGraphicsDevice.prototype.createRenderBuffer = function (params) {
